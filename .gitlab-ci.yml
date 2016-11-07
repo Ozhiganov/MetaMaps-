@@ -9,8 +9,7 @@ update(maps.metager.de):
     # Abhängigkeiten überprüfen
     - which composer
     - which git
-    - which php7.0
-    - which sqlite3
+    - which php
   script:
     - if [ -d ~/.MetaGerMaps ]; then rm -rf ~/.MetaGerMaps;fi
     - mkdir ~/.MetaGerMaps
