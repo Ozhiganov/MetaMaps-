@@ -23,4 +23,4 @@ update(maps.metager.de):
     - cd ~/
     - while [ -d ~/MetaGerMaps ]; do rm -rf ~/MetaGerMaps;done
     - mv .MetaGerMaps MetaGerMaps
-    - php ~/MetaGer/artisan up
+    - if [ -f ~/MetaGerMaps/artisan ]; then php ~/MetaGerMaps/artisan up;fi
