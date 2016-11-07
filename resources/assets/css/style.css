@@ -1,0 +1,130 @@
+a:hover {
+    text-decoration: none;
+}
+
+#results-absolute {
+    position: absolute;
+    top: 0px;
+    right: 0;
+    background-color: white;
+    max-width: 150px;
+}
+
+#results-bottom {
+    margin-left: 0;
+    margin-right: 0;
+}
+
+#results-bottom > .result:not(.more) {
+    height: 80%;
+}
+
+#results-bottom > .result.more {
+    height: 20%;
+}
+
+.results .result {
+    border: 1px solid lightgrey;
+    border-top: 0;
+    border-radius: 2px;
+    padding: 5px;
+    /*background-color: #D9E7F7;*/
+    cursor: pointer;
+}
+
+.results .result:hover:not(.more) {
+    background-color: #f2dede;
+    border-color: #a94442;
+}
+
+.results .result p.title {
+    font-weight: bold;
+    font-size: 11px;
+    margin-bottom: 0;
+}
+
+.results .result p.address, .results .result p.opening-hours, .results .result p.population, .results .result p.city {
+    font-size: 11px;
+    margin-bottom: 0;
+}
+
+.results .result p.type {
+    font-size: 10px;
+    color: grey;
+    margin-bottom: 0;
+}
+
+.row div {
+    padding: 0;
+}
+
+a.navbar-brand {
+    line-height: 100% !important;
+    padding: 0;
+}
+
+.logo {
+    height: 100%;
+    font-family: Liberation Sans, sans-serif;
+}
+
+.logo > h1 {
+    color: rgb(255, 128, 0);
+    height: 100%;
+    padding-left: 20px;
+    padding-top: 8px;
+    font-family: sans-serif;
+    font-style: italic;
+    margin: 0;
+    font-weight: bold;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.logo > h1 > small {
+    color: rgb(255, 128, 0);
+    font-size: 0.5em;
+}
+
+nav {
+    margin-bottom: 0!important;
+}
+
+#map {
+    height: 100vh;
+}
+
+
+/**
+       * The zoomslider in the second map shall be placed between the zoom-in and
+       * zoom-out buttons.
+       */
+
+#map .ol-zoom .ol-zoom-out {
+    margin-top: 204px;
+}
+
+#map .ol-zoom {
+    margin-top: 80px;
+}
+
+#map .ol-zoomslider {
+    background-color: transparent;
+    top: 2.3em;
+}
+
+#map .ol-touch .ol-zoom .ol-zoom-out {
+    margin-top: 212px;
+}
+
+#map .ol-touch .ol-zoomslider {
+    top: 2.75em;
+}
+
+#map .ol-zoom-in.ol-has-tooltip:hover [role=tooltip], #map2 .ol-zoom-in.ol-has-tooltip:focus [role=tooltip] {
+    top: 3px;
+}
+
+#map .ol-zoom-out.ol-has-tooltip:hover [role=tooltip], #map2 .ol-zoom-out.ol-has-tooltip:focus [role=tooltip] {
+    top: 232px;
+}
