@@ -1,7 +1,9 @@
 var map;
+var extent;
 $(document).ready(function() {
     // Initialize the Map
     initMap();
+    receiveLocation();
 });
 
 function initMap() {
@@ -37,4 +39,29 @@ function initMap() {
         loadTilesWhileInteracting: true
     });
     map.addControl(new ol.control.ZoomSlider());
+}
+var options = {
+    enableHighAccuracy: true,
+    timeout: 5000,
+    maximumAge: 0
+};
+
+function success(pos) {
+    var crd = pos.coords;
+    map.getView().setCenter(ol.proj.transform([crd.longitude, crd.latitude], 'EPSG:4326', 'EPSG:3857'));
+    map.getView().setZoom(9);
+    updateMapExtent();
+};
+
+function error(err) {
+    console.warn('ERROR(' + err.code + '): ' + err.message);
+};
+
+function receiveLocation() {
+    navigator.geolocation.getCurrentPosition(success, error, options);
+}
+
+function updateMapExtent() {
+    var tmpExtent = map.getView().calculateExtent([$("#map").width(), $("#map").height()]);
+    extent = ol.proj.transform([tmpExtent[0], tmpExtent[1]], 'EPSG:3857', 'EPSG:4326').concat(ol.proj.transform([tmpExtent[2], tmpExtent[3]], 'EPSG:3857', 'EPSG:4326'));
 }
