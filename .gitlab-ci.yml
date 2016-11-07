@@ -1,0 +1,27 @@
+# This file is a template, and might need editing before it works on your project.
+# Full project: https://gitlab.com/pages/plain-html
+update(maps.metager.de):
+  tags:
+    - 144.76.113.134
+  only:
+    - master@dominik/MetaGerMaps
+  before_script:
+    # Abhängigkeiten überprüfen
+    - which composer
+    - which git
+    - which php7.0
+    - which sqlite3
+  script:
+  - if [ -d ~/.MetaGerMaps ]; then rm -rf ~/.MetaGerMaps;fi
+  - mkdir ~/.MetaGerMaps
+  - cp -r * ~/.MetaGerMaps
+  - cd ~/.MetaGerMaps
+  - composer install
+  - scp -P 63824 metager@metager3.de:~/.env .
+  - chmod -R 777 storage
+  - chmod -R 777 bootstrap/cache
+  - if [ -f ~/MetaGerMaps/artisan ]; then php ~/MetaGerMaps/artisan down;fi
+  - cd ~/
+  - while [ -d ~/MetaGerMaps ]; do rm -rf ~/MetaGerMaps;done
+  - mv .MetaGerMaps MetaGerMaps
+  - php ~/MetaGer/artisan up
