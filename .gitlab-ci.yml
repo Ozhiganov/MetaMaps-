@@ -2,7 +2,7 @@
 # Full project: https://gitlab.com/pages/plain-html
 update(maps.metager.de):
   tags:
-    - 144.76.113.134
+    - maps.metager.de
   only:
     - master@dominik/MetaGerMaps
   before_script:
