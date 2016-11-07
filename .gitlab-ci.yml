@@ -12,16 +12,16 @@ update(maps.metager.de):
     - which php7.0
     - which sqlite3
   script:
-  - if [ -d ~/.MetaGerMaps ]; then rm -rf ~/.MetaGerMaps;fi
-  - mkdir ~/.MetaGerMaps
-  - cp -r * ~/.MetaGerMaps
-  - cd ~/.MetaGerMaps
-  - composer install
-  - scp -P 63824 metager@metager3.de:~/.env .
-  - chmod -R 777 storage
-  - chmod -R 777 bootstrap/cache
-  - if [ -f ~/MetaGerMaps/artisan ]; then php ~/MetaGerMaps/artisan down;fi
-  - cd ~/
-  - while [ -d ~/MetaGerMaps ]; do rm -rf ~/MetaGerMaps;done
-  - mv .MetaGerMaps MetaGerMaps
-  - php ~/MetaGer/artisan up
+    - if [ -d ~/.MetaGerMaps ]; then rm -rf ~/.MetaGerMaps;fi
+    - mkdir ~/.MetaGerMaps
+    - cp -r * ~/.MetaGerMaps
+    - cd ~/.MetaGerMaps
+    - composer install
+    - scp -P 63824 metager@metager3.de:~/.env .
+    - chmod -R 777 storage
+    - chmod -R 777 bootstrap/cache
+    - if [ -f ~/MetaGerMaps/artisan ]; then php ~/MetaGerMaps/artisan down;fi
+    - cd ~/
+    - while [ -d ~/MetaGerMaps ]; do rm -rf ~/MetaGerMaps;done
+    - mv .MetaGerMaps MetaGerMaps
+    - php ~/MetaGer/artisan up
