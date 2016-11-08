@@ -14,3 +14,5 @@
 Route::get('/', function () {
     return view('map');
 });
+
+Route::get('{search}/{latMin}/{lonMin}/{latMax}/{lonMax}/{adjustView?}', 'SearchController@boundingBoxSearch');

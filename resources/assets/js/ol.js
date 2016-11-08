@@ -663,7 +663,7 @@
     l.preventDefault = function() {
         wc.S.preventDefault.call(this);
         var a = this.b;
-        if (a.preventDefault) console.log("nö"); //a.preventDefault();
+        if (a.preventDefault) {} //a.preventDefault();
         else if (a.returnValue = !1, kc) try {
             if (a.ctrlKey || 112 <= a.keyCode && 123 >= a.keyCode) a.keyCode = -1
         } catch (c) {}

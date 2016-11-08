@@ -38,13 +38,21 @@
                 </div>
                 <!-- Collect the nav links, forms, and other content for toggling -->
                 <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
-                    <form accept-charset="UTF-8" class="navbar-form navbar-right" method="GET">
+                    <form accept-charset="UTF-8" class="navbar-form navbar-right" id="search" method="GET">
                         <div class="form-group">
-                            <input class="form-control" name="q" placeholder="" type="text" value="{{ Request::input('q', '') }}"/>
+                            <div class="input-group">
+                                <input autofocus="" class="form-control" name="q" placeholder="Karten durchsuchen..." type="text" value="{{ Request::input('q', '') }}"/>
+                                <div class="input-group-addon" id="doSearch">
+                                    <span class="glyphicon glyphicon-search">
+                                    </span>
+                                </div>
+                                <div class="input-group-addon" id="clearInput" title="Sucheingabe löschen">
+                                    <span class="font-bold">
+                                        X
+                                    </span>
+                                </div>
+                            </div>
                         </div>
-                        <button class="btn btn-default" type="submit">
-                            Suchen
-                        </button>
                     </form>
                 </div>
                 <!-- /.navbar-collapse -->
@@ -53,6 +61,11 @@
         </nav>
         <main>
             <div class="map" id="map">
+            </div>
+            <div class="col-xs-12 col-sm-6 col-md-3 hidden" data-status="in" id="results">
+                <div id="closer" title="Ergebnisse einklappen">
+                    >
+                </div>
             </div>
         </main>
         <script src="/js/all.js">
