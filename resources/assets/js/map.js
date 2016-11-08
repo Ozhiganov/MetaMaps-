@@ -25,7 +25,10 @@ $(document).ready(function() {
         q = encodeURI(q);
         $("#clearInput").html("<img src=\"/img/ajax-loader.gif\" />");
         var url = '/' + q + '/' + encodeURI(extent[0]) + '/' + encodeURI(extent[1]) + '/' + encodeURI(extent[2]) + '/' + encodeURI(extent[3]);
-        $.getScript(url);
+        console.log(url);
+        $.getScript(url).fail(function(jqxhr, settings, exception){
+            console.log(exception);
+        });
         $("#search input[name=q]").blur();
     });
     $("#results > #closer").click(function() {
@@ -115,4 +118,8 @@ function receiveLocation() {
 function updateMapExtent() {
     var tmpExtent = map.getView().calculateExtent([$("#map").width(), $("#map").height()]);
     extent = ol.proj.transform([tmpExtent[0], tmpExtent[1]], 'EPSG:3857', 'EPSG:4326').concat(ol.proj.transform([tmpExtent[2], tmpExtent[3]], 'EPSG:3857', 'EPSG:4326'));
+}
+
+function numberWithPoints(x) {
+    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 }
