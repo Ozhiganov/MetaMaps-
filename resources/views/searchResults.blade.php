@@ -11,13 +11,16 @@ $("#results > .result").remove();
 overlays = [];
 
 $.each(searchResults, function(index, value) {
+		var el = $('<img id="' + index + '" class="map-marker" src="https://maps.metager.de/nominatim/js/images/marker-icon.png">');
+		var pos = ol.proj.transform([parseFloat(value["lon"]), parseFloat(value["lat"])], 'EPSG:4326', 'EPSG:3857');
 		var overlay = new ol.Overlay({
-            position: ol.proj.transform([parseFloat(value["lon"]), parseFloat(value["lat"])], 'EPSG:4326', 'EPSG:3857'),
-            element: $('<img id="' + index + '" src="https://maps.metager.de/nominatim/js/images/marker-icon.png">'),
+            position: pos,
+            element: el,
             offset: [-12, -45],
             stopEvent: false,
         });
         map.addOverlay(overlay);
+        
         overlays.push(overlay);
 
         // Push Resultlist
@@ -51,7 +54,13 @@ $.each(searchResults, function(index, value) {
 	        opening_hours = opening_hours.replace(/;/g, ",<br />");
 	        population = typeof value["extratags"]["population"] !== 'undefined' ? " (" + numberWithPoints(value["extratags"]["population"]) + " Einwohner)" : "";
 	    }
-        $("#results").append("<div class=\"result col-sm-12\"> " + "<p class=\"title\">" + value["title"] + "</p>" + "<p class=\"type\">" + type + population + "</p>" + "<p class=\"address\">" + road + " " + house_number + "</p><p class=\"city\">" + city + "</p>" + "<p class=\"opening-hours\">" + opening_hours + "</p>" + "<p class=\"tags\">" + "</p>" + "</div>");
+	    var res = $("<div class=\"result col-sm-12\"> " + "<p class=\"title\">" + value["title"] + "</p>" + "<p class=\"type\">" + type + population + "</p>" + "<p class=\"address\">" + road + " " + house_number + "</p><p class=\"city\">" + city + "</p>" + "<p class=\"opening-hours\">" + opening_hours + "</p>" + "<p class=\"tags\">" + "</p>" + "</div>");
+        var resPopup = $("<div class=\"result col-sm-12\"> " + "<p class=\"title\">" + value["title"] + "</p>" + "<p class=\"type\">" + type + population + "</p>" + "<p class=\"address\">" + road + " " + house_number + "</p><p class=\"city\">" + city + "</p>" + "<p class=\"opening-hours\">" + opening_hours + "</p>" + "<p class=\"tags\">" + "</p>" + "</div>");
+        $("#results").append(res);
+        el.click(function(evt){
+        	$("#popup-content").html(resPopup);
+        	popupOverlay.setPosition(pos);
+        });
 
         $("#results").removeClass("hidden");
 });
@@ -101,3 +110,4 @@ function adjustView(results) {
     maxPosition = ol.proj.transform(maxPosition, 'EPSG:4326', 'EPSG:3857');
     map.getView().fitExtent([minPosition[0], minPosition[1], maxPosition[0], maxPosition[1]], map.getSize())
 }
+

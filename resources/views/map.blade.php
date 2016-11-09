@@ -60,6 +60,12 @@
             <!-- /.container-fluid -->
         </nav>
         <main>
+            <div class="ol-popup" id="popup">
+                <a class="ol-popup-closer" href="#" id="popup-closer">
+                </a>
+                <div id="popup-content">
+                </div>
+            </div>
             <div class="map" id="map">
             </div>
             <div class="col-xs-12 col-sm-6 col-md-3 hidden" data-status="in" id="results">
