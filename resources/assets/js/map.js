@@ -9,12 +9,6 @@ $(document).ready(function() {
     // Initialize the Map
     initMap();
     receiveLocation();
-    $("#search").submit(function() {
-        $("#search button[type=submit]").addClass("disabled");
-        var location = document.location.href;
-        location = location
-        return false;
-    });
     $("#clearInput").click(function() {
         $("#search input[name=q]").val('');
         $("#search input[name=q]").focus();
@@ -41,18 +35,21 @@ $(document).ready(function() {
         });
         $("#search input[name=q]").blur();
     });
-    $("#results > #closer").click(function() {
+    $("#closer").click(function() {
         if ($("#results").attr("data-status") === "in") {
             var width = $("#results").outerWidth() * -1;
             $("#results").css("right", width + "px");
-            $("#results > #closer").html("<");
+            $("#closer").html("<");
             $("#results").attr("data-status", "out");
-            $("#results > #closer").attr("title", "Ergebnisse ausklappen");
+            $("#closer").attr("title", "Ergebnisse ausklappen");
+            $("#closer").css("right", "0px");
         } else {
             $("#results").css("right", 0);
-            $("#results > #closer").html(">");
+            $("#closer").html(">");
             $("#results").attr("data-status", "in");
-            $("#results > #closer").attr("title", "Ergebnisse einklappen");
+            $("#closer").attr("title", "Ergebnisse einklappen");
+
+            $("#closer").css("right", ($("#results").width()-1) + "px");
         }
     });
 
@@ -189,4 +186,18 @@ function adjustView(results) {
     minPosition = ol.proj.transform(minPosition, 'EPSG:4326', 'EPSG:3857');
     maxPosition = ol.proj.transform(maxPosition, 'EPSG:4326', 'EPSG:3857');
     map.getView().fitExtent([minPosition[0], minPosition[1], maxPosition[0], maxPosition[1]], map.getSize())
+}
+
+function clearPOIS(){
+    // Remove All Existing Overlays
+    $.each(overlays, function(index, value) {
+        map.removeOverlay(value);
+    });
+    map.removeLayer(vectorLayer);
+    vectorSource = new ol.source.Vector();
+    // Remove Existing Results
+    $("#results > .result").remove();
+    $("#results > h4").remove();
+
+    overlays = [];
 }

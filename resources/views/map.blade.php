@@ -68,10 +68,10 @@
             </div>
             <div class="map" id="map">
             </div>
+            <div id="closer" title="Ergebnisse einklappen">
+                >
+            </div>
             <div class="col-xs-12 col-sm-6 col-md-3 hidden" data-status="in" id="results">
-                <div id="closer" title="Ergebnisse einklappen">
-                    >
-                </div>
             </div>
         </main>
         <script src="/js/all.js">
