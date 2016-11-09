@@ -5,6 +5,7 @@ $.each(overlays, function(index, value) {
 	map.removeOverlay(value);
 });
 map.removeLayer(vectorLayer);
+vectorSource = new ol.source.Vector();
 // Remove Existing Results
 $("#results > .result").remove();
 $("#results > h4").remove();
