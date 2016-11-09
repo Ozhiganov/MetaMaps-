@@ -11,7 +11,7 @@ $("#results > .result").remove();
 overlays = [];
 
 $.each(searchResults, function(index, value) {
-		var el = $('<img id="' + index + '" class="map-marker" src="https://maps.metager.de/nominatim/js/images/marker-icon.png">');
+		var el = $('<span id="index" class="marker">'+index+'</span>');
 		var pos = ol.proj.transform([parseFloat(value["lon"]), parseFloat(value["lat"])], 'EPSG:4326', 'EPSG:3857');
 		var overlay = new ol.Overlay({
             position: pos,
@@ -54,7 +54,7 @@ $.each(searchResults, function(index, value) {
 	        opening_hours = opening_hours.replace(/;/g, ",<br />");
 	        population = typeof value["extratags"]["population"] !== 'undefined' ? " (" + numberWithPoints(value["extratags"]["population"]) + " Einwohner)" : "";
 	    }
-	    var res = $("<div class=\"result col-sm-12\"> " + "<p class=\"title\">" + value["title"] + "</p>" + "<p class=\"type\">" + type + population + "</p>" + "<p class=\"address\">" + road + " " + house_number + "</p><p class=\"city\">" + city + "</p>" + "<p class=\"opening-hours\">" + opening_hours + "</p>" + "<p class=\"tags\">" + "</p>" + "</div>");
+	    var res = $("<div class=\"result col-sm-12\"><div class=\"col-xs-2\"><span id=\"index\" class=\"marker\">"+index+"</span></div>" + "<div class=\"col-xs-10\"><p class=\"title\">" + value["title"] + "</p>" + "<p class=\"type\">" + type + population + "</p>" + "<p class=\"address\">" + road + " " + house_number + "</p><p class=\"city\">" + city + "</p>" + "<p class=\"opening-hours\">" + opening_hours + "</p>" + "<p class=\"tags\">" + "</p>" + "</div></div>");
         var resPopup = $("<div class=\"result col-sm-12\"> " + "<p class=\"title\">" + value["title"] + "</p>" + "<p class=\"type\">" + type + population + "</p>" + "<p class=\"address\">" + road + " " + house_number + "</p><p class=\"city\">" + city + "</p>" + "<p class=\"opening-hours\">" + opening_hours + "</p>" + "<p class=\"tags\">" + "</p>" + "</div>");
         $("#results").append(res);
         el.click(function(evt){
