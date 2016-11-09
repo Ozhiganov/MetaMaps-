@@ -4,14 +4,22 @@ var searchResults = {!! $results !!};
 $.each(overlays, function(index, value) {
 	map.removeOverlay(value);
 });
-
+map.removeLayer(vectorLayer);
 // Remove Existing Results
 $("#results > .result").remove();
+$("#results > h4").remove();
 
 overlays = [];
 
+@if($boundingSuccess === false)
+$("#results").append('<div class="result col-xs-12"><div class="col-xs-2"></div><div class="col-xs-10"><p class="title">Keine Ergebnisse gefunden</p></div></div><div class="clearfix result"></div><h4>Ergebnisse außerhalb des angezeigten Bereichs:<small><a id="showResults" href="#">(anzeigen)</a></small></h4>');
+$("#showResults").click(function(){
+	adjustView(searchResults);
+});
+@endif
+
 $.each(searchResults, function(index, value) {
-		var el = $('<span id="index" class="marker">'+index+'</span>');
+		var el = $('<span id="index" class="marker" style="filter: hue-rotate('+value["huerotate"]+'deg);">'+index+'</span>');
 		var pos = ol.proj.transform([parseFloat(value["lon"]), parseFloat(value["lat"])], 'EPSG:4326', 'EPSG:3857');
 		var overlay = new ol.Overlay({
             position: pos,
@@ -54,8 +62,8 @@ $.each(searchResults, function(index, value) {
 	        opening_hours = opening_hours.replace(/;/g, ",<br />");
 	        population = typeof value["extratags"]["population"] !== 'undefined' ? " (" + numberWithPoints(value["extratags"]["population"]) + " Einwohner)" : "";
 	    }
-	    var res = $("<div class=\"result col-sm-12\"><div class=\"col-xs-2\"><span id=\"index\" class=\"marker\">"+index+"</span></div>" + "<div class=\"col-xs-10\"><p class=\"title\">" + value["title"] + "</p>" + "<p class=\"type\">" + type + population + "</p>" + "<p class=\"address\">" + road + " " + house_number + "</p><p class=\"city\">" + city + "</p>" + "<p class=\"opening-hours\">" + opening_hours + "</p>" + "<p class=\"tags\">" + "</p>" + "</div></div>");
-        var resPopup = $("<div class=\"result col-sm-12\"> " + "<p class=\"title\">" + value["title"] + "</p>" + "<p class=\"type\">" + type + population + "</p>" + "<p class=\"address\">" + road + " " + house_number + "</p><p class=\"city\">" + city + "</p>" + "<p class=\"opening-hours\">" + opening_hours + "</p>" + "<p class=\"tags\">" + "</p>" + "</div>");
+	    var res = $("<div class=\"result col-xs-12\" id=\"result-"+index+"\"><div class=\"col-xs-2\"><span class=\"marker\" style=\"filter: hue-rotate("+value["huerotate"]+"deg);\">"+index+"</span></div>" + "<div class=\"col-xs-10\"><p class=\"title\">" + value["title"] + "</p>" + "<p class=\"type\">" + type + population + "</p>" + "<p class=\"address\">" + road + " " + house_number + "</p><p class=\"city\">" + city + "</p>" + "<p class=\"opening-hours\">" + opening_hours + "</p>" + "<p class=\"tags\">" + "</p></div></div>");
+        var resPopup = $("<div class=\"result col-xs-12\"> " + "<p class=\"title\">" + value["title"] + "</p>" + "<p class=\"type\">" + type + population + "</p>" + "<p class=\"address\">" + road + " " + house_number + "</p><p class=\"city\">" + city + "</p>" + "<p class=\"opening-hours\">" + opening_hours + "</p>" + "<p class=\"tags\">" + "</p>" + "</div>");
         $("#results").append(res);
         el.click(function(evt){
         	$("#popup-content").html(resPopup);
@@ -63,7 +71,24 @@ $.each(searchResults, function(index, value) {
         });
 
         $("#results").removeClass("hidden");
+
+        // Add Features
+        var geom = (new ol.format.GeoJSON()).readGeometry(value["geojson"], {
+            'dataProjection': 'EPSG:4326',
+            'featureProjection': 'EPSG:3857'
+        });
+        var feature = new ol.Feature({
+            'geometry': geom
+        });
+        feature.setId(index);
+        vectorSource.addFeature(feature);
 });
+
+// add Features
+vectorLayer = new ol.layer.Vector({
+        source: vectorSource
+    });
+    map.addLayer(vectorLayer)
 
 @if($adjustView === true)
 console.log("test");
@@ -71,43 +96,4 @@ adjustView(searchResults);
 @endif
 
 $("#clearInput").html('<span class="font-bold">X</span>');
-
-function adjustView(results) {
-	if(results.length <= 0)
-		return;
-    var minPosition = [];
-    var maxPosition = [];
-    for (var i = 0; i < results.length; i++) {
-        if (typeof minPosition[0] === 'undefined' || minPosition[0] > parseFloat(results[i]["lon"])) {
-            minPosition[0] = parseFloat(results[i]["lon"]);
-        }
-        if (typeof minPosition[0] === 'undefined' || (typeof results[i]["boundingbox"] !== 'undefined' && minPosition[0] > parseFloat(results[i]["boundingbox"][2]))) {
-            minPosition[0] = parseFloat(results[i]["boundingbox"][2]);
-        }
-        if (typeof minPosition[1] === 'undefined' || minPosition[1] > parseFloat(results[i]["lat"])) {
-            minPosition[1] = parseFloat(results[i]["lat"]);
-        }
-        if (typeof minPosition[1] === 'undefined' || (typeof results[i]["boundingbox"] !== 'undefined' && minPosition[1] > parseFloat(results[i]["boundingbox"][0]))) {
-            minPosition[1] = parseFloat(results[i]["boundingbox"][0]);
-        }
-        if (typeof maxPosition[0] === 'undefined' || maxPosition[0] < parseFloat(results[i]["lon"])) {
-            maxPosition[0] = parseFloat(results[i]["lon"]);
-        }
-        if (typeof maxPosition[0] === 'undefined' || (typeof results[i]["boundingbox"] !== 'undefined' && maxPosition[0] < parseFloat(results[i]["boundingbox"][3]))) {
-            maxPosition[0] = parseFloat(results[i]["boundingbox"][3]);
-        }
-        if (typeof maxPosition[1] === 'undefined' || maxPosition[1] < parseFloat(results[i]["lat"])) {
-            maxPosition[1] = parseFloat(results[i]["lat"]);
-        }
-        if (typeof maxPosition[1] === 'undefined' || (typeof results[i]["boundingbox"] !== 'undefined' && maxPosition[1] < parseFloat(results[i]["boundingbox"][1]))) {
-            maxPosition[1] = parseFloat(results[i]["boundingbox"][1]);
-        }
-        if (typeof results[i]["type"] !== 'undefined' && (results[i]["type"] === 'city' || results[i]["type"] === 'administrative' || results[i]["type"] === 'river')) {
-            break;
-        }
-    }
-    minPosition = ol.proj.transform(minPosition, 'EPSG:4326', 'EPSG:3857');
-    maxPosition = ol.proj.transform(maxPosition, 'EPSG:4326', 'EPSG:3857');
-    map.getView().fitExtent([minPosition[0], minPosition[1], maxPosition[0], maxPosition[1]], map.getSize())
-}
 

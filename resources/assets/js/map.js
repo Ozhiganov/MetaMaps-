@@ -1,8 +1,10 @@
 var map;
 var extent;
 var overlays = [];
+var vectorSource = new ol.source.Vector();
 var lastClick;
 var popupOverlay;
+var vectorLayer;
 $(document).ready(function() {
     // Initialize the Map
     initMap();
@@ -33,6 +35,7 @@ $(document).ready(function() {
         q = encodeURI(q);
         $("#clearInput").html("<img src=\"/img/ajax-loader.gif\" />");
         var url = '/' + q + '/' + encodeURI(extent[0]) + '/' + encodeURI(extent[1]) + '/' + encodeURI(extent[2]) + '/' + encodeURI(extent[3]);
+        console.log(url);
         $.getScript(url).fail(function(jqxhr, settings, exception){
             console.log(exception);
         });
@@ -147,4 +150,43 @@ function updateMapExtent() {
 
 function numberWithPoints(x) {
     return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+}
+
+function adjustView(results) {
+    if(results.length <= 0)
+        return;
+    var minPosition = [];
+    var maxPosition = [];
+    for (var i = 0; i < results.length; i++) {
+        if (typeof minPosition[0] === 'undefined' || minPosition[0] > parseFloat(results[i]["lon"])) {
+            minPosition[0] = parseFloat(results[i]["lon"]);
+        }
+        if (typeof minPosition[0] === 'undefined' || (typeof results[i]["boundingbox"] !== 'undefined' && minPosition[0] > parseFloat(results[i]["boundingbox"][2]))) {
+            minPosition[0] = parseFloat(results[i]["boundingbox"][2]);
+        }
+        if (typeof minPosition[1] === 'undefined' || minPosition[1] > parseFloat(results[i]["lat"])) {
+            minPosition[1] = parseFloat(results[i]["lat"]);
+        }
+        if (typeof minPosition[1] === 'undefined' || (typeof results[i]["boundingbox"] !== 'undefined' && minPosition[1] > parseFloat(results[i]["boundingbox"][0]))) {
+            minPosition[1] = parseFloat(results[i]["boundingbox"][0]);
+        }
+        if (typeof maxPosition[0] === 'undefined' || maxPosition[0] < parseFloat(results[i]["lon"])) {
+            maxPosition[0] = parseFloat(results[i]["lon"]);
+        }
+        if (typeof maxPosition[0] === 'undefined' || (typeof results[i]["boundingbox"] !== 'undefined' && maxPosition[0] < parseFloat(results[i]["boundingbox"][3]))) {
+            maxPosition[0] = parseFloat(results[i]["boundingbox"][3]);
+        }
+        if (typeof maxPosition[1] === 'undefined' || maxPosition[1] < parseFloat(results[i]["lat"])) {
+            maxPosition[1] = parseFloat(results[i]["lat"]);
+        }
+        if (typeof maxPosition[1] === 'undefined' || (typeof results[i]["boundingbox"] !== 'undefined' && maxPosition[1] < parseFloat(results[i]["boundingbox"][1]))) {
+            maxPosition[1] = parseFloat(results[i]["boundingbox"][1]);
+        }
+        if (typeof results[i]["type"] !== 'undefined' && (results[i]["type"] === 'city' || results[i]["type"] === 'administrative' || results[i]["type"] === 'river')) {
+            break;
+        }
+    }
+    minPosition = ol.proj.transform(minPosition, 'EPSG:4326', 'EPSG:3857');
+    maxPosition = ol.proj.transform(maxPosition, 'EPSG:4326', 'EPSG:3857');
+    map.getView().fitExtent([minPosition[0], minPosition[1], maxPosition[0], maxPosition[1]], map.getSize())
 }
