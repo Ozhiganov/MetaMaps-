@@ -108,7 +108,7 @@ nav {
 
 #map .ol-zoomslider {
     background-color: transparent;
-    top: 7em;
+    top: 7em!important;
 }
 
 #map .ol-touch .ol-zoom .ol-zoom-out {

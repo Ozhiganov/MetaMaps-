@@ -29,28 +29,13 @@ $(document).ready(function() {
         q = encodeURI(q);
         $("#clearInput").html("<img src=\"/img/ajax-loader.gif\" />");
         var url = '/' + q + '/' + encodeURI(extent[0]) + '/' + encodeURI(extent[1]) + '/' + encodeURI(extent[2]) + '/' + encodeURI(extent[3]);
-        console.log(url);
         $.getScript(url).fail(function(jqxhr, settings, exception){
             console.log(exception);
         });
         $("#search input[name=q]").blur();
     });
     $("#closer").click(function() {
-        if ($("#results").attr("data-status") === "in") {
-            var width = $("#results").outerWidth() * -1;
-            $("#results").css("right", width + "px");
-            $("#closer").html("<");
-            $("#results").attr("data-status", "out");
-            $("#closer").attr("title", "Ergebnisse ausklappen");
-            $("#closer").css("right", "0px");
-        } else {
-            $("#results").css("right", 0);
-            $("#closer").html(">");
-            $("#results").attr("data-status", "in");
-            $("#closer").attr("title", "Ergebnisse einklappen");
-
-            $("#closer").css("right", ($("#results").width()-1) + "px");
-        }
+        toggleResults();
     });
 
     // Register Map Changed Event
@@ -68,6 +53,10 @@ $(document).ready(function() {
     map.on('singleclick', function(evt) {
         var coordinate = evt.coordinate;
         lastClick = coordinate;
+    });
+    $(window).resize(function(){
+        updateResultsPosition();
+        updateCloserPosition();
     });
 });
 
@@ -147,6 +136,46 @@ function updateMapExtent() {
 
 function numberWithPoints(x) {
     return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+}
+
+function toggleResults(){
+    if ($("#results").attr("data-status") === "in") { 
+            $("#closer").html("<");
+            $("#results").attr("data-status", "out");
+            $("#closer").attr("title", "Ergebnisse ausklappen");
+            updateResultsPosition();
+            updateCloserPosition();
+        } else {    
+            $("#closer").html(">");
+            $("#results").attr("data-status", "in");
+            $("#closer").attr("title", "Ergebnisse einklappen");
+            updateResultsPosition();
+            updateCloserPosition();
+        }
+}
+
+function updateResultsPosition() {
+    if ($("#results").attr("data-status") === "out") {
+        var width = $("#results").outerWidth() * -1;
+        $("#results").css("right", width + "px");
+    }else{
+        $("#results").css("right", 0);
+    }
+}
+
+function updateCloserPosition() {
+    if($("#results").attr("data-status") === "out"){
+        $("#closer").css("right", "0px");
+    }else{
+        var screenWidth = $(window).width();
+        var resultsWidth = $("#results").width()-1;
+        var closerWidth = $("#closer").width();
+        if(screenWidth > (resultsWidth + closerWidth)){
+            $("#closer").css("right", resultsWidth + "px");
+        }else{
+            $("#closer").css("right", (resultsWidth - closerWidth) + "px");
+        }        
+    }
 }
 
 function adjustView(results) {

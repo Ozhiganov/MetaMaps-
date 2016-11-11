@@ -56,9 +56,6 @@ $.each(searchResults, function(index, value) {
 	        population = typeof value["extratags"]["population"] !== 'undefined' ? " (" + numberWithPoints(value["extratags"]["population"]) + " Einwohner)" : "";
 	    }
 	    var res = $("<div class=\"result col-xs-12\" id=\"result-"+index+"\"><div class=\"col-xs-2\"><span class=\"marker\" style=\"filter: hue-rotate("+value["huerotate"]+"deg);\">"+index+"</span></div>" + "<div class=\"col-xs-10\"><p class=\"title\">" + value["title"] + "</p>" + "<p class=\"type\">" + type + population + "</p>" + "<p class=\"address\">" + road + " " + house_number + "</p><p class=\"city\">" + city + "</p>" + "<p class=\"opening-hours\">" + opening_hours + "</p>" + "<p class=\"tags\">" + "</p></div></div>");
-	    res.mouseover(function(evt){
-	    	console.log("test");
-	    });
         var resPopup = $("<div class=\"result col-xs-12\"> " + "<p class=\"title\">" + value["title"] + "</p>" + "<p class=\"type\">" + type + population + "</p>" + "<p class=\"address\">" + road + " " + house_number + "</p><p class=\"city\">" + city + "</p>" + "<p class=\"opening-hours\">" + opening_hours + "</p>" + "<p class=\"tags\">" + "</p>" + "</div>");
         $("#results").append(res);
         el.click(function(evt){
@@ -67,7 +64,8 @@ $.each(searchResults, function(index, value) {
         });
 
         $("#results").removeClass("hidden");
-        $("#closer").css("right", ($("#results").width()-1) + "px");
+        $("#closer").removeClass("hidden");
+        updateCloserPosition();
 
         // Add Features
         var geom = (new ol.format.GeoJSON()).readGeometry(value["geojson"], {
