@@ -37,6 +37,7 @@ class SearchController extends Controller
                 $tmp["boundingbox"] = $result["boundingbox"];
                 $tmp["geojson"]     = $result["geojson"];
                 $tmp["huerotate"]   = hexdec(substr(md5(serialize($result)), 0, 5)) % 360;
+                $tmp["place_id"]    = $result["place_id"];
 
                 $searchResults[] = $tmp;
             }
