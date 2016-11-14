@@ -14,7 +14,7 @@
             <div class="container-fluid">
                 <!-- Brand and toggle get grouped for better mobile display -->
                 <div class="navbar-header">
-                    <button aria-expanded="false" class="navbar-toggle collapsed" data-target="#bs-example-navbar-collapse-1" data-toggle="collapse" type="button">
+                    <button aria-expanded="false" class="navbar-toggle collapsed" data-target="#navbar-collapse" data-toggle="collapse" type="button">
                         <span class="sr-only">
                             Toggle navigation
                         </span>
@@ -37,7 +37,7 @@
                     </a>
                 </div>
                 <!-- Collect the nav links, forms, and other content for toggling -->
-                <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+                <div class="collapse navbar-collapse" id="navbar-collapse">
                     <form accept-charset="UTF-8" class="navbar-form navbar-right" id="search" method="GET">
                         <div class="form-group">
                             <div class="input-group">
@@ -71,7 +71,7 @@
             <div class="hidden" id="closer" title="Ergebnisse einklappen">
                 >
             </div>
-            <div class="col-xs-12 col-sm-6 col-md-3 hidden" data-status="in" id="results">
+            <div class="col-xs-11 col-sm-6 col-md-3 hidden" data-status="in" id="results">
             </div>
         </main>
         <script src="/js/all.js">

@@ -90,5 +90,7 @@ console.log("test");
 adjustView(searchResults);
 @endif
 
+// Hide Navbar if expanded
+$(".collapse").collapse("hide");
 $("#clearInput").html('<span class="font-bold">X</span>');
 
