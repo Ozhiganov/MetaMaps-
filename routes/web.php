@@ -16,3 +16,5 @@ Route::get('/', function () {
 });
 
 Route::get('{search}/{latMin}/{lonMin}/{latMax}/{lonMax}/{adjustView?}', 'SearchController@boundingBoxSearch');
+
+Route::get('metager/{search}', 'SearchController@iframeSearch');

@@ -230,3 +230,21 @@ function clearPOIS(){
 
     overlays = [];
 }
+
+/**
+* Fügt einen Marker auf die Karte hinzu
+* Parameter:
+*  el: HTML-Code für das Element, welches den Marker definiert
+*  pos: Position, auf der sich der Marker befinden soll int[2] (Lat, Long)
+**/
+function addMarker(el, pos){
+    var overlay = new ol.Overlay({
+            position: pos,
+            element: el,
+            offset: [-12, -45],
+            stopEvent: false,
+        });
+    map.addOverlay(overlay);
+        
+    overlays.push(overlay);
+}

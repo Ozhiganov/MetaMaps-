@@ -14,15 +14,8 @@ $("#showResults").click(function(){
 $.each(searchResults, function(index, value) {
 		var el = $('<span id="index" class="marker" style="filter: hue-rotate('+value["huerotate"]+'deg);">'+index+'</span>');
 		var pos = ol.proj.transform([parseFloat(value["lon"]), parseFloat(value["lat"])], 'EPSG:4326', 'EPSG:3857');
-		var overlay = new ol.Overlay({
-            position: pos,
-            element: el,
-            offset: [-12, -45],
-            stopEvent: false,
-        });
-        map.addOverlay(overlay);
-        
-        overlays.push(overlay);
+	
+		addMarker(el, pos);
 
         // Push Resultlist
         var type = typeof value["type"] !== 'undefined' ? value["type"] : "";
