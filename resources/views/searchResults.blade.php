@@ -79,11 +79,14 @@ vectorLayer = new ol.layer.Vector({
     map.addLayer(vectorLayer)
 
 @if($adjustView === true)
-console.log("test");
 adjustView(searchResults);
 @endif
 
 // Hide Navbar if expanded
 $(".collapse").collapse("hide");
 $("#clearInput").html('<span class="font-bold">X</span>');
+
+var stateObj = { url: '/{{$search . "/" . $bounds[0] . "/" . $bounds[1] . "/" . $bounds[2] . "/" . $bounds[3]}}'};
+// Change URL
+window.history.pushState(stateObj, '', '/map/{{$search . "/" . $bounds[0] . "/" . $bounds[1] . "/" . $bounds[2] . "/" . $bounds[3]}}');
 

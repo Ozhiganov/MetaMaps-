@@ -43,7 +43,7 @@ class SearchController extends Controller
             }
         }
         # Wir erstellen die Ergebnisseite (JavaScipt)
-        $response = Response::make(view('searchResults')->with("results", json_encode($searchResults))->with('adjustView', $adjustView)->with('boundingSuccess', $boundingSuccess), 200);
+        $response = Response::make(view('searchResults')->with("results", json_encode($searchResults))->with('adjustView', $adjustView)->with('boundingSuccess', $boundingSuccess)->with('bounds', [$latMin, $lonMin, $latMax, $lonMax])->with('search', $search), 200);
         $response->header('Content-Type', 'application/javascript');
         return $response;
     }
