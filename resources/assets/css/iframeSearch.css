@@ -1,0 +1,11 @@
+body {
+    max-height: 500px;
+}
+
+#map {
+    height: 500px;
+}
+
+#results {
+    height: 500px;
+}

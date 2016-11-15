@@ -1,0 +1,12 @@
+#map {
+    height: 100vh;
+}
+
+#results {
+    height: 100vh;
+    padding-top: 51px;
+}
+
+#closer {
+    top: 50px;
+}

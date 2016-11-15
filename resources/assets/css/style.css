@@ -73,10 +73,6 @@ nav {
     margin-bottom: 0!important;
 }
 
-#map {
-    height: 100vh;
-}
-
 .marker {
     background-image: url('/img/marker-icon.png');
     width: 25px;
@@ -138,12 +134,10 @@ nav {
 #results {
     background-color: white;
     position: absolute;
-    height: 100vh;
     overflow-y: scroll!important;
     top: 0;
     right: 0;
     padding: 0;
-    padding-top: 51px;
     overflow: visible;
     -webkit-box-shadow: -5px 0px 1px 0px rgba(50, 50, 50, 0.16);
     -moz-box-shadow: -5px 0px 1px 0px rgba(50, 50, 50, 0.16);
@@ -166,7 +160,7 @@ nav {
     -webkit-box-shadow: -2px 0px 1px 0px rgba(50, 50, 50, 0.16);
     -moz-box-shadow: -2px 0px 1px 0px rgba(50, 50, 50, 0.16);
     box-shadow: -2px 0px 1px 0px rgba(50, 50, 50, 0.16);
-    top: 50px;
+    top: 0;
 }
 
 .ol-popup {

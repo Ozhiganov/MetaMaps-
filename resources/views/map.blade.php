@@ -7,7 +7,7 @@
         <title>
             Maps - MetaGer
         </title>
-        <link href="/css/all.css" rel="stylesheet" type="text/css"/>
+        <link href="/css/mapSearch.css" rel="stylesheet" type="text/css"/>
     </head>
     <body>
         <nav class="navbar navbar-default navbar-fixed-top">
@@ -74,7 +74,7 @@
             <div class="col-xs-11 col-sm-6 col-md-3 hidden" data-status="in" id="results">
             </div>
         </main>
-        <script src="/js/all.js">
+        <script src="/js/mapSearch.js">
         </script>
         @if(isset($javascript))
         <script>

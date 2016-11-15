@@ -12,6 +12,7 @@ $("#showResults").click(function(){
 
 
 $.each(searchResults, function(index, value) {
+		console.log(value);
 		var el = $('<span id="index" class="marker" style="filter: hue-rotate('+value["huerotate"]+'deg);">'+index+'</span>');
 		var pos = ol.proj.transform([parseFloat(value["lon"]), parseFloat(value["lat"])], 'EPSG:4326', 'EPSG:3857');
 	
@@ -37,7 +38,13 @@ $.each(searchResults, function(index, value) {
     	
 	        house_number = typeof value["address"]["house_number"] !== 'undefined' ? value["address"]["house_number"] : "";
 	        city = typeof value["address"]["postcode"] !== 'undefined' ? value["address"]["postcode"] + " " : "";
-	        city += typeof value["address"]["city"] !== 'undefined' ? value["address"]["city"] : "";
+	        if(typeof value["address"]["city"] !== "undefined"){
+	        	city += value["address"]["city"];
+	        }else if(typeof value["address"]["town"] !== "undefined"){
+	        	city += value["address"]["town"];
+	        }else if(typeof value["address"]["village"] !== "undefined"){
+	        	city += value["address"]["village"];
+	        }
         }
 
         var opening_hours = "";
@@ -86,7 +93,7 @@ adjustView(searchResults);
 $(".collapse").collapse("hide");
 $("#clearInput").html('<span class="font-bold">X</span>');
 
-var stateObj = { url: '/{{$search . "/" . $bounds[0] . "/" . $bounds[1] . "/" . $bounds[2] . "/" . $bounds[3]}}'};
+//var stateObj = { url: '/{{$search . "/" . $bounds[0] . "/" . $bounds[1] . "/" . $bounds[2] . "/" . $bounds[3]}}'};
 // Change URL
-window.history.pushState(stateObj, '', '/map/{{$search . "/" . $bounds[0] . "/" . $bounds[1] . "/" . $bounds[2] . "/" . $bounds[3]}}');
+//window.history.pushState(stateObj, '', '/map/{{$search . "/" . $bounds[0] . "/" . $bounds[1] . "/" . $bounds[2] . "/" . $bounds[3]}}');
 

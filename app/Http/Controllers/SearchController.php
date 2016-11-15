@@ -74,6 +74,5 @@ class SearchController extends Controller
             }
         }
         # Wir erstellen die Ergebnisseite (JavaScipt)
-        return view('mapIframe')->with("results", json_encode($searchResults))->with('adjustView', true);
     }
 }

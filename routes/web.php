@@ -21,4 +21,7 @@ Route::get('map/{search}/{latMin}/{lonMin}/{latMax}/{lonMax}', function ($search
 
 Route::get('{search}/{latMin}/{lonMin}/{latMax}/{lonMax}/{adjustView?}', 'SearchController@boundingBoxSearch');
 
-Route::get('metager/{search}', 'SearchController@iframeSearch');
+Route::get('metager/{search}', function ($search) {
+    # Wir erstellen die Ergebnisseite (JavaScipt)
+    return view('mapIframe')->with('search', $search);
+});

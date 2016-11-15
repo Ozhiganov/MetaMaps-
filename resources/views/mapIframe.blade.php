@@ -7,7 +7,7 @@
         <title>
             Maps - MetaGer
         </title>
-        <link href="/css/all.css" rel="stylesheet" type="text/css"/>
+        <link href="/css/iframeSearch.css" rel="stylesheet" type="text/css"/>
     </head>
     <body>
         <main>
@@ -25,7 +25,15 @@
             <div class="col-xs-11 col-sm-6 col-md-3 hidden" data-status="in" id="results">
             </div>
         </main>
-        <script src="/js/all.js">
+        <script src="/js/iframeSearch.js">
+        </script>
+        <script>
+            $(document).ready(function(){
+                updateMapExtent();
+                var q = '{{$search}}';
+                var url = '/' + q + '/' + encodeURI(extent[0]) + '/' + encodeURI(extent[1]) + '/' + encodeURI(extent[2]) + '/' + encodeURI(extent[3]);
+                $.getScript(url);
+            });
         </script>
     </body>
 </html>
