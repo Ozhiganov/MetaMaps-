@@ -9,7 +9,7 @@ class SearchController extends Controller
     //
     public function boundingBoxSearch($search, $latMin, $lonMin, $latMax, $lonMax, $adjustView = true, $limit = 50)
     {
-        $adjustView = boolval($adjustView);
+        $adjustView = filter_var($adjustView, FILTER_VALIDATE_BOOLEAN);
         $search     = urldecode($search);
         // Gibt an, ob die Suche im angezeigten Bereich erfolgreich war:
         $boundingSuccess = true;

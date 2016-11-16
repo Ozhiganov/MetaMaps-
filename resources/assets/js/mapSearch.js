@@ -34,7 +34,7 @@ $(document).ready(function() {
         var q = $("#search input[name=q]").val();
         q = encodeURI(q);
         $("#clearInput").html("<img src=\"/img/ajax-loader.gif\" />");
-        var url = '/' + q + '/' + encodeURI(extent[0]) + '/' + encodeURI(extent[1]) + '/' + encodeURI(extent[2]) + '/' + encodeURI(extent[3]+'/false');
+        var url = '/' + q + '/' + encodeURI(extent[0]) + '/' + encodeURI(extent[1]) + '/' + encodeURI(extent[2]) + '/' + encodeURI(extent[3]+'/'+false+'/50');
         $.getScript(url);
         }
     }, map);
