@@ -7,18 +7,19 @@ use Response;
 class SearchController extends Controller
 {
     //
-    public function boundingBoxSearch($search, $latMin, $lonMin, $latMax, $lonMax, $adjustView = true)
+    public function boundingBoxSearch($search, $latMin, $lonMin, $latMax, $lonMax, $adjustView = true, $limit = 50)
     {
-        $search = urldecode($search);
+        $adjustView = boolval($adjustView);
+        $search     = urldecode($search);
         // Gibt an, ob die Suche im angezeigten Bereich erfolgreich war:
         $boundingSuccess = true;
         # Get The Search Results
-        $link    = "https://maps.metager.de/nominatim/search.php?q=" . urlencode($search) . "&limit=50&bounded=1&polygon_geojson=1&viewbox=$latMin,$lonMin,$latMax,$lonMax&format=json&extratags=1&addressdetails=1";
+        $link    = "https://maps.metager.de/nominatim/search.php?q=" . urlencode($search) . "&limit=$limit&bounded=1&polygon_geojson=1&viewbox=$latMin,$lonMin,$latMax,$lonMax&format=json&extratags=1&addressdetails=1";
         $results = json_decode(file_get_contents($link), true);
 
         if (!$results && $latMin && $lonMin && $latMax && $lonMax) {
             $boundingSuccess = false;
-            $link            = "https://maps.metager.de/nominatim/search.php?q=" . urlencode($search) . "&limit=50&polygon_geojson=1&format=json&extratags=1&addressdetails=1";
+            $link            = "https://maps.metager.de/nominatim/search.php?q=" . urlencode($search) . "&limit=$limit&polygon_geojson=1&format=json&extratags=1&addressdetails=1";
             $results         = json_decode(file_get_contents($link), true);
         }
 

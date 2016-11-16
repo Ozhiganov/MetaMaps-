@@ -74,6 +74,9 @@
             <div class="col-xs-11 col-sm-6 col-md-3 hidden" data-status="in" id="results">
             </div>
         </main>
+        <script>
+            var boundings = {{$boundings}};
+        </script>
         <script src="/js/mapSearch.js">
         </script>
         @if(isset($javascript))

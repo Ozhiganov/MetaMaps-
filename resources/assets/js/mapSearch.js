@@ -1,5 +1,6 @@
 $(document).ready(function() {
-	receiveLocation();
+    if(!boundings)
+	   receiveLocation();
 	$("#clearInput").click(function() {
         $("#search input[name=q]").val('');
         $("#search input[name=q]").focus();

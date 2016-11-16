@@ -50,10 +50,10 @@ function initMap() {
         overlays: [popupOverlay],
         view: new ol.View({
             maxZoom: 18,
-            minZoom: 6,
+            minZoom: 5,
             center: ol.proj.transform(
                 [10.06897, 51.37247], 'EPSG:4326', 'EPSG:3857'),
-            zoom: 6
+            zoom: 5
         }),
         loadTilesWhileAnimating: true,
         loadTilesWhileInteracting: true

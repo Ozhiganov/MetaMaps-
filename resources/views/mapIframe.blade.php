@@ -17,12 +17,11 @@
                 <div id="popup-content">
                 </div>
             </div>
-            <div class="map" id="map">
+            <div class="col-xs-8 col-md-9" id="map-container">
+            <div class="map" id="map" >
             </div>
-            <div class="hidden" id="closer" title="Ergebnisse einklappen">
-                >
             </div>
-            <div class="col-xs-11 col-sm-6 col-md-3 hidden" data-status="in" id="results">
+            <div class="col-xs-4 col-md-3 hidden" data-status="in" id="results">
             </div>
         </main>
         <script src="/js/iframeSearch.js">
@@ -31,8 +30,17 @@
             $(document).ready(function(){
                 updateMapExtent();
                 var q = '{{$search}}';
-                var url = '/' + q + '/' + encodeURI(extent[0]) + '/' + encodeURI(extent[1]) + '/' + encodeURI(extent[2]) + '/' + encodeURI(extent[3]);
-                $.getScript(url);
+                var url = '/' + q + '/' + encodeURI(extent[0]) + '/' + encodeURI(extent[1]) + '/' + encodeURI(extent[2]) + '/' + encodeURI(extent[3]) + '/' + true + '/3';
+                $.getScript(url, function(){
+                    if(typeof searchResults !== "undefined" && searchResults.length > 0){
+                        $("body").css("visibility", "visible");
+                    }
+                    var link = "https://maps.metager.de/map" + '/' + q + '/' + encodeURI(extent[0]) + '/' + encodeURI(extent[1]) + '/' + encodeURI(extent[2]) + '/' + encodeURI(extent[3]);
+                    $("#results .result, #map").click(function(){
+                        updateMapExtent();
+                        window.open(link);
+                    });
+                });
             });
         </script>
     </body>

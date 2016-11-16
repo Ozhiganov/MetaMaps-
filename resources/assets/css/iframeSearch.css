@@ -1,11 +1,24 @@
 body {
-    max-height: 500px;
+    max-height: 300px;
+    visibility: hidden;
+}
+
+#map-container {
+    padding: 0;
 }
 
 #map {
-    height: 500px;
+    height: 300px;
 }
 
 #results {
-    height: 500px;
+    height: 300px;
+}
+
+.ol-zoomslider.ol-unselectable.ol-control {
+    display: none;
+}
+
+#results .result > .col-xs-2 {
+    padding: 0;
 }
