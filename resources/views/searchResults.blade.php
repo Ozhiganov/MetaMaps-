@@ -2,6 +2,8 @@ var searchResults = {!! $results !!};
 
 clearPOIS();
 
+var markers = [];
+
 @if($boundingSuccess === false)
 $("#results").append('<div class="result col-xs-12"><div class="col-xs-2"></div><div class="col-xs-10"><p class="title">Keine Ergebnisse gefunden</p></div></div><div class="clearfix result"></div><h4>Ergebnisse außerhalb des angezeigten Bereichs:<small><a id="showResults" href="#">(anzeigen)</a></small></h4>');
 $("#showResults").click(function(){
@@ -13,6 +15,7 @@ $("#showResults").click(function(){
 
 $.each(searchResults, function(index, value) {
         var el = $('<span id="index" class="marker" style="filter: hue-rotate('+value["huerotate"]+'deg);">'+index+'</span>');
+        markers.push(el);
         var pos = ol.proj.transform([parseFloat(value["lon"]), parseFloat(value["lat"])], 'EPSG:4326', 'EPSG:3857');
 
         addMarker(el, pos);
@@ -62,6 +65,35 @@ $.each(searchResults, function(index, value) {
             popupOverlay.setPosition(pos);
         });
 
+        var resultHoverIn = function(){
+            // Wenn du Maus auf das Ergebnis fährt:
+            $.each(markers, function(index, value){
+                if(value !== el){
+                    value.css("filter", value.css("filter") + " grayscale(1)");
+                }
+            });
+            el.css("transform", "scale(1.5)");
+            res.css("background-color", "#f2dede");
+            res.css("border-color", "#a94442");
+        };
+
+        var resultHoverOut = function(){
+            // Wenn die Maus das Ergebnis verlässt:
+            $.each(markers, function(index, value){
+                if(value !== el){
+                    var css = value.css("filter");
+                    css = css.replace(" grayscale(1)", "");
+                    value.css("filter", css);
+                }
+            });
+            el.css("transform", "scale(1)");
+            res.css("background-color", "");
+            res.css("border-color", "");
+        };
+
+        res.hover(resultHoverIn, resultHoverOut);
+        el.hover(resultHoverIn, resultHoverOut);
+
         $("#results").removeClass("hidden");
         $("#closer").removeClass("hidden");
         updateCloserPosition();
@@ -92,6 +124,6 @@ adjustView(searchResults);
 $(".collapse").collapse("hide");
 $("#clearInput").html('<span class="font-bold">X</span>');
 
-//var stateObj = { url: '/{{$search . "/" . $bounds[0] . "/" . $bounds[1] . "/" . $bounds[2] . "/" . $bounds[3]}}'};
+var stateObj = { url: '/{{$search . "/" . $bounds[0] . "/" . $bounds[1] . "/" . $bounds[2] . "/" . $bounds[3]}}'};
 // Change URL
-//window.history.pushState(stateObj, '', '/map/{{$search . "/" . $bounds[0] . "/" . $bounds[1] . "/" . $bounds[2] . "/" . $bounds[3]}}');
+window.history.pushState(stateObj, '', '/map/{{$search . "/" . $bounds[0] . "/" . $bounds[1] . "/" . $bounds[2] . "/" . $bounds[3]}}');

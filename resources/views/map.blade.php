@@ -81,6 +81,7 @@
         </script>
         @if(isset($javascript))
         <script>
+            console.log("{{$javascript}}");
             $(document).ready(function(){
                 $.getScript('{{$javascript}}');
             });

@@ -15,11 +15,6 @@ body {
     cursor: pointer;
 }
 
-#results .result:hover:not(.more) {
-    background-color: #f2dede;
-    border-color: #a94442;
-}
-
 .result p.title {
     font-weight: bold;
     font-size: 11px;
