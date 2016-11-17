@@ -30,7 +30,7 @@
             $(document).ready(function(){
                 updateMapExtent();
                 var q = '{{$search}}';
-                var url = '/' + q + '/' + encodeURI(extent[0]) + '/' + encodeURI(extent[1]) + '/' + encodeURI(extent[2]) + '/' + encodeURI(extent[3]) + '/' + true + '/3';
+                var url = '/' + q + '/' + encodeURI(extent[0]) + '/' + encodeURI(extent[1]) + '/' + encodeURI(extent[2]) + '/' + encodeURI(extent[3]) + '/' + true + '/10';
                 $.getScript(url, function(){
                     if(typeof searchResults !== "undefined" && searchResults.length > 0){
                         $("body").css("visibility", "visible");
