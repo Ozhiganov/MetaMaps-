@@ -15,6 +15,7 @@ class SearchController extends Controller
         $search      = urldecode($search);
         $adjustView  = filter_var($adjustView, FILTER_VALIDATE_BOOLEAN);
         $search      = urldecode($search);
+
         // Gibt an, ob die Suche im angezeigten Bereich erfolgreich war:
         $boundingSuccess = true;
         # Get The Search Results
