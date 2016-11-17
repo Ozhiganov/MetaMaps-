@@ -35,7 +35,7 @@ class SearchController extends Controller
                     $match       = false;
                     foreach ($searchWords as $word) {
                         foreach ($result["address"] as $key => $value) {
-                            if (($key === "hamlet" || $key === "suburb" || $key === "subdistrict" || $key === "district" || $key === "province" || $key === "state" || $key === "city" || $key === "place" || $key === "street" || $key === "country" || $key === "housename") && stripos($value, $word) !== false) {
+                            if (($key === "hamlet" || $key === "village" || $key === "suburb" || $key === "subdistrict" || $key === "district" || $key === "province" || $key === "state" || $key === "city" || $key === "place" || $key === "street" || $key === "country" || $key === "housename") && stripos($value, $word) !== false) {
                                 $match = true;
                                 break 2;
                             }
