@@ -205,3 +205,11 @@ nav {
 .ol-popup-closer:after {
     content: "✖";
 }
+
+.ol-control button, .ol-control button:hover {
+    background-color: #ff8000;
+}
+
+.ol-zoomslider-thumb {
+    background: #ff8000;
+}
