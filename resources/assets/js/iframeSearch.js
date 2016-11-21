@@ -65,5 +65,3 @@ function initMap() {
         return false;
     });
 }
-
-$(".result .btn").click(function(e){e.stopPropagation();});

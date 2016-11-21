@@ -40,6 +40,7 @@
                         updateMapExtent();
                         window.open(link);
                     });
+                    $(".result .btn").click(function(e){e.stopPropagation();});
                 });
             });
         </script>
