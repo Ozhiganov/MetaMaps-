@@ -13,7 +13,7 @@ class SearchController extends Controller
     public function search($search)
     {
         $link          = "https://maps.metager.de/nominatim/search.php?q=" . urlencode($search) . "&limit=10&polygon_geojson=1&format=json&extratags=1&addressdetails=1";
-        $searchResults = $this->makeSearch($link);
+        $searchResults = $this->makeSearch($link, true);
         return $searchResults;
     }
 
