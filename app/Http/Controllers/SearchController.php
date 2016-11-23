@@ -2,12 +2,21 @@
 
 namespace App\Http\Controllers;
 
+use Cache;
+use Predis\Connection\ConnectionException;
 use Response;
 use \Illuminate\Http\Request;
 
 class SearchController extends Controller
 {
-    //
+
+    public function search($search)
+    {
+        $link          = "https://maps.metager.de/nominatim/search.php?q=" . urlencode($search) . "&limit=10&polygon_geojson=1&format=json&extratags=1&addressdetails=1";
+        $searchResults = $this->makeSearch($link);
+        return $searchResults;
+    }
+
     public function boundingBoxSearch(Request $request, $search, $latMin, $lonMin, $latMax, $lonMax, $adjustView = true, $limit = 50)
     {
         $exactSearch = filter_var($request->input('exactSearch', 'false'), FILTER_VALIDATE_BOOLEAN);
@@ -20,13 +29,37 @@ class SearchController extends Controller
         $boundingSuccess = true;
         # Get The Search Results
         $link    = "https://maps.metager.de/nominatim/search.php?q=" . urlencode($search) . "&limit=$limit&bounded=1&polygon_geojson=1&viewbox=$latMin,$lonMin,$latMax,$lonMax&format=json&extratags=1&addressdetails=1";
-        $results = json_decode(file_get_contents($link), true);
+        $results = $this->makeSearch($link, $exactSearch);
 
         if (!$results && $latMin && $lonMin && $latMax && $lonMax) {
             $boundingSuccess = false;
             $link            = "https://maps.metager.de/nominatim/search.php?q=" . urlencode($search) . "&limit=$limit&polygon_geojson=1&format=json&extratags=1&addressdetails=1";
-            $results         = json_decode(file_get_contents($link), true);
+            $results         = $this->makeSearch($link);
         }
+
+        # Wir erstellen die Ergebnisseite (JavaScipt)
+        $response = Response::make(view('searchResults')->with("results", json_encode($results))->with('adjustView', $adjustView)->with('boundingSuccess', $boundingSuccess)->with('bounds', [$latMin, $lonMin, $latMax, $lonMax])->with('search', $search)->with('adjustLink', $adjustLink), 200);
+        $response->header('Content-Type', 'application/javascript');
+        return $response;
+    }
+
+    private function makeSearch($link, $exactSearch = false)
+    {
+
+        $results = [];
+        if ($this->canCache()) {
+            $hash = md5($link);
+            if (Cache::has($hash)) {
+                $results = unserialize(base64_decode(Cache::get($hash)));
+            } else {
+                $results = json_decode(file_get_contents($link), true);
+                Cache::put($hash, base64_encode(serialize($results)), 10080);
+            }
+        } else {
+            # If the Cache is not there we can just execute a search
+            $results = json_decode(file_get_contents($link), true);
+        }
+
         $searchResults = [];
         if ($results) {
             foreach ($results as $result) {
@@ -62,10 +95,18 @@ class SearchController extends Controller
                 $searchResults[] = $tmp;
             }
         }
-        # Wir erstellen die Ergebnisseite (JavaScipt)
-        $response = Response::make(view('searchResults')->with("results", json_encode($searchResults))->with('adjustView', $adjustView)->with('boundingSuccess', $boundingSuccess)->with('bounds', [$latMin, $lonMin, $latMax, $lonMax])->with('search', $search)->with('adjustLink', $adjustLink), 200);
-        $response->header('Content-Type', 'application/javascript');
-        return $response;
+        return $searchResults;
+    }
+
+    private function canCache()
+    {
+        # Cachebarkeit testen
+        try {
+            Cache::has('test');
+            return true;
+        } catch (ConnectionException $e) {
+            return false;
+        }
     }
 
     public function iframeSearch($search)

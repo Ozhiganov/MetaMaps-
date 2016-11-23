@@ -30,18 +30,15 @@
             $(document).ready(function(){
                 updateMapExtent();
                 var q = '{{$search}}';
-                var url = '/' + q + '/' + encodeURI(extent[0]) + '/' + encodeURI(extent[1]) + '/' + encodeURI(extent[2]) + '/' + encodeURI(extent[3]) + '/' + true + '/10?exactSearch=true&adjustLink=false';
-                $.getScript(url, function(){
-                    if(typeof searchResults !== "undefined" && searchResults.length > 0){
-                        $("body").css("visibility", "visible");
-                    }
-                    var link = "https://maps.metager.de/map" + '/' + q + '/' + encodeURI(extent[0]) + '/' + encodeURI(extent[1]) + '/' + encodeURI(extent[2]) + '/' + encodeURI(extent[3]);
-                    $("#results .result, #map").click(function(){
-                        updateMapExtent();
-                        window.open(link);
-                    });
-                    $(".result .btn").click(function(e){e.stopPropagation();});
+                {!! $script !!}
+                if(typeof searchResults !== "undefined" && searchResults.length > 0){
+                    $("body").css("visibility", "visible");
+                }
+                $("#results .result, #map").click(function(){
+                    updateMapExtent();
+                    window.open(link);
                 });
+                $(".result .btn").click(function(e){e.stopPropagation();});
             });
         </script>
     </body>

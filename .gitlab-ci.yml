@@ -16,7 +16,7 @@ update(maps.metager.de):
     - cp -r * ~/.MetaGerMaps
     - cd ~/.MetaGerMaps
     - composer install
-    - scp -P 63824 metager@metager3.de:~/.env .
+    - cp ~/.env .
     - chmod -R 777 storage
     - chmod -R 777 bootstrap/cache
     - if [ -f ~/MetaGerMaps/artisan ]; then php ~/MetaGerMaps/artisan down;fi

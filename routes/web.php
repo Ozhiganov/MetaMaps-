@@ -21,7 +21,19 @@ Route::get('map/{search}/{latMin}/{lonMin}/{latMax}/{lonMax}', function ($search
 
 Route::get('{search}/{latMin}/{lonMin}/{latMax}/{lonMax}/{adjustView?}/{limit?}', 'SearchController@boundingBoxSearch');
 
-Route::get('metager/{search}', function ($search) {
-    # Wir erstellen die Ergebnisseite (JavaScipt)
-    return view('mapIframe')->with('search', $search);
+Route::get('{search}', 'SearchController@search');
+
+Route::group(['prefix' => 'metager'], function () {
+    Route::get('{search}', function ($search) {
+        # Let's get some Searchresults if existent
+        $searchResults = app('\App\Http\Controllers\SearchController')->search($search);
+        if (sizeof($searchResults) > 0) {
+            $javaScript = view('searchResults')->with("results", json_encode($searchResults))->with('adjustView', true)->with('boundingSuccess', true)->with('search', $search)->with('adjustLink', false);
+
+            # Wir erstellen die Ergebnisseite (JavaScipt)
+            return view('mapIframe')->with('search', $search)->with('script', $javaScript);
+        } else {
+            return view('empty');
+        }
+    });
 });
