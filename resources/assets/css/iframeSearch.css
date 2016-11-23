@@ -1,3 +1,7 @@
+html {
+    margin-bottom: 10px;
+}
+
 body {
     max-height: 300px;
 }
