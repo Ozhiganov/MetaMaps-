@@ -23,6 +23,7 @@
             </div>
             <div class="col-xs-4 col-md-3 hidden" data-status="in" id="results">
             </div>
+            <div class="clearfix"></div>
         </main>
         <script src="/js/iframeSearch.js">
         </script>
