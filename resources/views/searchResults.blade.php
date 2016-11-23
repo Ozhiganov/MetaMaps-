@@ -73,6 +73,7 @@ $.each(searchResults, function(index, value) {
                 }
             });
             el.css("transform", "scale(1.5)");
+            el.parent().css("z-index", "20000");
             res.css("background-color", "#f2dede");
             res.css("border-color", "#a94442");
         };
@@ -87,6 +88,7 @@ $.each(searchResults, function(index, value) {
                 }
             });
             el.css("transform", "scale(1)");
+            el.parent().css("z-index", "0");
             res.css("background-color", "");
             res.css("border-color", "");
         };
