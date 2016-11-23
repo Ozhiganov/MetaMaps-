@@ -13,7 +13,7 @@ class SearchController extends Controller
     public function search($search)
     {
         $link          = "https://maps.metager.de/nominatim/search.php?q=" . urlencode($search) . "&limit=10&polygon_geojson=1&format=json&extratags=1&addressdetails=1";
-        $searchResults = $this->makeSearch($link, true);
+        $searchResults = $this->makeSearch($link, $search, true);
         return $searchResults;
     }
 
@@ -29,12 +29,12 @@ class SearchController extends Controller
         $boundingSuccess = true;
         # Get The Search Results
         $link    = "https://maps.metager.de/nominatim/search.php?q=" . urlencode($search) . "&limit=$limit&bounded=1&polygon_geojson=1&viewbox=$latMin,$lonMin,$latMax,$lonMax&format=json&extratags=1&addressdetails=1";
-        $results = $this->makeSearch($link, $exactSearch);
+        $results = $this->makeSearch($link, $search, $exactSearch);
 
         if (!$results && $latMin && $lonMin && $latMax && $lonMax) {
             $boundingSuccess = false;
             $link            = "https://maps.metager.de/nominatim/search.php?q=" . urlencode($search) . "&limit=$limit&polygon_geojson=1&format=json&extratags=1&addressdetails=1";
-            $results         = $this->makeSearch($link);
+            $results         = $this->makeSearch($link, $search, $exactSearch);
         }
 
         # Wir erstellen die Ergebnisseite (JavaScipt)
@@ -43,7 +43,7 @@ class SearchController extends Controller
         return $response;
     }
 
-    private function makeSearch($link, $exactSearch = false)
+    private function makeSearch($link, $search, $exactSearch = false)
     {
 
         $results = [];
