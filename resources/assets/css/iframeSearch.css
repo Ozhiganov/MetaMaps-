@@ -1,13 +1,10 @@
-html {
-    margin-bottom: 10px;
-}
-
 body {
     max-height: 300px;
 }
 
 #map-container {
     padding: 0;
+    margin-bottom: 10px;
 }
 
 #map {
