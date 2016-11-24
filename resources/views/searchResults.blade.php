@@ -57,8 +57,8 @@ $.each(searchResults, function(index, value) {
             opening_hours = opening_hours.replace(/;/g, ",<br />");
             population = typeof value["extratags"]["population"] !== 'undefined' ? " (" + numberWithPoints(value["extratags"]["population"]) + " Einwohner)" : "";
         }
-        var res = $("<div class=\"result col-xs-12\" id=\"result-"+index+"\"><div class=\"col-xs-2\"><span class=\"marker\" style=\"filter: hue-rotate("+value["huerotate"]+"deg);\">"+index+"</span></div>" + "<div class=\"col-xs-10\"><p class=\"title\">" + value["title"] + "</p>" + "<p class=\"type\">" + type + population + "</p>" + "<p class=\"address\">" + road + " " + house_number + "</p><p class=\"city\">" + city + "</p>" + "<p class=\"opening-hours\">" + opening_hours + "</p>" + "<p class=\"tags\">" + "</p><a href=\"https://maps.metager.de/nominatim/details.php?place_id="+value["place_id"]+"\" target=\"_blank\" class=\"btn btn-default btn-xs\">Details</a></div></div>");
-        var resPopup = $("<div class=\"result col-xs-12\"> " + "<p class=\"title\">" + value["title"] + "</p>" + "<p class=\"type\">" + type + population + "</p>" + "<p class=\"address\">" + road + " " + house_number + "</p><p class=\"city\">" + city + "</p>" + "<p class=\"opening-hours\">" + opening_hours + "</p>" + "<p class=\"tags\">" + "</p>" + "<a href=\"https://maps.metager.de/nominatim/details.php?place_id="+value["place_id"]+"\" target=\"_blank\" class=\"btn btn-default btn-xs\">Details</a></div>");
+        var res = $("<div class=\"result col-xs-12\" id=\"result-"+index+"\"><div class=\"col-xs-2\"><span class=\"marker\" style=\"filter: hue-rotate("+value["huerotate"]+"deg);\">"+index+"</span></div>" + "<div class=\"col-xs-10\"><p class=\"title\">" + value["title"] + "</p>" + "<p class=\"type\">" + type + population + "</p>" + "<p class=\"address\">" + road + " " + house_number + "</p><p class=\"city\">" + city + "</p>" + "<p class=\"opening-hours\">" + opening_hours + "</p>" + "<p class=\"tags\">" + "</p><a href=\"https://maps.metager.de/nominatim/details.php?place_id="+value["place_id"]+"\" target=\"_blank\" class=\"btn btn-default btn-xs\">Details</a><a href=\"#\" target=\"_blank\" class=\"btn btn-default btn-xs route disabled\">Route berechnen</a></div></div>");
+        var resPopup = $("<div class=\"result col-xs-12\"> " + "<p class=\"title\">" + value["title"] + "</p>" + "<p class=\"type\">" + type + population + "</p>" + "<p class=\"address\">" + road + " " + house_number + "</p><p class=\"city\">" + city + "</p>" + "<p class=\"opening-hours\">" + opening_hours + "</p>" + "<p class=\"tags\">" + "</p>" + "<a href=\"https://maps.metager.de/nominatim/details.php?place_id="+value["place_id"]+"\" target=\"_blank\" class=\"btn btn-default btn-xs\">Details</a><a href=\"#\" target=\"_blank\" class=\"btn btn-default btn-xs route disabled\">Route berechnen</a></div>");
         $("#results").append(res);
         el.click(function(evt){
             $("#popup-content").html(resPopup);
@@ -72,7 +72,7 @@ $.each(searchResults, function(index, value) {
                     value.css("filter", value.css("filter") + " grayscale(1)");
                 }
             });
-            el.css("transform", "scale(1.5)");
+            el.css("transform", "scale(1.2)");
             el.parent().css("z-index", "20000");
             res.css("background-color", "#f2dede");
             res.css("border-color", "#a94442");
