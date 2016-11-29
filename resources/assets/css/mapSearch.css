@@ -10,3 +10,11 @@
 #closer {
     top: 50px;
 }
+
+#beta-info {
+    position: absolute;
+    z-index: 99999;
+    left: 25%;
+    top: 55px;
+    width: 50%;
+}

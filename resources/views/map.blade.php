@@ -60,6 +60,12 @@
             <!-- /.container-fluid -->
         </nav>
         <main>
+            <div id="beta-info" class="alert alert-info alert-dismissible" role="alert">
+              <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">×</span></button>
+              <strong>maps.metager.de:</strong> Auch Ihre geografischen Nutzungsdaten bleiben geschützt.
+            Beta-Version, bisher nur Deutschland-Karten, noch ohne Routenplaner - wir
+            arbeiten daran.
+            </div>
             <div class="ol-popup" id="popup">
                 <a class="ol-popup-closer" href="#" id="popup-closer">
                 </a>
