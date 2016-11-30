@@ -28,10 +28,7 @@
                     <a class="navbar-brand" href="{{ url('/') }}">
                         <div class="logo">
                             <h1>
-                                MetaGer
-                                <small>
-                                    Maps
-                                </small>
+                                Maps<small>.metager.de</small>
                             </h1>
                         </div>
                     </a>
@@ -62,7 +59,7 @@
         <main>
             <div id="beta-info" class="alert alert-info alert-dismissible" role="alert">
               <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">×</span></button>
-              <strong>maps.metager.de:</strong> Auch Ihre geografischen Nutzungsdaten bleiben geschützt.
+              <strong>Maps.metager.de:</strong> Auch Ihre geografischen Nutzungsdaten bleiben geschützt.
             Beta-Version, bisher nur Deutschland-Karten, noch ohne Routenplaner - wir
             arbeiten daran.
             </div>
