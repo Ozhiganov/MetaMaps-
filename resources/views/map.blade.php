@@ -38,7 +38,7 @@
                     <form accept-charset="UTF-8" class="navbar-form navbar-right" id="search" method="GET">
                         <div class="form-group">
                             <div class="input-group">
-                                <input autofocus="" class="form-control" name="q" placeholder="Karten durchsuchen..." type="text" value="@if(isset($search)){{$search}}@endif"/>
+                                <input class="form-control" name="q" placeholder="Karten durchsuchen..." type="text" value="@if(isset($search)){{$search}}@endif"/>
                                 <div class="input-group-addon" id="doSearch">
                                     <span class="glyphicon glyphicon-search">
                                     </span>
