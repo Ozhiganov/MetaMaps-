@@ -126,11 +126,10 @@ adjustView(searchResults);
 $(".collapse").collapse("hide");
 $("#clearInput").html('<span class="font-bold">X</span>');
 
-// Add the research function after the map moved
-map.on("moveend", moveFunction, map);
-
 @if($adjustLink)
 var stateObj = { url: '/{{$search . "/" . $bounds[0] . "/" . $bounds[1] . "/" . $bounds[2] . "/" . $bounds[3]}}'};
 // Change URL
 window.history.pushState(stateObj, '', '/map/{{$search . "/" . $bounds[0] . "/" . $bounds[1] . "/" . $bounds[2] . "/" . $bounds[3]}}');
+// Add the research function after the map moved
+map.on("moveend", moveFunction, map);
 @endif

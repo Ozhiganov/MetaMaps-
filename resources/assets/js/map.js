@@ -5,6 +5,17 @@ var vectorSource = new ol.source.Vector();
 var lastClick;
 var popupOverlay;
 var vectorLayer;
+var moveFunction = function(){
+                var q = $("#search input[name=q]").val();
+                if(q !== ""){
+                    updateMapExtent();
+                    var q = $("#search input[name=q]").val();
+                    q = encodeURI(q);
+                    $("#clearInput").html("<img src=\"/img/ajax-loader.gif\" />");
+                    var url = '/' + q + '/' + encodeURI(extent[0]) + '/' + encodeURI(extent[1]) + '/' + encodeURI(extent[2]) + '/' + encodeURI(extent[3]+'/'+false+'/50');
+                    $.getScript(url);
+                }
+            }
 $(document).ready(function() {
     // Initialize the Map
     initMap();
