@@ -51,6 +51,10 @@
                             </div>
                         </div>
                     </form>
+                    <ul class="nav navbar-nav navbar-right">
+                        <li><a href="https://metager.de" target="_blank">MetaGer.de</a></li>
+                        <li><a href="https://metager.de/impressum" target="_blank">Impressum</a></li>
+                    </ul>
                 </div>
                 <!-- /.navbar-collapse -->
             </div>
@@ -76,7 +80,7 @@
             </div>
             <div class="col-xs-11 col-sm-6 col-md-3 hidden" data-status="in" id="results">
             </div>
-            <div class="follow-location visible-xs"></div>
+            <div class="follow-location visible-xs"><span class="glyphicon glyphicon-record"></span></div>
         </main>
         <script>
             var boundings = {{$boundings}};
