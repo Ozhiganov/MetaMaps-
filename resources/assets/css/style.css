@@ -36,6 +36,10 @@ body {
     padding: 0;
 }
 
+.navbar {
+    z-index: 20002;
+}
+
 a.navbar-brand {
     line-height: 100% !important;
     padding: 0;
@@ -127,12 +131,14 @@ nav {
 }
 
 #results {
-    background-color: white;
+    background-color: #f8f8f8;
+    border-color: #e7e7e7;
     position: absolute;
     overflow-y: scroll!important;
     top: 0;
     right: 0;
     padding: 0;
+    z-index: 20001;
     overflow: visible;
     -webkit-box-shadow: -5px 0px 1px 0px rgba(50, 50, 50, 0.16);
     -moz-box-shadow: -5px 0px 1px 0px rgba(50, 50, 50, 0.16);
@@ -140,7 +146,9 @@ nav {
 }
 
 #closer {
-    z-index: 1;
+    z-index: 20002;
+    background-color: #f8f8f8!important;
+    border-color: #e7e7e7!important;
     position: absolute;
     right: 0;
     border: 1px solid lightgrey;
