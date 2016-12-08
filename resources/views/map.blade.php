@@ -79,6 +79,11 @@
         </main>
         <script>
             var boundings = {{$boundings}};
+            @if($boundings === 'true')
+            var minPos = {{$minPos}};
+            var maxPos = {{$maxPos}};
+            @endif
+            var getPosition = {{$getPosition}};
         </script>
         <script src="/js/mapSearch.js">
         </script>

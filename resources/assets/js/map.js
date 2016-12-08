@@ -128,7 +128,15 @@ function adjustView(results) {
     }
     minPosition = ol.proj.transform(minPosition, 'EPSG:4326', 'EPSG:3857');
     maxPosition = ol.proj.transform(maxPosition, 'EPSG:4326', 'EPSG:3857');
-    map.getView().fitExtent([minPosition[0], minPosition[1], maxPosition[0], maxPosition[1]], map.getSize())
+    map.getView().fitExtent([minPosition[0], minPosition[1], maxPosition[0], maxPosition[1]], map.getSize());
+    updateMapExtent();
+}
+
+function adjustViewBoundingBox(minpos,maxpos){
+    minPosition = ol.proj.transform(minpos, 'EPSG:4326', 'EPSG:3857');
+    maxPosition = ol.proj.transform(maxpos, 'EPSG:4326', 'EPSG:3857');
+    map.getView().fitExtent([minPosition[0], minPosition[1], maxPosition[0], maxPosition[1]], map.getSize());
+    updateMapExtent();
 }
 
 function clearPOIS(){

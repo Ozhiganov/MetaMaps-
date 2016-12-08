@@ -1,10 +1,13 @@
 $(document).ready(function() {
-    if(!boundings)
+    if(!boundings && getPosition)
 	   receiveLocation();
+    if(boundings){
+        adjustViewBoundingBox(minPos,maxPos);
+    }
 	$("#clearInput").click(function() {
         $("#search input[name=q]").val('');
         $("#search input[name=q]").focus();
-        $("#results > .result").remove();
+        clearPOIS();
         $("#results").addClass("hidden");
         $.each(overlays, function(index, value){
             map.removeOverlay(value);
@@ -26,18 +29,7 @@ $(document).ready(function() {
         });
         $("#search input[name=q]").blur();
     });
-    // Register Map Changed Event
-    map.on("moveend", function(){
-        var q = $("#search input[name=q]").val();
-        if(q !== ""){
-            updateMapExtent();
-        var q = $("#search input[name=q]").val();
-        q = encodeURI(q);
-        $("#clearInput").html("<img src=\"/img/ajax-loader.gif\" />");
-        var url = '/' + q + '/' + encodeURI(extent[0]) + '/' + encodeURI(extent[1]) + '/' + encodeURI(extent[2]) + '/' + encodeURI(extent[3]+'/'+false+'/50');
-        $.getScript(url);
-        }
-    }, map);
+    
 });
 
 function initMap() {
@@ -88,3 +80,15 @@ function initMap() {
         return false;
     });
 }
+
+var moveFunction = function(){
+                var q = $("#search input[name=q]").val();
+                if(q !== ""){
+                    updateMapExtent();
+                    var q = $("#search input[name=q]").val();
+                    q = encodeURI(q);
+                    $("#clearInput").html("<img src=\"/img/ajax-loader.gif\" />");
+                    var url = '/' + q + '/' + encodeURI(extent[0]) + '/' + encodeURI(extent[1]) + '/' + encodeURI(extent[2]) + '/' + encodeURI(extent[3]+'/'+false+'/50');
+                    $.getScript(url);
+                }
+            }

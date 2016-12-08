@@ -1,5 +1,5 @@
 var searchResults = {!! $results !!};
-
+map.un("moveend", moveFunction, map);
 clearPOIS();
 
 var markers = [];
@@ -125,6 +125,9 @@ adjustView(searchResults);
 // Hide Navbar if expanded
 $(".collapse").collapse("hide");
 $("#clearInput").html('<span class="font-bold">X</span>');
+
+// Add the research function after the map moved
+map.on("moveend", moveFunction, map);
 
 @if($adjustLink)
 var stateObj = { url: '/{{$search . "/" . $bounds[0] . "/" . $bounds[1] . "/" . $bounds[2] . "/" . $bounds[3]}}'};
