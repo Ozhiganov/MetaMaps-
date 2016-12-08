@@ -18,7 +18,7 @@ $.each(searchResults, function(index, value) {
         markers.push(el);
         var pos = ol.proj.transform([parseFloat(value["lon"]), parseFloat(value["lat"])], 'EPSG:4326', 'EPSG:3857');
 
-        addMarker(el, pos);
+        overlays.push(addMarker(el, pos));
 
         // Push Resultlist
         var type = typeof value["type"] !== 'undefined' ? value["type"] : "";

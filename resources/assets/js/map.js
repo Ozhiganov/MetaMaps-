@@ -5,6 +5,8 @@ var vectorSource = new ol.source.Vector();
 var lastClick;
 var popupOverlay;
 var vectorLayer;
+var id = null;
+var userPositionMarker = null;
 var moveFunction = function(){
                 var q = $("#search input[name=q]").val();
                 if(q !== ""){
@@ -29,6 +31,10 @@ $(document).ready(function() {
     $(window).resize(function(){
         updateResultsPosition();
         updateCloserPosition();
+    });
+
+    $("#follow-location").click(function(){
+        followLocation();
     });
 });
 
@@ -164,6 +170,11 @@ function clearPOIS(){
     overlays = [];
 }
 
+function centerMap(longitude, latitude){
+    var point = ol.proj.transform([longitude, latitude], 'EPSG:4326', 'EPSG:3857')
+    map.getView().setCenter(point);
+}
+
 /**
 * Fügt einen Marker auf die Karte hinzu
 * Parameter:
@@ -179,5 +190,58 @@ function addMarker(el, pos){
         });
     map.addOverlay(overlay);
         
-    overlays.push(overlay);
+    return overlay;
+}
+
+function followLocation(){
+    // Element to be displayed at the user-location
+    var el = $('<span id="user-position" class="glyphicon glyphicon-record" style="color: #2881cc;"></span>');
+
+    if(id === null){
+        id = navigator.geolocation.watchPosition(function(position) {
+
+                // Set the Center of the map to the given Location:
+                centerMap(position.coords.longitude,position.coords.latitude);
+                map.getView().setZoom(18);
+
+                // Remove possibly existing User-Location Marker:
+                if(userPositionMarker !== null){
+                    map.removeLayer(userPositionMarker);
+                    userPositionMarker = null;
+                }
+
+                // Create User Position
+                var point_geom = new ol.geom.Point(ol.proj.transform([position.coords.longitude, position.coords.latitude], 'EPSG:4326', 'EPSG:3857'));
+                var point_feature = new ol.Feature({
+                    name: "Position",
+                    geometry: point_geom
+                });
+                // Create the accuracy Circle:
+                var circle = new ol.geom.Circle(
+                    ol.proj.transform([position.coords.longitude, position.coords.latitude], 'EPSG:4326', 'EPSG:3857'),
+                    position.coords.accuracy);
+                var accuracy_feature = new ol.Feature({
+                    name: "Accuracy",
+                    geometry: circle
+                });
+                userPositionMarker = new ol.layer.Vector({
+                    source: new ol.source.Vector({
+                        features: [point_feature, accuracy_feature]
+                    })
+                });
+                map.addLayer(userPositionMarker);
+
+
+                // Change the color of the Icon so the user knows that the position is tracked:
+                $("#follow-location").css("color", "#2881cc");
+            }, function(error){}, options);
+    }else{
+        map.removeLayer(userPositionMarker);
+        userPositionMarker = null;
+        navigator.geolocation.clearWatch(id);
+        id = null;
+
+        // Clear the color of the Icon so the user knows that the position is no longer tracked
+        $("#follow-location").css("color", "black");
+    }
 }

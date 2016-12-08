@@ -6,6 +6,20 @@ body {
     overflow: hidden;
 }
 
+#follow-location {
+    position: absolute;
+    cursor: pointer;
+    bottom: 10px;
+    left: 10px;
+    background-color: rgba(255, 255, 255, 0.6);
+    padding: 4px;
+    border-radius: 6px;
+    width: 30px;
+    text-align: center;
+    font-size: 20px;
+    line-height: 1;
+}
+
 #results .result {
     border: 1px solid lightgrey;
     border-top: 0;

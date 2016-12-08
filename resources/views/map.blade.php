@@ -80,7 +80,7 @@
             </div>
             <div class="col-xs-11 col-sm-6 col-md-3 hidden" data-status="in" id="results">
             </div>
-            <div class="follow-location visible-xs"><span class="glyphicon glyphicon-record"></span></div>
+            <div id="follow-location" class="visible-xs"><span class="glyphicon glyphicon-record"></span></div>
         </main>
         <script>
             var boundings = {{$boundings}};
