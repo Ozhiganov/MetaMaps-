@@ -14,6 +14,9 @@ function initMap() {
                 source: new ol.source.OSM({
                     attributions: [
                         new ol.Attribution({
+                            html: '<a href="https://metager.de/impressum">Impressum</a>'
+                        }),
+                        new ol.Attribution({
                             html: 'All search results &copy; ' + '<a href="http://nominatim.openstreetmap.org/">Nominatim</a>'
                         }),
                         ol.source.OSM.ATTRIBUTION,
