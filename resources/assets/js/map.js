@@ -200,10 +200,6 @@ function followLocation(){
     if(id === null){
         id = navigator.geolocation.watchPosition(function(position) {
 
-                // Set the Center of the map to the given Location:
-                centerMap(position.coords.longitude,position.coords.latitude);
-                map.getView().setZoom(18);
-
                 // Remove possibly existing User-Location Marker:
                 if(userPositionMarker !== null){
                     map.removeLayer(userPositionMarker);
@@ -231,6 +227,8 @@ function followLocation(){
                 });
                 map.addLayer(userPositionMarker);
 
+                // Fit the Extent of the Map to Fit the new Features Exactly
+                map.getView().fitExtent(userPositionMarker.getSource().getExtent(), map.getSize());
 
                 // Change the color of the Icon so the user knows that the position is tracked:
                 $("#follow-location").css("color", "#2881cc");
