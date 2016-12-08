@@ -18,12 +18,7 @@
                         <span class="sr-only">
                             Toggle navigation
                         </span>
-                        <span class="icon-bar">
-                        </span>
-                        <span class="icon-bar">
-                        </span>
-                        <span class="icon-bar">
-                        </span>
+                        <span class="glyphicon glyphicon-search"></span>
                     </button>
                     <a class="navbar-brand" href="{{ url('/') }}">
                         <div class="logo">

@@ -6,6 +6,10 @@ body {
     overflow: hidden;
 }
 
+.navbar-toggle span.glyphicon-search {
+    width: 2em;
+}
+
 #follow-location {
     position: absolute;
     cursor: pointer;
