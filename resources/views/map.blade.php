@@ -75,7 +75,10 @@
             </div>
             <div class="col-xs-11 col-sm-6 col-md-3 hidden" data-status="in" id="results">
             </div>
-            <div id="follow-location" class="visible-xs"><span class="glyphicon glyphicon-record"></span></div>
+            <ul id="location-tool" class="list-unstyled">
+                <li id="lock-location" class="hidden"><span class="button glyphicon glyphicon-lock"></span><span class="info">Ansicht zentriert</span></li>
+                <li id="follow-location"><span class="button glyphicon glyphicon-record"></span></li>
+            </ul>
         </main>
         <script>
             var boundings = {{$boundings}};

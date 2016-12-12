@@ -7,6 +7,7 @@ var popupOverlay;
 var vectorLayer;
 var id = null;
 var userPositionMarker = null;
+var lockViewToPosition = true;
 var moveFunction = function(){
                 var q = $("#search input[name=q]").val();
                 if(q !== ""){
@@ -17,7 +18,7 @@ var moveFunction = function(){
                     var url = '/' + q + '/' + encodeURI(extent[0]) + '/' + encodeURI(extent[1]) + '/' + encodeURI(extent[2]) + '/' + encodeURI(extent[3]+'/'+false+'/50');
                     $.getScript(url);
                 }
-            }
+            };
 $(document).ready(function() {
     // Initialize the Map
     initMap();
@@ -33,8 +34,11 @@ $(document).ready(function() {
         updateCloserPosition();
     });
 
-    $("#follow-location").click(function(){
+    $("#follow-location > span.button").click(function(){
         followLocation();
+    });
+    $("#lock-location > span.button").click(function(){
+        toggleViewLock();
     });
 });
 
@@ -50,11 +54,11 @@ function success(pos) {
     map.getView().setCenter(ol.proj.transform([crd.longitude, crd.latitude], 'EPSG:4326', 'EPSG:3857'));
     map.getView().setZoom(12);
     updateMapExtent();
-};
+}
 
 function error(err) {
     console.warn('ERROR(' + err.code + '): ' + err.message);
-};
+}
 
 function receiveLocation() {
     navigator.geolocation.getCurrentPosition(success, error, options);
@@ -196,6 +200,10 @@ function addMarker(el, pos){
 function followLocation(){
     // Element to be displayed at the user-location
     var el = $('<span id="user-position" class="glyphicon glyphicon-record" style="color: #2881cc;"></span>');
+    if(lockViewToPosition)
+        $("#lock-location").addClass("active");        
+    else
+        $("#lock-location").removeClass("active");
 
     if(id === null){
         id = navigator.geolocation.watchPosition(function(position) {
@@ -227,12 +235,18 @@ function followLocation(){
                 });
                 map.addLayer(userPositionMarker);
 
-                // Fit the Extent of the Map to Fit the new Features Exactly
-                map.getView().fitExtent(userPositionMarker.getSource().getExtent(), map.getSize());
+                if(lockViewToPosition){
+                    // Fit the Extent of the Map to Fit the new Features Exactly
+                    map.getView().fitExtent(userPositionMarker.getSource().getExtent(), map.getSize());
+                }
 
                 // Change the color of the Icon so the user knows that the position is tracked:
-                $("#follow-location").css("color", "#2881cc");
+                $("#follow-location").addClass("active");
+
             }, function(error){}, options);
+        // Show the Lock View to Position Button
+        $("#lock-location").removeClass("hidden");
+        $("#lock-location > span.info").fadeOut(2000);
     }else{
         map.removeLayer(userPositionMarker);
         userPositionMarker = null;
@@ -240,6 +254,25 @@ function followLocation(){
         id = null;
 
         // Clear the color of the Icon so the user knows that the position is no longer tracked
-        $("#follow-location").css("color", "black");
+        $("#follow-location").removeClass("active");
+        // Hide the lock View to Position Button
+        $("#lock-location").addClass("hidden");
+        $("#lock-location > span.info").css("display", "");
+    }
+}
+
+function toggleViewLock() {
+    if(lockViewToPosition){
+        lockViewToPosition = false;
+        $("#lock-location").removeClass("active");
+        $("#lock-location > span.info").html("Ansicht freigegeben");
+        $("#lock-location > span.info").css("display", "");
+        $("#lock-location > span.info").fadeOut(2000);
+    }else{
+        lockViewToPosition = true;
+        $("#lock-location").addClass("active");
+        $("#lock-location > span.info").html("Ansicht zentriert");
+        $("#lock-location > span.info").css("display", "");
+        $("#lock-location > span.info").fadeOut(2000);
     }
 }
