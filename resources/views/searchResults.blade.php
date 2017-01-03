@@ -11,7 +11,10 @@ $("#showResults").click(function(){
 });
 @endif
 
-
+var featureStyle = new ol.style.Style({
+    stroke: new ol.style.Stroke({ color: 'rgb(255,128,0)' }),
+    fill: new ol.style.Fill({ color: 'rgba(255,128,0,.03)'})
+});
 
 $.each(searchResults, function(index, value) {
         var el = $('<span id="index" class="marker" style="filter: hue-rotate('+value["huerotate"]+'deg);">'+index+'</span>');
@@ -108,6 +111,9 @@ $.each(searchResults, function(index, value) {
         var feature = new ol.Feature({
             'geometry': geom
         });
+
+        feature.setStyle(featureStyle);
+
         feature.setId(index);
         vectorSource.addFeature(feature);
 });
