@@ -91,10 +91,9 @@ function toggleResults(){
 
 function updateResultsPosition() {
     if ($("#results").attr("data-status") === "out") {
-        var width = $("#results").outerWidth() * -1;
-        $("#results").css("right", width + "px");
+        $("#results").css("display", "none");
     }else{
-        $("#results").css("right", 0);
+        $("#results").css("display", "");
     }
 }
 

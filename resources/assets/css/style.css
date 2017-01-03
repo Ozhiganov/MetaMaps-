@@ -120,6 +120,11 @@ nav {
     margin-bottom: 0!important;
 }
 
+html, body, main, #map {
+    max-width: 100%;
+    overflow: hidden;
+}
+
 .marker {
     background-image: url('/img/marker-icon.png');
     width: 25px;
