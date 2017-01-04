@@ -10,10 +10,10 @@ $("#showResults").click(function() {
 @endif
 var featureStyle = new ol.style.Style({
     stroke: new ol.style.Stroke({
-        color: 'rgb(255,128,0)'
+        color: 'rgb(255,0,0)'
     }),
     fill: new ol.style.Fill({
-        color: 'rgba(255,128,0,.03)'
+        color: 'rgba(255,0,0,.03)'
     })
 });
 $.each(searchResults, function(index, value) {
