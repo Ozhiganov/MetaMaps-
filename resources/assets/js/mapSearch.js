@@ -1,22 +1,20 @@
 $(document).ready(function() {
-    if(!boundings && getPosition)
-	   receiveLocation();
-    if(boundings){
-        adjustViewBoundingBox(minPos,maxPos);
+    if (!boundings && getPosition) receiveLocation();
+    if (boundings) {
+        adjustViewBoundingBox(minPos, maxPos);
     }
-	$("#clearInput").click(function() {
+    $("#clearInput").click(function() {
         $("#search input[name=q]").val('');
         $("#search input[name=q]").focus();
         clearPOIS();
         $("#results").addClass("hidden");
-        $.each(overlays, function(index, value){
+        $.each(overlays, function(index, value) {
             map.removeOverlay(value);
             $("#popup-closer").click();
         });
     });
-    $( "#search input[name=q]" ).on( "keydown", function(event) {
-      if(event.which == 13) 
-         $("#doSearch").click();
+    $("#search input[name=q]").on("keydown", function(event) {
+        if (event.which == 13) $("#doSearch").click();
     });
     $("#doSearch").click(function() {
         updateMapExtent();
@@ -24,17 +22,15 @@ $(document).ready(function() {
         q = encodeURI(q);
         $("#clearInput").html("<img src=\"/img/ajax-loader.gif\" />");
         var url = '/' + q + '/' + encodeURI(extent[0]) + '/' + encodeURI(extent[1]) + '/' + encodeURI(extent[2]) + '/' + encodeURI(extent[3]);
-        $.getScript(url).fail(function(jqxhr, settings, exception){
+        $.getScript(url).fail(function(jqxhr, settings, exception) {
             console.log(exception);
         });
         $("#search input[name=q]").blur();
     });
-    
 });
 
 function initMap() {
-
-    popupOverlay = new ol.Overlay(/** @type {olx.OverlayOptions} */ ({
+    popupOverlay = new ol.Overlay( /** @type {olx.OverlayOptions} */ ({
         element: $("#popup"),
         autoPan: true,
         autoPanAnimation: {
@@ -77,9 +73,35 @@ function initMap() {
         loadTilesWhileInteracting: true
     });
     map.addControl(new ol.control.ZoomSlider());
-    $("#popup-closer").click(function(){
+    $("#popup-closer").click(function() {
         popupOverlay.setPosition(undefined);
         $(this).blur();
         return false;
+    });
+}
+/**
+ * This function sends a request to our Nominatim instance and evaluates the given coordinates to an adress
+ * @param {Float} lon
+ * @param {Float} lat
+ * @return {Array} adress
+ */
+function getNearest(lon, lat) {
+    var url = "https://maps.metager.de/nominatim/reverse.php?format=json&lat=" + lat + "&lon=" + lon + "&zoom=18";
+    // Send the Request
+    $.get(url, function(data) {
+        if (typeof data !== "undefined" && typeof data["address"] !== "undefined") {
+            // Success we have an address
+            var address = data["address"];
+
+            var road = getRoad(address);
+            var house_number = getHouseNumber(address);
+            var city = getCity(address);
+            var id = data["place_id"];
+
+            var popup = $("<div class=\"result col-xs-12\"> " + "<p class=\"address\">" + road + " " + house_number + "</p><p class=\"city\">" + city + "</p><p class=\"address\">Longitude: " + lon + "</p><p class=\"address\">Latitude: " + lat + "</p>" +  "<a href=\"https://maps.metager.de/nominatim/details.php?place_id=" + id + "\" target=\"_blank\" class=\"btn btn-default btn-xs\">Details</a></div>");
+
+            // And now we can show the Popup where the user clicked
+            createPopup(lon, lat, popup);
+        }
     });
 }
