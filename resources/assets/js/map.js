@@ -159,6 +159,8 @@ function getRoad(address) {
         road = address["road"];
     } else if (typeof address["pedestrian"] !== 'undefined') {
         road = address["pedestrian"];
+    } else if (typeof address["path"] !== 'undefined' ) {
+        road = address["path"];
     } else if (typeof address["footway"] !== 'undefined') {
         road = address["footway"];
     }
