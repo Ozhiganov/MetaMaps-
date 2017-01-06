@@ -56,6 +56,17 @@ $(document).ready(function() {
 			    source: vectorS
 			});
 			map.addLayer(vectorL);
+
+			// We should add some Pins to the Waypoint Locations
+			$.each(route["waypoints"], function(index, value){
+				// This will work upto an index of 25
+				// Caharacter Representation of the index:
+				var chr = String.fromCharCode(65 + index);
+				// So now the Pin
+				var el = $('<span id="'+chr+'" class="marker">' + chr + '</span>');
+				var pos = ol.proj.transform([parseFloat(value["location"][0]), parseFloat(value["location"][1])], 'EPSG:4326', 'EPSG:3857');
+				addMarker(el, pos);
+			});
 		}
 	});
 });

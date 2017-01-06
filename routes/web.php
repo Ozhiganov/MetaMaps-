@@ -10,12 +10,6 @@
 | contains the "web" middleware group. Now create something great!
 |
  */
-Route::get('test', function () {
-    $chars = 'abcdefghijklmnopqrstuvwxyzäöü1234567890ß!"§$%&/()=?+*~';
-    foreach ($chars as $char) {
-        print $char . "\n";
-    }
-});
 Route::get('/', function () {
     return view('map')->with('boundings', 'false')->with('getPosition', 'true')->with('scripts', ['/js/mapSearch.js']);
 });
