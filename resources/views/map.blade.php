@@ -87,16 +87,21 @@
             var maxPos = {{$maxPos}};
             @endif
             var getPosition = {{$getPosition}};
-        </script>
-        <script src="/js/mapSearch.js">
+            @if(isset($route))
+            var route = '{{$route}}';
+            @endif
         </script>
         @if(isset($javascript))
         <script>
-            console.log("{{$javascript}}");
             $(document).ready(function(){
                 $.getScript('{{$javascript}}');
             });
         </script>
+        @endif
+        @if(isset($scripts))
+            @foreach($scripts as $script)
+                <script src="{{$script}}" ></script>
+            @endforeach
         @endif
     </body>
 </html>

@@ -8,6 +8,14 @@ var vectorLayer;
 var id = null;
 var userPositionMarker = null;
 var lockViewToPosition = true;
+var featureStyle = new ol.style.Style({
+    stroke: new ol.style.Stroke({
+        color: 'rgb(255,0,0)'
+    }),
+    fill: new ol.style.Fill({
+        color: 'rgba(255,0,0,.03)'
+    })
+});
 var moveFunction = function() {
     var q = $("#search input[name=q]").val();
     if (q !== "") {

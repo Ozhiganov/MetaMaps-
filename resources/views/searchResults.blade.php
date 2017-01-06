@@ -8,14 +8,7 @@ $("#showResults").click(function() {
     adjustView(searchResults);
 });
 @endif
-var featureStyle = new ol.style.Style({
-    stroke: new ol.style.Stroke({
-        color: 'rgb(255,0,0)'
-    }),
-    fill: new ol.style.Fill({
-        color: 'rgba(255,0,0,.03)'
-    })
-});
+
 $.each(searchResults, function(index, value) {
     var el = $('<span id="index" class="marker" style="filter: hue-rotate(' + value["huerotate"] + 'deg);">' + index + '</span>');
     markers.push(el);
