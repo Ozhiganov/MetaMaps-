@@ -90,6 +90,11 @@
             @if(isset($route))
             var route = '{{$route}}';
             @endif
+            @if(isset($vars) && sizeof($vars) > 0)
+            @foreach($vars as $key => $value)
+            var {!!$key!!} = {!! $value !!};
+            @endforeach
+            @endif
         </script>
         @if(isset($javascript))
         <script>

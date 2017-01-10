@@ -98,7 +98,24 @@ function getNearest(lon, lat) {
             var city = getCity(address);
             var id = data["place_id"];
 
-            var popup = $("<div class=\"result col-xs-12\"> " + "<p class=\"address\">" + road + " " + house_number + "</p><p class=\"city\">" + city + "</p><p class=\"address\">Longitude: " + lon + "</p><p class=\"address\">Latitude: " + lat + "</p>" +  "<a href=\"https://maps.metager.de/nominatim/details.php?place_id=" + id + "\" target=\"_blank\" class=\"btn btn-default btn-xs\">Details</a></div>");
+            var points = [];
+            if(typeof waypoints !== "undefined"){
+                points = waypoints;
+            }
+            points.push([lon,lat]);
+            console.log(points);
+            // Base 64 encode
+            points = btoa(points);
+
+            var popup = $("\
+                <div class=\"result col-xs-12\">\
+                    <p class=\"address\">" + road + " " + house_number + "</p>\
+                    <p class=\"city\">" + city + "</p>\
+                    <p class=\"address\">Longitude: " + lon + "</p>\
+                    <p class=\"address\">Latitude: " + lat + "</p>\
+                    <a href=\"https://maps.metager.de/nominatim/details.php?place_id=" + id + "\" target=\"_blank\" class=\"btn btn-default btn-xs\">Details</a>\
+                    <a href=\"/route/start/"+points+"\" class=\"btn btn-default btn-xs\">Route berechnen</a>\
+                    </div>");
 
             // And now we can show the Popup where the user clicked
             createPopup(lon, lat, popup);

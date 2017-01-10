@@ -16,6 +16,11 @@ var featureStyle = new ol.style.Style({
         color: 'rgba(255,0,0,.03)'
     })
 });
+var mapClickFunction = function(evt){
+    var pos = ol.proj.transform(evt["coordinate"], 'EPSG:3857', 'EPSG:4326');
+    lastClick = pos;
+    getNearest(pos[0], pos[1]);
+};
 var moveFunction = function() {
     var q = $("#search input[name=q]").val();
     if (q !== "") {
@@ -33,11 +38,7 @@ $(document).ready(function() {
     $("#closer").click(function() {
         toggleResults();
     });
-    map.on('singleclick', function(evt) {
-        var pos = ol.proj.transform(evt["coordinate"], 'EPSG:3857', 'EPSG:4326');
-        lastClick = pos;
-        getNearest(pos[0], pos[1]);
-    });
+    map.on('singleclick', mapClickFunction);
     $(window).resize(function() {
         updateResultsPosition();
         updateCloserPosition();
