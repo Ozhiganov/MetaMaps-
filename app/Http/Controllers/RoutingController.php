@@ -8,10 +8,10 @@ use Response;
 
 class RoutingController extends Controller
 {
-    public function calcRoute($vehicle, $from, $to)
+    public function calcRoute($vehicle, $points)
     {
         // This is the function to calculate the Route from $from to $to with the given vehicle
-        $url       = "http://maps.metager.de:5000/route/v1/$vehicle/$from;$to?steps=true&geometries=geojson";
+        $url       = "http://maps.metager.de:5000/route/v1/$vehicle/$points?steps=true&geometries=geojson";
         $cacheHash = md5($url);
         if (Cache::has($cacheHash)) {
             $result = Cache::get($cacheHash);
@@ -33,10 +33,10 @@ class RoutingController extends Controller
             ->with('scripts', ['/js/routing.js']);
     }
 
-    public function routingOverviewGeoJson($vehicle, $from, $to)
+    public function routingOverviewGeoJson($vehicle, $points)
     {
         // This is the function to calculate the Route from $from to $to with the given vehicle
-        $url       = "http://maps.metager.de:5000/route/v1/$vehicle/$from;$to?steps=true&geometries=geojson";
+        $url       = "http://maps.metager.de:5000/route/v1/$vehicle/$points?steps=true&geometries=geojson";
         $cacheHash = md5($url);
         if (Cache::has($cacheHash)) {
             $result = Cache::get($cacheHash);

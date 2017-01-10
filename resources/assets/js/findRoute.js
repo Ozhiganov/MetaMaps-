@@ -112,8 +112,26 @@ function initRouteFinder(){
 		var from = waypoints[0][0] + "," + waypoints[0][1];
 		var lastIndex = waypoints.length - 1;
 		var to = waypoints[lastIndex][0] + "," + waypoints[lastIndex][1];
-		var startButton = $("<a href=\"/route/foot/"+from+"/"+to+"\" class=\"btn btn-default\">Route berechnen</a>");
+		var points = "";
+		$.each(waypoints, function(index, value){
+			if(value === '' || typeof value[0] === "undefined"){
+				return;
+			}else{
+				points += value.toString() + ";";
+			}
+		});
+		points = points.replace(/;+$/,'');
+		var startButton = $("<a href=\"/route/foot/"+points+"\" class=\"btn btn-default\">Route berechnen</a>");
+		var addWayPoint = $("<a id=\"add-waypoint\" href=\"#\" class=\"btn btn-default\">Wegpunkt hinzufügen</a>");
 		$("#foot").append(startButton);
+		$("#foot").append(addWayPoint);
+
+		// Add the Listener for adding Waypoints
+		$("#add-waypoint").click(function(){
+			waypoints.push('');
+			initRouteFinder();
+		});
+
 		generatePreviewRoute();
 	}
 	
@@ -189,20 +207,21 @@ function generatePreviewRoute(){
 	    })
 	});
 
-	if(waypoints.length < 2 || waypoints[0] === ''){
+	if(waypoints.length < 2 || waypoints[0] === '' || (waypoints[waypoints.length - 1] === '' && waypoints.length === 2)){
 		return;
 	}else{
-		var start = waypoints[0].toString();
-		var end = waypoints[waypoints.length -1].toString();
-		if(end === ''){
-			end = waypoints[waypoints.length -2].toString();
-		}
-		if(end === start){
-			return;
-		}
+		var points = "";
+		$.each(waypoints, function(index, value){
+			if(value === '' || typeof value[0] === "undefined"){
+				return;
+			}else{
+				points += value.toString() + ";";
+			}
+		});
+		points = points.replace(/;+$/,'');
 
 		// At this Point we can only Route between 2 Points so we have all the Information needed
-		var url = '/route/preview/foot/' + start + '/' + end;
+		var url = '/route/preview/foot/' + points;
 
 		// The Rest will be handled Asynchronious
 		$.get(url, function(data){

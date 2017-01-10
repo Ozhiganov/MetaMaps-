@@ -22,8 +22,8 @@ $(document).ready(function() {
 			$.each(route["routes"][0]["legs"], function(index, value){
 				// For each leg we collect all the steps:
 				$.each(value["steps"], function(index, value){
-					var geojson =  value["geometry"];
 
+					var geojson =  value["geometry"];
 					// Let's look through the Points to find the minimal
 					$.each(geojson["coordinates"], function(index, value){
 						if(typeof minPos[0] === "undefined" || parseFloat(value[0]) < minPos[0]){
@@ -45,10 +45,9 @@ $(document).ready(function() {
 				        'geometry': geom
 				    });
 				    feature.setStyle(routeLineStyle);
-				    feature.setId(index);
+				   // feature.setId(index);
 				    vectorS.addFeature(feature);
 				});
-			   
 			});
 			adjustViewBoundingBox(minPos, maxPos);
 		    // add Features

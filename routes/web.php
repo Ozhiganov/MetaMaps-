@@ -15,12 +15,7 @@ Route::get('/', function () {
 });
 
 Route::group(['prefix' => 'route'], function () {
-    Route::get('{vehicle}/{from}/{to}', 'RoutingController@calcRoute');
-    /* This is the Route for finding a route
-     * Means finding the Lat/Lon of the Start/End of Route
-     * and all possible other targets.
-     * Determining which Routing Service (Foot, Car, etc.).
-     */
+    Route::get('preview/{vehicle}/{points}', 'RoutingController@routingOverviewGeoJson');
     Route::get('start/{from?}', function ($points = "") {
         $waypoints = [];
         if ($points !== "") {
@@ -39,8 +34,12 @@ Route::group(['prefix' => 'route'], function () {
         $waypoints = json_encode($waypoints);
         return view('map')->with('boundings', 'false')->with('getPosition', 'true')->with('scripts', ['/js/findRoute.js'])->with("vars", ["waypoints" => $waypoints]);
     });
-
-    Route::get('preview/{vehicle}/{from}/{to}', 'RoutingController@routingOverviewGeoJson');
+    Route::get('{vehicle}/{points}', 'RoutingController@calcRoute');
+    /* This is the Route for finding a route
+     * Means finding the Lat/Lon of the Start/End of Route
+     * and all possible other targets.
+     * Determining which Routing Service (Foot, Car, etc.).
+     */
 
     Route::get('{routeHash}', function ($routeHash) {
         $route = "";
