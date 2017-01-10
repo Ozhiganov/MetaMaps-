@@ -3,7 +3,7 @@
  * First thinkg would be to prepare the Results Div
  */
 var vectorLayerRoutePreview;
-
+var markers = [];
  $(document).ready(function(){
 	deinitSearchBox();
 	initRouteFinder();
@@ -39,6 +39,8 @@ function deinitSearchBox(){
 
 function initRouteFinder(){
 	$("#results").html("");
+	// Remove Existing Markers
+	clearMarkers();
 
 	var vehicleChooser = 
 	$("<div>\
@@ -128,7 +130,8 @@ function initRouteFinder(){
 
 		// Add the Listener for adding Waypoints
 		$("#add-waypoint").click(function(){
-			waypoints.push('');
+			clearMarkers();
+			waypoints.splice(waypoints.length - 1, 0, '');
 			initRouteFinder();
 		});
 
@@ -166,8 +169,18 @@ function addPositionMarker(lon, lat, index){
 	// So now the Pin
 	var el = $('<span id="'+chr+'" class="marker">' + chr + '</span>');
 	var pos = ol.proj.transform([parseFloat(lon), parseFloat(lat)], 'EPSG:4326', 'EPSG:3857');
-	addMarker(el, pos);
+	markers.push(addMarker(el, pos));
 }
+
+/*
+ * Clears all Markers which are on the map
+ */
+ function clearMarkers(){
+ 	$.each(markers, function(index, value){
+ 		map.removeOverlay(value);
+ 	});
+ 	markers = [];
+ }
 
 /*
  * Generates Parameter to the Route until this point using the global waypoints variable
