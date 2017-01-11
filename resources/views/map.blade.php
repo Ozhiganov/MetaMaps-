@@ -7,7 +7,11 @@
         <title>
             Maps - MetaGer
         </title>
-        <link href="/css/mapSearch.css" rel="stylesheet" type="text/css"/>
+        @if(isset($css))
+            @foreach($css as $el)
+                <link href="{{$el}}" rel="stylesheet" type="text/css"/>
+            @endforeach
+        @endif
     </head>
     <body>
         <nav class="navbar navbar-default navbar-fixed-top">

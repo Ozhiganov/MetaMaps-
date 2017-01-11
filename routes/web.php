@@ -32,7 +32,7 @@ Route::group(['prefix' => 'route'], function () {
 
         }
         $waypoints = json_encode($waypoints);
-        return view('map')->with('boundings', 'false')->with('getPosition', 'true')->with('scripts', ['/js/findRoute.js'])->with("vars", ["waypoints" => $waypoints]);
+        return view('map')->with('boundings', 'false')->with('getPosition', 'true')->with('scripts', ['/js/findRoute.js'])->with("vars", ["waypoints" => $waypoints])->with('css', ['/css/routing.css']);
     });
     Route::get('{vehicle}/{points}', 'RoutingController@calcRoute');
     /* This is the Route for finding a route
@@ -57,7 +57,7 @@ Route::group(['prefix' => 'route'], function () {
 });
 
 Route::get('map/{search}/{latMin}/{lonMin}/{latMax}/{lonMax}', function ($search, $latMin, $lonMin, $latMax, $lonMax) {
-    return view('map')->with('javascript', "/$search/$latMin/$lonMin/$latMax/$lonMax")->with('search', $search)->with('boundings', 'true')->with('getPosition', 'false')->with('minPos', json_encode([floatval($latMin), floatval($lonMin)]))->with('maxPos', json_encode([floatval($latMax), floatval($lonMax)]))->with('scripts', ['/js/mapSearch.js']);
+    return view('map')->with('javascript', "/$search/$latMin/$lonMin/$latMax/$lonMax")->with('search', $search)->with('boundings', 'true')->with('getPosition', 'false')->with('minPos', json_encode([floatval($latMin), floatval($lonMin)]))->with('maxPos', json_encode([floatval($latMax), floatval($lonMax)]))->with('scripts', ['/js/mapSearch.js'])->with('css', ['/css/mapSearch.css']);
 });
 
 Route::get('{search}/{latMin}/{lonMin}/{latMax}/{lonMax}/{adjustView?}/{limit?}', 'SearchController@boundingBoxSearch');

@@ -30,6 +30,7 @@ class RoutingController extends Controller
             ->with('boundings', 'false')
             ->with('getPosition', 'false')
             ->with('route', $cacheHash)
+            ->with('css', ['/css/routing.css'])
             ->with('scripts', ['/js/routing.js']);
     }
 
@@ -55,15 +56,19 @@ class RoutingController extends Controller
 
         $result = json_decode($result, true);
 
+        $duration = $result["routes"][0]["duration"];
+        $distance = $result["routes"][0]["distance"];
+
         // If there is no geometry we will return an empty geojson Object
         $geojson = "{coordinates: [],type: \"LineString\"}";
         if ($result["code"] === "Ok" && sizeof($result["routes"]) >= 1) {
             $geojson = $result["routes"][0]["geometry"];
         }
 
-        $geojson = json_encode($geojson);
+        $result = ['duration' => $duration, 'distance' => $distance, 'geojson' => $geojson];
+        $result = json_encode($result);
 
-        $response = Response::make($geojson, 200);
+        $response = Response::make($result, 200);
         $response->header('Content-Type', 'application/json');
 
         return $response;

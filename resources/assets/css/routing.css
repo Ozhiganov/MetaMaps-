@@ -1,0 +1,29 @@
+.waypoint-list-item {
+    line-height: 1.5em;
+    max-height: 3em;
+    overflow: hidden;
+    padding: 0 15px;
+    border: 1px inset lightgrey;
+    border-radius: 6px;
+    cursor: crosshair;
+}
+
+.drop-target {
+    margin: 10px 0;
+    border-color: black;
+    border-width: 2px
+}
+
+#route-information {
+    margin: 8px 10px;
+    text-align: center;
+    font-weight: bold;
+}
+
+#route-information #length {
+    border-right: 1px solid lightgrey;
+}
+
+.hide {
+    transform: translateX(-9999px);
+}

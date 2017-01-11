@@ -77,12 +77,17 @@ function initRouteFinder(){
 		}else if(waypoints.length === 1 ){
 			waypoints.unshift('');
 		}
+
 		var firstEmpty = false;
 
+		var waypointHtml = $('<div id="waypoint-container"></div>');
 		$.each(waypoints, function(index, value){
 			var html;
 			if(typeof value[0] !== "undefined"){
-				html = $("<input id=\""+index+"\" class=\"form-control\" placeholder=\"\" value=\""+value[0]+"\"></input>");
+				html = $("<div id=\""+index+"\" class=\"waypoint-list-item\" draggable=\"true\" title=\""+value[0]+"\">"+value[0]+"</div>");
+				// Add the correct value:
+				positionToAdress(value[0], value[1], html);
+				addPositionMarker(value[0], value[1], index);
 			}else{
 				if(!firstEmpty){
 					html = $("<input id=\""+index+"\" class=\"form-control\" placeholder=\"Klicke auf die Karte um diesen Wegpunkt einzufügen.\" value=\"\"></input>");
@@ -91,14 +96,9 @@ function initRouteFinder(){
 					html = $("<input id=\""+index+"\" class=\"form-control\" placeholder=\"\" value=\"\"></input>");
 				}
 			}
-			$("#foot").append(html);
-			if( typeof value[0] !== "undefined"){
-				// Add the correct value:
-				positionToAdress(value[0], value[1], html);
-				addPositionMarker(value[0], value[1], index);
-			}
+			$(waypointHtml).append(html);
 		});
-
+		$("#foot").append(waypointHtml);
 	}
 
 	// Describes the number of unfilled waypoints
@@ -131,13 +131,18 @@ function initRouteFinder(){
 		// Add the Listener for adding Waypoints
 		$("#add-waypoint").click(function(){
 			clearMarkers();
-			waypoints.splice(waypoints.length - 1, 0, '');
+			waypoints.splice(waypoints.length, 0, '');
 			initRouteFinder();
 		});
+
+		// We should add a Place to display Informations About the Route
+		var routeInformation = $('<div id="route-information" class="row"><div id="length" class="col-md-6"></div><div id="duration" class="col-md-6"></div></div>')
+		$("#foot").prepend(routeInformation);
 
 		generatePreviewRoute();
 	}
 	
+	addDragAndDrop();
 	
 
 	$("#results").removeClass("hidden");
@@ -156,8 +161,8 @@ function positionToAdress(lon, lat, obj){
 	$.get(url, function(data){
 		//console.log(data);
 		if(typeof data !== "undefined" && typeof data["display_name"] !== "undefined"){
-				obj.val(data["display_name"]);
-				obj.attr("readonly", "true");
+				obj.html(data["display_name"]);
+				obj.attr("title", data["display_name"]);
 		}
 	});
 }
@@ -235,10 +240,15 @@ function generatePreviewRoute(){
 
 		// At this Point we can only Route between 2 Points so we have all the Information needed
 		var url = '/route/preview/foot/' + points;
-
 		// The Rest will be handled Asynchronious
 		$.get(url, function(data){
-			var geom = (new ol.format.GeoJSON()).readGeometry(data, {
+			var geojson = data["geojson"];
+			var duration = data["duration"];
+			var distance = data["distance"];
+
+			$("#route-information #length").html(parseDistance(distance));
+			$("#route-information #duration").html(parseDuration(duration));
+			var geom = (new ol.format.GeoJSON()).readGeometry(geojson, {
 			        'dataProjection': 'EPSG:4326',
 			        'featureProjection': 'EPSG:3857'
 			    	});
@@ -256,5 +266,112 @@ function generatePreviewRoute(){
 
 
 	}	
-
 }
+
+function parseDistance(distance){
+	distance = parseFloat(distance);
+	distance /= 1000;
+	var km = Math.round(distance * 10) / 10;
+
+	return km + " km";
+}
+
+function parseDuration(duration){
+	duration = Math.floor(parseFloat(duration));
+	console.log(duration);
+	var hours = 0;
+	if(duration > 3600){
+		hours = Math.floor(duration / 3600);
+		duration = duration % 3600;
+	}
+	var minute = 0;
+	if(duration > 60){
+		minute = Math.round(duration / 60);
+		duration = duration % 60;
+	}
+	var result = "";
+
+	if(hours > 0){
+		result += hours + " Std.";
+	}
+	if(minute > 0){
+		result += " " + minute + " Min.";
+	}
+	return result;
+}
+
+/*
+ * This functions appends the drag and drop event for all waypoints
+ * This allows us to switch the Position of the waypoints
+ */
+ var draggedId = -5;
+function addDragAndDrop(){
+	$(".waypoint-list-item").on("dragstart", function(evt){
+		evt.originalEvent.dataTransfer.setData('text', evt.target.id);
+
+		//Hide Original Element
+		setTimeout(function(){
+			$("#"+evt.target.id).addClass("hide");
+		});
+		draggedId = parseInt(evt.target.id);
+	});
+	$(".waypoint-list-item").on("dragend", function(evt){
+		$("#waypoint-container .hide").removeClass("hide");
+	});
+	$("#waypoint-container div").each(function(index, element){
+		$(element).on('dragover', function(evt){
+			var targetId = parseInt(evt.target.id);
+			if(draggedId !== targetId){
+				evt.originalEvent.preventDefault();
+				$("#waypoint-container .drop-target").remove();
+				$(this).after('<hr class="drop-target" />');
+			}
+		});
+		$(element).on('dragleave', function(evt){
+			$("#waypoint-container .drop-target").remove();
+		});
+		$(element).on('drop', function(evt){
+			evt.originalEvent.preventDefault();
+			var data = parseInt(evt.originalEvent.dataTransfer.getData('text'));
+			var target = parseInt($(this).attr("id"));
+			if(data !== target){
+				if(data > target)
+					target += 1;
+				waypoints.move(data, target);
+				initRouteFinder();
+			}
+			draggedId = -5;
+		});
+	});
+
+	// We need a special treatment to allow placing a waypoint at the start
+	// For being able so we need to assign a special dragover,dragleave and drop event handler to the Nav-Tabs of the result
+	var element = $("#results ul.nav-tabs, #route-information");
+	$(element).on('dragover', function(evt){
+		var targetId = -1;
+		if(draggedId !== targetId ){
+			evt.originalEvent.preventDefault();
+			$("#waypoint-container .drop-target").remove();
+			$("#waypoint-container").prepend('<hr class="drop-target" />');
+		}
+	});
+	$(element).on('dragleave', function(evt){
+		$("#waypoint-container .drop-target").remove();
+	});
+	$(element).on('drop', function(evt){
+		evt.originalEvent.preventDefault();
+		var data = parseInt(evt.originalEvent.dataTransfer.getData('text'));
+		var target = -1;
+		if(data !== target){
+			if(data > target)
+					target += 1;
+			waypoints.move(data, target);
+			initRouteFinder();
+		}
+		draggedId = -5;
+	});
+}
+
+Array.prototype.move = function(from, to) {
+    this.splice(to, 0, this.splice(from, 1)[0]);
+};
