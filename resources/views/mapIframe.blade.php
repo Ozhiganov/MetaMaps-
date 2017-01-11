@@ -7,7 +7,7 @@
         <title>
             Maps - MetaGer
         </title>
-        <link href="/css/iframeSearch.css" rel="stylesheet" type="text/css"/>
+        <link href="{{elixir('css/iframeSearch.css')}}" rel="stylesheet" type="text/css"/>
     </head>
     <body>
         <main>
@@ -25,7 +25,7 @@
             </div>
             <div class="clearfix"></div>
         </main>
-        <script src="/js/iframeSearch.js">
+        <script src="{{elixir('js/iframeSearch.js')}}">
         </script>
         <script>
             $(document).ready(function(){

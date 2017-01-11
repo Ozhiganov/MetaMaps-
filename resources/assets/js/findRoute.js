@@ -88,6 +88,7 @@ function initRouteFinder(){
 				// Add the correct value:
 				positionToAdress(value[0], value[1], html);
 				addPositionMarker(value[0], value[1], index);
+
 			}else{
 				if(!firstEmpty){
 					html = $("<input id=\""+index+"\" class=\"form-control\" placeholder=\"Klicke auf die Karte um diesen Wegpunkt einzufügen.\" value=\"\"></input>");
@@ -159,7 +160,6 @@ function initRouteFinder(){
 function positionToAdress(lon, lat, obj){
 	var url = "https://maps.metager.de/nominatim/reverse.php?format=json&lat=" + lat + "&lon=" + lon + "&zoom=18";
 	$.get(url, function(data){
-		//console.log(data);
 		if(typeof data !== "undefined" && typeof data["display_name"] !== "undefined"){
 				obj.html(data["display_name"]);
 				obj.attr("title", data["display_name"]);
@@ -278,7 +278,6 @@ function parseDistance(distance){
 
 function parseDuration(duration){
 	duration = Math.floor(parseFloat(duration));
-	console.log(duration);
 	var hours = 0;
 	if(duration > 3600){
 		hours = Math.floor(duration / 3600);

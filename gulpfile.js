@@ -1,7 +1,7 @@
 process.env.DISABLE_NOTIFIER = true;
 const elixir = require('laravel-elixir');
 require('laravel-elixir-vue-2');
-/*
+/*js/routing.js
  |--------------------------------------------------------------------------
  | Elixir Asset Management
  |--------------------------------------------------------------------------
@@ -19,4 +19,5 @@ elixir((mix) => {
     mix.scripts(['jquery.min.js', 'bootstrap.min.js', 'ol.js', 'map.js', 'iframeSearch.js', 'iframeResizer.contentWindow.min.js'], 'public/js/iframeSearch.js');
     mix.scripts(['jquery.min.js', 'bootstrap.min.js', 'ol.js', 'map.js', 'mapSearch.js', 'routing.js'], 'public/js/routing.js');
     mix.scripts(['jquery.min.js', 'bootstrap.min.js', 'ol.js', 'map.js', 'mapSearch.js', 'findRoute.js'], 'public/js/findRoute.js');
+    mix.version(['public/css/mapSearch.css', 'public/css/iframeSearch.css', 'public/css/routing.css', 'public/js/mapSearch.js', 'public/js/iframeSearch.js', 'public/js/routing.js', 'public/js/findRoute.js']);
 });

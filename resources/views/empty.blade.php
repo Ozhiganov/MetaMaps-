@@ -1,6 +1,6 @@
 <html>
 	<head>
-		<script src="/js/iframeSearch.js"></script>
+		<script src="{{elixir('js/iframeSearch.js')}}"></script>
 		<style>
 			html, body {
 				height: 0;

@@ -30,8 +30,8 @@ class RoutingController extends Controller
             ->with('boundings', 'false')
             ->with('getPosition', 'false')
             ->with('route', $cacheHash)
-            ->with('css', ['/css/routing.css'])
-            ->with('scripts', ['/js/routing.js']);
+            ->with('css', [elixir('/css/routing.css')])
+            ->with('scripts', [elixir('js/routing.js')]);
     }
 
     public function routingOverviewGeoJson($vehicle, $points)
