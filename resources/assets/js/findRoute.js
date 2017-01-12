@@ -96,6 +96,7 @@ function initRouteFinder(){
 				}else{
 					html = $("<input id=\""+index+"\" class=\"form-control\" placeholder=\"\" value=\"\"></input>");
 				}
+				addSearchEvent(html);
 			}
 			$(waypointHtml).append(html);
 		});
@@ -182,6 +183,7 @@ function addPositionMarker(lon, lat, index){
  	$.each(markers, function(index, value){
  		map.removeOverlay(value);
  	});
+ 	removeTemporarayMarker();
  	markers = [];
  	markerPositions = [];
  }
@@ -373,3 +375,89 @@ function addDragAndDrop(){
 Array.prototype.move = function(from, to) {
     this.splice(to, 0, this.splice(from, 1)[0]);
 };
+
+/* 
+ * This Function adds the Search Event to the input Box to allow searching for any Waypoint
+ * @param element{Object} Input-Field that needs the Listeners to be attached
+ */
+function addSearchEvent(element){
+	$(element).focusin(function(){
+		var searchButton = $("<a tab-index=\"-1\" href=\"#\" class=\"search-btn btn btn-default btn-sm\"><span class=\"glyphicon glyphicon-search\"></span></a>");
+		$(element).after(searchButton);
+
+		var placeholder = $(element).attr("placeholder");
+		$(element).attr("placeholder", "Suchworte eingeben");
+
+		$(element).keypress(function(e){
+			if(e.which == 13) {
+				$(searchButton).click();
+			}
+		});
+
+		$(searchButton).mousedown(function(evt){
+			evt.preventDefault();
+		});	
+
+		$(searchButton).click(function(){
+			var searchResults = $("<div id=\"search-results\"><div class=\"loader\"><img src=\"/img/ajax-loader.gif\" /></div></div>");
+				$(element).after(searchResults);
+				
+				var id = $(element).attr("id");
+				
+				var query = $(element).val();
+				var url = "/route/search/" + encodeURI(query);
+				$.getJSON(url, function(data){
+					var results = $("<ul class=\"list list-unstyled\"></ul>");
+					$.each(data, function(index, value){
+						var result = $("<li>"+value["display_name"]+"</li>");
+						$(results).append(result);
+
+						$(result).mousedown(function(evt){
+							waypoints[id] = [parseFloat(value["lon"]), parseFloat(value["lat"])];
+							initRouteFinder();
+						});
+
+						$(result).mouseover(function(){
+							addTemporaryMarker(value["lon"], value["lat"]);
+						});
+						$(result).mouseout(function(){
+							removeTemporarayMarker();
+						});
+
+					});
+					$(searchResults).find(".loader").remove();
+					$(searchResults).append("<h5>Suchergebnisse für: \""+query+"\"</h5>");
+					$(searchResults).append(results);
+				});
+				
+		});
+
+		$(element).focusout(function(evt){
+			$("#search-results").remove();
+			$(element).off();
+			$(element).val("");
+			addSearchEvent(element);
+			$(element).attr("placeholder", placeholder);
+			$(".search-btn").remove();
+		});
+	});
+}
+
+var marker = null;
+function addTemporaryMarker(lon, lat){
+	// So now the Pin
+	var el = $('<span class="marker"></span>');
+	var pos = ol.proj.transform([parseFloat(lon), parseFloat(lat)], 'EPSG:4326', 'EPSG:3857');
+	if(marker !== null){
+		map.removeOverlay(marker);
+		marker = null;
+	}
+	marker = addMarker(el, pos);
+}
+
+function removeTemporarayMarker(){
+	if(marker !== null){
+		map.removeOverlay(marker);
+		marker = null;
+	}
+}

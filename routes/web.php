@@ -34,6 +34,13 @@ Route::group(['prefix' => 'route'], function () {
         $waypoints = json_encode($waypoints);
         return view('map')->with('boundings', 'false')->with('getPosition', 'true')->with('scripts', [elixir('js/findRoute.js')])->with("vars", ["waypoints" => $waypoints])->with('css', [elixir('css/routing.css')]);
     });
+    Route::get('search/{search}', function ($search) {
+        $url      = "https://maps.metager.de/nominatim/search.php?q=" . urlencode($search) . "&limit=5&polygon_geojson=0&format=json&extratags=0&addressdetails=0";
+        $content  = file_get_contents($url);
+        $response = Response::make($content, 200);
+        $response->header('Content-Type', 'application/json');
+        return $response;
+    });
     Route::get('{vehicle}/{points}', 'RoutingController@calcRoute');
     /* This is the Route for finding a route
      * Means finding the Lat/Lon of the Start/End of Route
