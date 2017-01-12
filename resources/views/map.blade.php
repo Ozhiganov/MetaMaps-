@@ -84,6 +84,11 @@
                 <li id="follow-location"><span class="button glyphicon glyphicon-record"></span></li>
             </ul>
         </main>
+        @if(isset($scripts))
+            @foreach($scripts as $script)
+                <script src="{{$script}}" ></script>
+            @endforeach
+        @endif
         <script>
             var boundings = {{$boundings}};
             @if($boundings === 'true')
@@ -107,10 +112,6 @@
             });
         </script>
         @endif
-        @if(isset($scripts))
-            @foreach($scripts as $script)
-                <script src="{{$script}}" ></script>
-            @endforeach
-        @endif
+
     </body>
 </html>
