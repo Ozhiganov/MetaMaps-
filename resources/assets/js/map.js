@@ -80,6 +80,17 @@ function numberWithPoints(x) {
     return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 }
 
+function initResults() {
+    if($("#results").hasClass("hidden")){
+        $('#results').removeClass("hidden");
+    }
+    if($("#closer").hasClass("hidden")){
+        $("#closer").removeClass("hidden");
+        updateCloserPosition();
+    }
+    updateMapSize();
+}
+
 function toggleResults() {
     if ($("#results").attr("data-status") === "in") {
         $("#closer").html("<");
@@ -94,6 +105,27 @@ function toggleResults() {
         updateResultsPosition();
         updateCloserPosition();
     }
+    updateMapSize();
+}
+
+function updateMapSize(){
+    var resultsWidth = $("#results").width();
+    if($("#results").css("display") === "none"){
+        resultsWidth = 0;
+    }
+    var displayWidth = $(window).width();
+
+    // Change Map Width
+    $("#map").width(displayWidth-resultsWidth);
+
+    var navBarHeight = $("nav.navbar").height();
+    var displayHeight = $(window).height();
+
+    // Change The Map Height
+    $("#map").height(displayHeight-navBarHeight);
+    $("#map").css("margin-top", navBarHeight);
+
+    map.updateSize();
 }
 
 function updateResultsPosition() {
@@ -206,6 +238,31 @@ function adjustViewBoundingBox(minpos, maxpos) {
     maxPosition = ol.proj.transform(maxpos, 'EPSG:4326', 'EPSG:3857');
     map.getView().fitExtent([minPosition[0], minPosition[1], maxPosition[0], maxPosition[1]], map.getSize());
     updateMapExtent();
+}
+
+/*
+ * This Function takes an array of Positions and adjusts the view of the map so everything is visible
+ * @param positions{Array} - Array with Position Objects ([lon,lat])
+ */
+function adjustViewPosList(positions){
+    var minpos = [null,null];
+    var maxpos = [null,null];
+
+    $.each(positions, function(index, value){
+        if(minpos[0] === null || value[0] < minpos[0]){
+            minpos[0] = value[0];
+        }
+        if(maxpos[0] === null || value[0] > maxpos[0]){
+            maxpos[0] = value[0];
+        }
+        if(minpos[1] === null || value[1] < minpos[1]){
+            minpos[1] = value[1];
+        }
+        if(maxpos[1] === null || value[1] > maxpos[1]){
+            maxpos[1] = value[1];
+        }
+    });
+    adjustViewBoundingBox(minpos, maxpos);
 }
 
 function clearPOIS() {

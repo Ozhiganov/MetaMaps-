@@ -146,9 +146,7 @@ function initRouteFinder(){
 	addDragAndDrop();
 	
 
-	$("#results").removeClass("hidden");
-	$("#closer").removeClass("hidden");
-	updateCloserPosition();
+	initResults();
 }
 
 /*
@@ -185,6 +183,7 @@ function addPositionMarker(lon, lat, index){
  		map.removeOverlay(value);
  	});
  	markers = [];
+ 	markerPositions = [];
  }
 
 /*

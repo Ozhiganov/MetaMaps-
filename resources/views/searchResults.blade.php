@@ -71,9 +71,7 @@ $.each(searchResults, function(index, value) {
     };
     res.hover(resultHoverIn, resultHoverOut);
     el.hover(resultHoverIn, resultHoverOut);
-    $("#results").removeClass("hidden");
-    $("#closer").removeClass("hidden");
-    updateCloserPosition();
+    initResults();
     // Add Features
     var geom = (new ol.format.GeoJSON()).readGeometry(value["geojson"], {
         'dataProjection': 'EPSG:4326',
