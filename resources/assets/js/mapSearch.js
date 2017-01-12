@@ -31,7 +31,7 @@ $(document).ready(function() {
 
 function initMap() {
     popupOverlay = new ol.Overlay( /** @type {olx.OverlayOptions} */ ({
-        element: $("#popup"),
+        element: document.getElementById("popup"),
         autoPan: true,
         autoPanAnimation: {
             duration: 250
@@ -103,7 +103,6 @@ function getNearest(lon, lat) {
                 points = waypoints;
             }
             points.push([lon,lat]);
-            console.log(points);
             // Base 64 encode
             points = btoa(points);
 

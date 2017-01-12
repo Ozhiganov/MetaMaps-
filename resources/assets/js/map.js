@@ -186,7 +186,7 @@ function adjustView(results) {
     }
     minPosition = ol.proj.transform(minPosition, 'EPSG:4326', 'EPSG:3857');
     maxPosition = ol.proj.transform(maxPosition, 'EPSG:4326', 'EPSG:3857');
-    map.getView().fitExtent([minPosition[0], minPosition[1], maxPosition[0], maxPosition[1]], map.getSize());
+    map.getView().fit([minPosition[0], minPosition[1], maxPosition[0], maxPosition[1]], map.getSize());
     updateMapExtent();
 }
 /**
@@ -236,7 +236,7 @@ function getCity(address) {
 function adjustViewBoundingBox(minpos, maxpos) {
     minPosition = ol.proj.transform(minpos, 'EPSG:4326', 'EPSG:3857');
     maxPosition = ol.proj.transform(maxpos, 'EPSG:4326', 'EPSG:3857');
-    map.getView().fitExtent([minPosition[0], minPosition[1], maxPosition[0], maxPosition[1]], map.getSize());
+    map.getView().fit([minPosition[0], minPosition[1], maxPosition[0], maxPosition[1]], map.getSize());
     updateMapExtent();
 }
 
@@ -291,7 +291,7 @@ function centerMap(longitude, latitude) {
 function addMarker(el, pos) {
     var overlay = new ol.Overlay({
         position: pos,
-        element: el,
+        element: el.get(0),
         offset: [-12, -45],
         stopEvent: false,
     });
