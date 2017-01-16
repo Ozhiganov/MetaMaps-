@@ -413,6 +413,7 @@ function addSearchEvent(element){
 						$(results).append(result);
 
 						$(result).mousedown(function(evt){
+							console.log(parseFloat(value["lon"]) +"/"+ parseFloat(value["lat"]));
 							waypoints[id] = [parseFloat(value["lon"]), parseFloat(value["lat"])];
 							initRouteFinder();
 						});

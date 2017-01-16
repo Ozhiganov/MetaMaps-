@@ -7165,4 +7165,20 @@ html, body, main, #map {
     position: relative;
     top: -.3em;
 }
+
+#routing-steps {
+    margin-top: 10px;
+}
+
+#routing-steps > li {
+    cursor: pointer;
+}
+
+#routing-steps > li:hover {
+    background-color: #ececec;
+}
+
+#routing-steps .step > div {
+    margin-top: .5em;
+}
 /*# sourceMappingURL=routing.css.map */
