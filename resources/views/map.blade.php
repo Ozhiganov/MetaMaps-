@@ -42,10 +42,8 @@
                                     <span class="glyphicon glyphicon-search">
                                     </span>
                                 </div>
-                                <div class="input-group-addon" id="clearInput" title="Sucheingabe löschen">
-                                    <span class="font-bold">
-                                        X
-                                    </span>
+                                <div class="input-group-addon" id="clearInput">
+
                                 </div>
                             </div>
                         </div>

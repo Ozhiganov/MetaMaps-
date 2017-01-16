@@ -1,18 +1,11 @@
+
+
 $(document).ready(function() {
+    initStartNavigation();
     if (!boundings && getPosition) receiveLocation();
     if (boundings) {
         adjustViewBoundingBox(minPos, maxPos);
     }
-    $("#clearInput").click(function() {
-        $("#search input[name=q]").val('');
-        $("#search input[name=q]").focus();
-        clearPOIS();
-        $("#results").addClass("hidden");
-        $.each(overlays, function(index, value) {
-            map.removeOverlay(value);
-            $("#popup-closer").click();
-        });
-    });
     $("#search input[name=q]").on("keydown", function(event) {
         if (event.which == 13) $("#doSearch").click();
     });
@@ -120,4 +113,13 @@ function getNearest(lon, lat) {
             createPopup(lon, lat, popup);
         }
     });
+}
+
+function deinitResults() {
+    toggleResults("out");
+    $("#results").addClass("hidden");
+    $("#closer").addClass("hidden");
+    $("#results").html("");
+    updateMapSize();
+    initStartNavigation();
 }

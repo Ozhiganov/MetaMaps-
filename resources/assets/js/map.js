@@ -24,7 +24,7 @@ var mapClickFunction = function(evt){
 };
 var moveFunction = function() {
     var q = $("#search input[name=q]").val();
-    if (q !== "") {
+    if (q !== "" && $("#search input[name=q]").attr("data-move-search") === "") {
         updateMapExtent();
         var q = $("#search input[name=q]").val();
         q = encodeURI(q);
@@ -33,6 +33,19 @@ var moveFunction = function() {
         $.getScript(url);
     }
 };
+
+var clearInputFunction = function(){
+    $("#search input[name=q]").val('');
+    $("#search input[name=q]").focus();
+    clearPOIS();
+    $.each(overlays, function(index, value) {
+        map.removeOverlay(value);
+        $("#popup-closer").click();
+    });
+    deinitResults();
+    $("#clearInput").off();
+};
+
 $(document).ready(function() {
     // Initialize the Map
     initMap();
@@ -90,10 +103,29 @@ function initResults() {
         updateCloserPosition();
     }
     updateMapSize();
+    toggleResults("out");
 }
 
-function toggleResults() {
-    if ($("#results").attr("data-status") === "in") {
+function initStartNavigation(){
+    $("#clearInput").html('<a href="/route/start" target="_self"><img src="/img/navigation-arrow.svg" height="20px"></a>');
+    $("#clearInput").off();
+    $("#clearInput").attr("title", "Routenplaner starten");
+}
+
+function initClearInput(){
+    $("#clearInput").html('<span class="font-bold">X</span>');
+    $("#clearInput").off();
+    $("#clearInput").click(clearInputFunction);
+    $("#clearInput").attr("title", "Sucheingabe löschen");
+}
+
+function toggleResults(status) {
+    if(status === undefined){
+        status = $("#results").attr("data-status");
+    }else if(status !== "in" && status !== "out"){
+        status = "in";
+    }
+    if (status === "in") {
         $("#closer").html("<");
         $("#results").attr("data-status", "out");
         $("#closer").attr("title", "Ergebnisse ausklappen");
@@ -110,10 +142,12 @@ function toggleResults() {
 }
 
 function updateMapSize(){
-    var resultsWidth = $("#results").width();
-    if($("#results").css("display") === "none"){
+    var resultsWidth = parseInt($("#results").width());
+    if($("#results").hasClass("hidden")){
         resultsWidth = 0;
     }
+    $("#search input[name=q]").attr("data-move-search", "false");
+
     var displayWidth = $(window).width();
 
     // Change Map Width
@@ -127,13 +161,16 @@ function updateMapSize(){
     $("#map").css("margin-top", navBarHeight);
 
     map.updateSize();
+    setTimeout(function(){
+        $("#search input[name=q]").attr("data-move-search", "");
+    }, 1500);
 }
 
 function updateResultsPosition() {
     if ($("#results").attr("data-status") === "out") {
-        $("#results").css("display", "none");
+        $("#results").addClass("hidden");
     } else {
-        $("#results").css("display", "");
+        $("#results").removeClass("hidden");
     }
 }
 
