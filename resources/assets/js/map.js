@@ -10,10 +10,11 @@ var userPositionMarker = null;
 var lockViewToPosition = true;
 var featureStyle = new ol.style.Style({
     stroke: new ol.style.Stroke({
-        color: 'rgb(255,0,0)'
+        color: 'rgb(153,39,208)',
+        lineDash: [4,8]
     }),
     fill: new ol.style.Fill({
-        color: 'rgba(255,0,0,.03)'
+        color: 'rgba(153,39,208,.03)'
     })
 });
 var mapClickFunction = function(evt){
