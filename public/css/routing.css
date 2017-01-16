@@ -7181,4 +7181,30 @@ html, body, main, #map {
 #routing-steps .step > div {
     margin-top: .5em;
 }
+
+#vehicle-chooser label.radio-inline {
+    padding: 0;
+    margin: 0;
+}
+
+#vehicle-chooser label.radio-inline > input[type=radio] {
+    display: none;
+}
+
+#vehicle-chooser label.radio-inline > input[type=radio] + div {
+    padding: 10px 15px;
+    border-bottom: 1px solid #ddd;
+}
+
+#vehicle-chooser label.radio-inline > input[type=radio]:checked + div {
+    color: #555;
+    cursor: default;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-bottom-color: transparent;
+}
+
+.ol-attribution ul {
+    font-size: .7em;
+}
 /*# sourceMappingURL=routing.css.map */

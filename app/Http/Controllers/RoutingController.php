@@ -11,7 +11,18 @@ class RoutingController extends Controller
     public function calcRoute($vehicle, $points)
     {
         // This is the function to calculate the Route from $from to $to with the given vehicle
-        $url       = "http://maps.metager.de:5000/route/v1/$vehicle/$points?steps=true&geometries=geojson";
+        $port = 0;
+        switch ($vehicle) {
+            case "bicycle":
+                $port = 5001;
+                break;
+            case "car":
+                $port = 5002;
+                break;
+            default:
+                $port = 5000;
+        }
+        $url       = "http://maps.metager.de:$port/route/v1/$vehicle/$points?steps=true&geometries=geojson";
         $cacheHash = md5($url);
         if (Cache::has($cacheHash)) {
             $result = Cache::get($cacheHash);
@@ -23,6 +34,7 @@ class RoutingController extends Controller
                 Cache::put($cacheHash, $result, 60);
             } catch (\ErrorException $e) {
                 Log::error("Konnte den Routing Server nicht erreichen");
+                return redirect('/route/start/');
             }
         }
 
@@ -37,7 +49,18 @@ class RoutingController extends Controller
     public function routingOverviewGeoJson($vehicle, $points)
     {
         // This is the function to calculate the Route from $from to $to with the given vehicle
-        $url       = "http://maps.metager.de:5000/route/v1/$vehicle/$points?steps=true&geometries=geojson";
+        $port = 0;
+        switch ($vehicle) {
+            case "bicycle":
+                $port = 5001;
+                break;
+            case "car":
+                $port = 5002;
+                break;
+            default:
+                $port = 5000;
+        }
+        $url       = "http://maps.metager.de:$port/route/v1/$vehicle/$points?steps=true&geometries=geojson";
         $cacheHash = md5($url);
         if (Cache::has($cacheHash)) {
             $result = Cache::get($cacheHash);

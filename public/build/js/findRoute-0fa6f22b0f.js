@@ -93114,6 +93114,8 @@ function deinitResults() {
  */
 var vectorLayerRoutePreview;
 var markers = [];
+var vehicle = "foot";
+
  $(document).ready(function(){
 	deinitSearchBox();
 	initRouteFinder();
@@ -93153,32 +93155,30 @@ function initRouteFinder(){
 	clearMarkers();
 
 	var vehicleChooser = 
-	$("<div>\
-			<ul class=\"nav nav-tabs\" role=\"tablist\">\
-				<li role=\"presentation\" class=\"active\">\
-					<a href=\"#foot\" aria-controls=\"foot\" role=\"tab\" data-toggle=\"tab\">\
-						<img src=\"/img/silhouette-walk.png\" height=\"20px\" />\
-					</a>\
-				</li>\
-				<li role=\"presentation\" class=\"disabled\">\
-					<a href=\"#foot\" aria-controls=\"foot\" role=\"tab\">\
-						<img src=\"/img/bike.png\" height=\"20px\" />\
-					</a>\
-				</li>\
-				<li role=\"presentation\" class=\"disabled\">\
-					<a href=\"#foot\" aria-controls=\"foot\" role=\"tab\">\
-						<img src=\"/img/car.png\" height=\"20px\" />\
-					</a>\
-				</li>\
-			</ul>\
-			<div class=\"tab-content\">\
-				<div role=\"tabpanel\" class=\"tab-pane active\" id=\"foot\">\
-				</div>\
-			</div>\
+	$("<div id=\"vehicle-chooser\">\
+			<label class=\"radio-inline\">\
+			  <input type=\"radio\" name=\"vehicle\" value=\"foot\"> <div><img src=\"/img/silhouette-walk.png\" height=\"20px\" /></div>\
+			</label>\
+			<label class=\"radio-inline disabled\" >\
+			  <input type=\"radio\" name=\"vehicle\" value=\"bicycle\" disabled> <div><img src=\"/img/bike.png\" height=\"20px\" /></div>\
+			</label>\
+			<label class=\"radio-inline disabled\">\
+			  <input type=\"radio\" name=\"vehicle\" value=\"car\" disabled> <div><img src=\"/img/car.png\" height=\"20px\" /></div>\
+			</label>\
+		</div>\
+		<div id=\"route-content\">\
 		</div>\
 		");
 	$("#results").append(vehicleChooser);
 
+	// Select the correct checkbox:
+	$("#vehicle-chooser input[value="+vehicle+"]").prop("checked", true);
+
+	// Add the changed Listener to the Radio Buttons
+	$(vehicleChooser).find("input[type=radio]").change(function(){
+		vehicle = $("input[type=radio]:checked").val();
+		initRouteFinder();
+	});
 
 	// Let's check for existing waypoints
 	if(typeof waypoints !== "undefined"){
@@ -93210,7 +93210,7 @@ function initRouteFinder(){
 			}
 			$(waypointHtml).append(html);
 		});
-		$("#foot").append(waypointHtml);
+		$("#route-content").append(waypointHtml);
 	}
 
 	// Describes the number of unfilled waypoints
@@ -93235,10 +93235,10 @@ function initRouteFinder(){
 			}
 		});
 		points = points.replace(/;+$/,'');
-		var startButton = $("<a href=\"/route/foot/"+points+"\" class=\"btn btn-default\">Route berechnen</a>");
+		var startButton = $("<a href=\"/route/"+vehicle+"/"+points+"\" class=\"btn btn-default\">Route berechnen</a>");
 		var addWayPoint = $("<a id=\"add-waypoint\" href=\"#\" class=\"btn btn-default\">Wegpunkt hinzufügen</a>");
-		$("#foot").append(startButton);
-		$("#foot").append(addWayPoint);
+		$("#route-content").append(startButton);
+		$("#route-content").append(addWayPoint);
 
 		// Add the Listener for adding Waypoints
 		$("#add-waypoint").click(function(){
@@ -93249,7 +93249,7 @@ function initRouteFinder(){
 
 		// We should add a Place to display Informations About the Route
 		var routeInformation = $('<div id="route-information" class="row"><div id="length" class="col-md-6"></div><div id="duration" class="col-md-6"></div></div>')
-		$("#foot").prepend(routeInformation);
+		$("#route-content").prepend(routeInformation);
 
 		generatePreviewRoute();
 	}
