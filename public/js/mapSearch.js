@@ -92665,6 +92665,10 @@ function numberWithPoints(x) {
     return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 }
 
+function deinitSearchBox() {
+    $("#search").addClass("hidden");
+}
+
 function initResults() {
     if($("#results").hasClass("hidden")){
         $('#results').removeClass("hidden");

@@ -70,10 +70,6 @@ function initState() {
     };
 }
 
-function deinitSearchBox() {
-    $("#search").addClass("hidden");
-}
-
 function initRouteFinder() {
     $("#results").html("");
     // Remove Existing Markers

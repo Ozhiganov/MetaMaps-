@@ -13,6 +13,7 @@ $(document).ready(function() {
     }).success(function() {
         // If the Route could be loaded and there is a route between the points we can show it:
         if (typeof route["code"] !== 'undefined' && route["code"] === "Ok" && route["routes"].length >= 1) {
+            deinitSearchBox();
             addGraphics();
             addResults();
             initResults();

@@ -92665,6 +92665,10 @@ function numberWithPoints(x) {
     return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 }
 
+function deinitSearchBox() {
+    $("#search").addClass("hidden");
+}
+
 function initResults() {
     if($("#results").hasClass("hidden")){
         $('#results').removeClass("hidden");
@@ -93123,6 +93127,7 @@ $(document).ready(function() {
     }).success(function() {
         // If the Route could be loaded and there is a route between the points we can show it:
         if (typeof route["code"] !== 'undefined' && route["code"] === "Ok" && route["routes"].length >= 1) {
+            deinitSearchBox();
             addGraphics();
             addResults();
             initResults();
