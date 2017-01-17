@@ -25,11 +25,14 @@ Route::group(['prefix' => 'route'], function () {
                 if ($value === '') {
                     $waypoints[] = '';
                 } else {
-                    $waypoints[] = explode(',', $value);
+                    $pos         = explode(',', $value);
+                    $pos[0]      = floatval($pos[0]);
+                    $pos[1]      = floatval($pos[1]);
+                    $waypoints[] = $pos;
                 }
             }
         }
-        return response(view('map')->with('boundings', 'false')->with('getPosition', 'true')->with('scripts', [elixir('js/findRoute.js')])->with("vars", ["waypoints" => $waypoints, 'vehicle' => $vehicle])->with('css', [elixir('css/routing.css')]))->header('Vary', 'Accept');
+        return response(view('map')->with('boundings', 'false')->with('getPosition', 'false')->with('scripts', [elixir('js/findRoute.js')])->with("vars", ["waypoints" => $waypoints, 'vehicle' => $vehicle])->with('css', [elixir('css/routing.css')]))->header('Vary', 'Accept');
     });
     Route::get('search/{search}', function ($search) {
         $url      = "https://maps.metager.de/nominatim/search.php?q=" . urlencode($search) . "&limit=5&polygon_geojson=0&format=json&extratags=0&addressdetails=0";

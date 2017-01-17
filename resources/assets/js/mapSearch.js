@@ -91,13 +91,7 @@ function getNearest(lon, lat) {
             var city = getCity(address);
             var id = data["place_id"];
 
-            var points = [];
-            if(typeof waypoints !== "undefined"){
-                points = waypoints;
-            }
-            points.push([lon,lat]);
-            // Base 64 encode
-            points = btoa(points);
+            var url = "/route/start/foot/"+lon+","+lat;
 
             var popup = $("\
                 <div class=\"result col-xs-12\">\
@@ -106,7 +100,7 @@ function getNearest(lon, lat) {
                     <p class=\"address\">Longitude: " + lon + "</p>\
                     <p class=\"address\">Latitude: " + lat + "</p>\
                     <a href=\"https://maps.metager.de/nominatim/details.php?place_id=" + id + "\" target=\"_blank\" class=\"btn btn-default btn-xs\">Details</a>\
-                    <a href=\"/route/start/"+points+"\" class=\"btn btn-default btn-xs\">Route berechnen</a>\
+                    <a href=\""+url+"\" class=\"btn btn-default btn-xs\">Route berechnen</a>\
                     </div>");
 
             // And now we can show the Popup where the user clicked

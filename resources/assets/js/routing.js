@@ -158,6 +158,43 @@ function parseManeuver(maneuver, takenRoute, legIndex, stepIndex) {
                 stepString = modifier;
             }
             break;
+        case "roundabout":
+        case "rotary":
+            stepString = "Im Kreisverkehr ";
+            if(maneuver["exit"] !== null){
+                stepString += "die ";
+                switch(parseInt(maneuver["exit"])){
+                    case 1:
+                        stepString += "erste ";
+                        break;
+                    case 2:
+                        stepString += "zweite ";
+                        break;
+                    case 3:
+                        stepString += "dritte ";
+                        break;
+                    case 4:
+                        stepString += "vierte ";
+                        break;
+                    case 5:
+                        stepString += "fünfte ";
+                        break;
+                    case 6:
+                        stepString += "sechste ";
+                        break;
+                    case 7:
+                        stepString += "siebte ";
+                        break;
+                    case 8:
+                        stepString += "achte ";
+                        break;
+                    case 9:
+                        stepString += "neunte ";
+                        break;
+                }
+                stepString += "Ausfahrt nehmen."
+            }
+            break;
         case "arrive":
             var modifier = parseModifier(modifier);
             if (modifier === undefined) {

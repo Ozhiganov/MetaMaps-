@@ -92582,13 +92582,13 @@ var lockViewToPosition = true;
 var featureStyle = new ol.style.Style({
     stroke: new ol.style.Stroke({
         color: 'rgb(153,39,208)',
-        lineDash: [4,8]
+        lineDash: [4, 8]
     }),
     fill: new ol.style.Fill({
         color: 'rgba(153,39,208,.03)'
     })
 });
-var mapClickFunction = function(evt){
+var mapClickFunction = function(evt) {
     var pos = ol.proj.transform(evt["coordinate"], 'EPSG:3857', 'EPSG:4326');
     lastClick = pos;
     getNearest(pos[0], pos[1]);
@@ -92604,8 +92604,7 @@ var moveFunction = function() {
         $.getScript(url);
     }
 };
-
-var clearInputFunction = function(){
+var clearInputFunction = function() {
     $("#search input[name=q]").val('');
     $("#search input[name=q]").focus();
     clearPOIS();
@@ -92616,7 +92615,6 @@ var clearInputFunction = function(){
     deinitResults();
     $("#clearInput").off();
 };
-
 $(document).ready(function() {
     // Initialize the Map
     initMap();
@@ -92670,10 +92668,10 @@ function deinitSearchBox() {
 }
 
 function initResults() {
-    if($("#results").hasClass("hidden")){
+    if ($("#results").hasClass("hidden")) {
         $('#results').removeClass("hidden");
     }
-    if($("#closer").hasClass("hidden")){
+    if ($("#closer").hasClass("hidden")) {
         $("#closer").removeClass("hidden");
         updateCloserPosition();
     }
@@ -92681,13 +92679,13 @@ function initResults() {
     toggleResults("out");
 }
 
-function initStartNavigation(){
+function initStartNavigation() {
     $("#clearInput").html('<a href="/route/start/foot" target="_self"><img src="/img/navigation-arrow.svg" height="20px"></a>');
     $("#clearInput").off();
     $("#clearInput").attr("title", "Routenplaner starten");
 }
 
-function initClearInput(){
+function initClearInput() {
     $("#clearInput").html('<span class="font-bold">X</span>');
     $("#clearInput").off();
     $("#clearInput").click(clearInputFunction);
@@ -92695,9 +92693,9 @@ function initClearInput(){
 }
 
 function toggleResults(status) {
-    if(status === undefined){
+    if (status === undefined) {
         status = $("#results").attr("data-status");
-    }else if(status !== "in" && status !== "out"){
+    } else if (status !== "in" && status !== "out") {
         status = "in";
     }
     if (status === "in") {
@@ -92716,27 +92714,22 @@ function toggleResults(status) {
     updateMapSize();
 }
 
-function updateMapSize(){
+function updateMapSize() {
     var resultsWidth = parseInt($("#results").width());
-    if($("#results").hasClass("hidden")){
+    if ($("#results").hasClass("hidden")) {
         resultsWidth = 0;
     }
     $("#search input[name=q]").attr("data-move-search", "false");
-
     var displayWidth = $(window).width();
-
     // Change Map Width
-    $("#map").width(displayWidth-resultsWidth);
-
+    $("#map").width(displayWidth - resultsWidth);
     var navBarHeight = $("nav.navbar").height();
     var displayHeight = $(window).height();
-
     // Change The Map Height
-    $("#map").height(displayHeight-navBarHeight);
+    $("#map").height(displayHeight - navBarHeight);
     $("#map").css("margin-top", navBarHeight);
-
     map.updateSize();
-    setTimeout(function(){
+    setTimeout(function() {
         $("#search input[name=q]").attr("data-move-search", "");
     }, 1500);
 }
@@ -92813,7 +92806,7 @@ function getRoad(address) {
         road = address["road"];
     } else if (typeof address["pedestrian"] !== 'undefined') {
         road = address["pedestrian"];
-    } else if (typeof address["path"] !== 'undefined' ) {
+    } else if (typeof address["path"] !== 'undefined') {
         road = address["path"];
     } else if (typeof address["footway"] !== 'undefined') {
         road = address["footway"];
@@ -92852,26 +92845,27 @@ function adjustViewBoundingBox(minpos, maxpos) {
     map.getView().fit([minPosition[0], minPosition[1], maxPosition[0], maxPosition[1]], map.getSize());
     updateMapExtent();
 }
-
 /*
  * This Function takes an array of Positions and adjusts the view of the map so everything is visible
  * @param positions{Array} - Array with Position Objects ([lon,lat])
  */
-function adjustViewPosList(positions){
-    var minpos = [null,null];
-    var maxpos = [null,null];
-
-    $.each(positions, function(index, value){
-        if(minpos[0] === null || value[0] < minpos[0]){
+function adjustViewPosList(positions) {
+    var minpos = [null, null];
+    var maxpos = [null, null];
+    $.each(positions, function(index, value) {
+        if(value === ""){
+            return;
+        }
+        if (minpos[0] === null || value[0] < minpos[0]) {
             minpos[0] = value[0];
         }
-        if(maxpos[0] === null || value[0] > maxpos[0]){
+        if (maxpos[0] === null || value[0] > maxpos[0]) {
             maxpos[0] = value[0];
         }
-        if(minpos[1] === null || value[1] < minpos[1]){
+        if (minpos[1] === null || value[1] < minpos[1]) {
             minpos[1] = value[1];
         }
-        if(maxpos[1] === null || value[1] > maxpos[1]){
+        if (maxpos[1] === null || value[1] > maxpos[1]) {
             maxpos[1] = value[1];
         }
     });
@@ -92981,12 +92975,11 @@ function toggleViewLock() {
     }
 }
 
-function createPopup(lon, lat, html){
+function createPopup(lon, lat, html) {
     var pos = ol.proj.transform([parseFloat(lon), parseFloat(lat)], 'EPSG:4326', 'EPSG:3857');
     $("#popup-content").html(html);
     popupOverlay.setPosition(pos);
 }
-
 
 
 $(document).ready(function() {
@@ -93080,13 +93073,7 @@ function getNearest(lon, lat) {
             var city = getCity(address);
             var id = data["place_id"];
 
-            var points = [];
-            if(typeof waypoints !== "undefined"){
-                points = waypoints;
-            }
-            points.push([lon,lat]);
-            // Base 64 encode
-            points = btoa(points);
+            var url = "/route/start/foot/"+lon+","+lat;
 
             var popup = $("\
                 <div class=\"result col-xs-12\">\
@@ -93095,7 +93082,7 @@ function getNearest(lon, lat) {
                     <p class=\"address\">Longitude: " + lon + "</p>\
                     <p class=\"address\">Latitude: " + lat + "</p>\
                     <a href=\"https://maps.metager.de/nominatim/details.php?place_id=" + id + "\" target=\"_blank\" class=\"btn btn-default btn-xs\">Details</a>\
-                    <a href=\"/route/start/"+points+"\" class=\"btn btn-default btn-xs\">Route berechnen</a>\
+                    <a href=\""+url+"\" class=\"btn btn-default btn-xs\">Route berechnen</a>\
                     </div>");
 
             // And now we can show the Popup where the user clicked
@@ -93270,6 +93257,43 @@ function parseManeuver(maneuver, takenRoute, legIndex, stepIndex) {
                     modifier += " auf " + targetStreet;
                 }
                 stepString = modifier;
+            }
+            break;
+        case "roundabout":
+        case "rotary":
+            stepString = "Im Kreisverkehr ";
+            if(maneuver["exit"] !== null){
+                stepString += "die ";
+                switch(parseInt(maneuver["exit"])){
+                    case 1:
+                        stepString += "erste ";
+                        break;
+                    case 2:
+                        stepString += "zweite ";
+                        break;
+                    case 3:
+                        stepString += "dritte ";
+                        break;
+                    case 4:
+                        stepString += "vierte ";
+                        break;
+                    case 5:
+                        stepString += "fünfte ";
+                        break;
+                    case 6:
+                        stepString += "sechste ";
+                        break;
+                    case 7:
+                        stepString += "siebte ";
+                        break;
+                    case 8:
+                        stepString += "achte ";
+                        break;
+                    case 9:
+                        stepString += "neunte ";
+                        break;
+                }
+                stepString += "Ausfahrt nehmen."
             }
             break;
         case "arrive":

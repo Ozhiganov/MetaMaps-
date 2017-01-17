@@ -21,8 +21,10 @@ $(document).ready(function() {
         }
     });
     deinitSearchBox();
-    initState();
-    initRouteFinder();
+    if (waypoints.length >= 1) {
+        adjustViewPosList(waypoints);
+    }
+    refreshUrl();
     map.un("singleclick", mapClickFunction);
     map.on('singleclick', function(evt) {
         var pos = evt["coordinate"];
@@ -60,14 +62,6 @@ function changeVehicle(newVehicle) {
     var uri = '/route/start/' + newVehicle + '/';
     vehicle = newVehicle;
     refreshUrl();
-}
-
-function initState() {
-    state = {
-        vehicle: vehicle,
-        waypoints: waypoints.slice(),
-        lastState: null
-    };
 }
 
 function initRouteFinder() {
