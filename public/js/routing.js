@@ -93156,6 +93156,7 @@ function addResults() {
     $(vehicleChooser).find("input[value="+vehicle+"]").prop("checked", true);
     // Add the changed Listener to the vehicle Chooser:
     $(vehicleChooser).find("input[type=radio]").change(function(){
+       vehicle = $(vehicleChooser).find("input[type=radio]:checked").val();
        var url = '/route/start/'+vehicle+'/';
        $.each(route["waypoints"], function(index, value){
             url += value["location"].toString() + ";";
