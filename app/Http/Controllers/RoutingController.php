@@ -37,11 +37,11 @@ class RoutingController extends Controller
                 return redirect('/route/start/');
             }
         }
-
         return view('map')
             ->with('boundings', 'false')
             ->with('getPosition', 'false')
             ->with('route', $cacheHash)
+            ->with('vars', ['vehicle' => $vehicle])
             ->with('css', [elixir('/css/routing.css')])
             ->with('scripts', [elixir('js/routing.js')]);
     }

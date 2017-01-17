@@ -99,7 +99,13 @@
             @endif
             @if(isset($vars) && sizeof($vars) > 0)
             @foreach($vars as $key => $value)
+            @if(gettype($value) === "string")
+            var {!!$key!!} = '{!! $value !!}';
+            @elseif(gettype($value) === "array")
+            var {!!$key!!} = {!! json_encode($value) !!};
+            @else
             var {!!$key!!} = {!! $value !!};
+            @endif
             @endforeach
             @endif
         </script>

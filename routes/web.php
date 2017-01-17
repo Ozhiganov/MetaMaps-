@@ -16,23 +16,20 @@ Route::get('/', function () {
 
 Route::group(['prefix' => 'route'], function () {
     Route::get('preview/{vehicle}/{points}', 'RoutingController@routingOverviewGeoJson');
-    Route::get('start/{from?}', function ($points = "") {
+    Route::get('start/{vehicle}/{points?}', function ($vehicle, $points = "") {
         $waypoints = [];
         if ($points !== "") {
             // Let's Convert
-            $points = base64_decode($points);
-            $points = explode(",", $points);
-            for ($i = 0; $i < sizeof($points); $i = $i + 2) {
-                if ($points[$i] === '') {
+            $points = explode(";", $points);
+            foreach ($points as $index => $value) {
+                if ($value === '') {
                     $waypoints[] = '';
                 } else {
-                    $waypoints[] = [floatval($points[$i]), floatval($points[$i + 1])];
+                    $waypoints[] = explode(',', $value);
                 }
             }
-
         }
-        $waypoints = json_encode($waypoints);
-        return view('map')->with('boundings', 'false')->with('getPosition', 'true')->with('scripts', [elixir('js/findRoute.js')])->with("vars", ["waypoints" => $waypoints])->with('css', [elixir('css/routing.css')]);
+        return response(view('map')->with('boundings', 'false')->with('getPosition', 'true')->with('scripts', [elixir('js/findRoute.js')])->with("vars", ["waypoints" => $waypoints, 'vehicle' => $vehicle])->with('css', [elixir('css/routing.css')]))->header('Vary', 'Accept');
     });
     Route::get('search/{search}', function ($search) {
         $url      = "https://maps.metager.de/nominatim/search.php?q=" . urlencode($search) . "&limit=5&polygon_geojson=0&format=json&extratags=0&addressdetails=0";

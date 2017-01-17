@@ -107,7 +107,7 @@ function initResults() {
 }
 
 function initStartNavigation(){
-    $("#clearInput").html('<a href="/route/start" target="_self"><img src="/img/navigation-arrow.svg" height="20px"></a>');
+    $("#clearInput").html('<a href="/route/start/foot" target="_self"><img src="/img/navigation-arrow.svg" height="20px"></a>');
     $("#clearInput").off();
     $("#clearInput").attr("title", "Routenplaner starten");
 }

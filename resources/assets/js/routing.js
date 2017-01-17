@@ -22,34 +22,36 @@ $(document).ready(function() {
 
 function addResults() {
     $("#results").html("");
-    var vehicleChooser = $("<div>\
-			<ul class=\"nav nav-tabs\" role=\"tablist\">\
-				<li role=\"presentation\" class=\"active\">\
-					<a href=\"#foot\" aria-controls=\"foot\" role=\"tab\" data-toggle=\"tab\">\
-						<img src=\"/img/silhouette-walk.png\" height=\"20px\" />\
-					</a>\
-				</li>\
-				<li role=\"presentation\" class=\"disabled\">\
-					<a href=\"#foot\" aria-controls=\"foot\" role=\"tab\">\
-						<img src=\"/img/bike.png\" height=\"20px\" />\
-					</a>\
-				</li>\
-				<li role=\"presentation\" class=\"disabled\">\
-					<a href=\"#foot\" aria-controls=\"foot\" role=\"tab\">\
-						<img src=\"/img/car.png\" height=\"20px\" />\
-					</a>\
-				</li>\
-			</ul>\
-			<div class=\"tab-content\">\
-				<div role=\"tabpanel\" class=\"tab-pane active\" id=\"foot\">\
-				</div>\
-			</div>\
-		</div>\
-		");
+    var vehicleChooser = 
+        $("<div id=\"vehicle-chooser\">\
+            <label class=\"radio-inline\">\
+              <input type=\"radio\" name=\"vehicle\" value=\"foot\"> <div><img src=\"/img/silhouette-walk.png\" height=\"20px\" /></div>\
+            </label>\
+            <label class=\"radio-inline\" >\
+              <input type=\"radio\" name=\"vehicle\" value=\"bicycle\"> <div><img src=\"/img/bike.png\" height=\"20px\" /></div>\
+            </label>\
+            <label class=\"radio-inline\">\
+              <input type=\"radio\" name=\"vehicle\" value=\"car\"> <div><img src=\"/img/car.png\" height=\"20px\" /></div>\
+            </label>\
+        </div>\
+        <div id=\"route-content\">\
+        </div>\
+        ");
     $("#results").append(vehicleChooser);
+    $(vehicleChooser).find("input[value="+vehicle+"]").prop("checked", true);
+    // Add the changed Listener to the vehicle Chooser:
+    $(vehicleChooser).find("input[type=radio]").change(function(){
+       var url = '/route/start/'+vehicle+'/';
+       $.each(route["waypoints"], function(index, value){
+            url += value["location"].toString() + ";";
+       });
+       url = url.replace(/;+$/, '');
+       document.location.href = url;
+    });
+
     // We should add a Place to display Informations About the Route
     var routeInformation = $('<div id="route-information" class="row"><div id="length" class="col-md-6"></div><div id="duration" class="col-md-6"></div></div>')
-    $("#foot").prepend(routeInformation);
+    $("#route-content").prepend(routeInformation);
     addRouteMetaData();
     insertSteps();
 }
@@ -95,7 +97,7 @@ function insertSteps() {
             $(stepList).append(maneuver);
         });
     });
-    $("#foot").append(stepList);
+    $("#route-content").append(stepList);
 }
 
 function addPoint(lon, lat) {
