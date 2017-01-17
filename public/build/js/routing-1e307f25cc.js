@@ -93231,6 +93231,7 @@ function parseManeuver(maneuver, takenRoute, legIndex, stepIndex) {
     var type = maneuver["type"];
     var modifier = maneuver["modifier"];
     var targetStreet = takenRoute["legs"][legIndex]["steps"][stepIndex]["name"];
+    var destinations = takenRoute["legs"][legIndex]["steps"][stepIndex]["destinations"];
     switch (type) {
         case "depart":
             var direction = parseBearing(maneuver["bearing_after"]);
@@ -93307,11 +93308,17 @@ function parseManeuver(maneuver, takenRoute, legIndex, stepIndex) {
         case "new name":
             stepString = "Weiter auf " + targetStreet;
             break;
+        case "merge":
+            stepString = parseModifier()
+        case "off ramp":
         case "fork":
             stepString = "An der Gabelung " + parseModifier(modifier) + " halten.";
+            if(destinations){
+                stepString += " Richtung \"" + destinations + "\".";
+            }
             break;
         default:
-            console.log(maneuver);
+            console.log(takenRoute["legs"][legIndex]["steps"][stepIndex]);
             stepString = "Konnte diesen Schritt nicht zu einem String auswerten";
     }
     return stepString;
