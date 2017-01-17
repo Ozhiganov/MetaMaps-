@@ -92938,7 +92938,7 @@ function followLocation() {
             map.addLayer(userPositionMarker);
             if (lockViewToPosition) {
                 // Fit the Extent of the Map to Fit the new Features Exactly
-                map.getView().fitExtent(userPositionMarker.getSource().getExtent(), map.getSize());
+                map.getView().fit(userPositionMarker.getSource().getExtent(), map.getSize());
             }
             // Change the color of the Icon so the user knows that the position is tracked:
             $("#follow-location").addClass("active");
@@ -92980,33 +92980,10 @@ function createPopup(lon, lat, html) {
     $("#popup-content").html(html);
     popupOverlay.setPosition(pos);
 }
-
-
-$(document).ready(function() {
-    initStartNavigation();
-    if (!boundings && getPosition) receiveLocation();
-    if (boundings) {
-        adjustViewBoundingBox(minPos, maxPos);
-    }
-    $("#search input[name=q]").on("keydown", function(event) {
-        if (event.which == 13) $("#doSearch").click();
-    });
-    $("#doSearch").click(function() {
-        updateMapExtent();
-        var q = $("#search input[name=q]").val();
-        q = encodeURI(q);
-        $("#clearInput").html("<img src=\"/img/ajax-loader.gif\" />");
-        var url = '/' + q + '/' + encodeURI(extent[0]) + '/' + encodeURI(extent[1]) + '/' + encodeURI(extent[2]) + '/' + encodeURI(extent[3]);
-        $.getScript(url).fail(function(jqxhr, settings, exception) {
-            console.log(exception);
-        });
-        $("#search input[name=q]").blur();
-    });
-});
-
 function initMap() {
-    popupOverlay = new ol.Overlay( /** @type {olx.OverlayOptions} */ ({
-        element: document.getElementById("popup"),
+
+    popupOverlay = new ol.Overlay(/** @type {olx.OverlayOptions} */ ({
+        element: $("#popup"),
         autoPan: true,
         autoPanAnimation: {
             duration: 250
@@ -93031,526 +93008,56 @@ function initMap() {
             })
         ],
         target: 'map',
-        controls: ol.control.defaults({
-            attributionOptions: /** @type {olx.control.AttributionOptions} */ ({
-                collapsible: true
-            })
-        }),
+        controls: [],
+            interactions: ol.interaction.defaults({
+                doubleClickZoom: false,
+                dragAndDrop: false,
+                dragPan: false,
+                dragBox: false,
+                dragRotate: false,
+                dragRotateAndZoom: false,
+                dragZoom: false,
+                draw: false,
+                extent: false,
+                interaction: false,
+                pointer: false,
+                keyboardPan: false,
+                keyboardZoom: false,
+                modify: false,
+                pinchRotate: false,
+                pinchZoom: false,
+                snap: false,
+                translate: false,
+                mouseWheelZoom: false,
+                pointer: false,
+                select: false
+            }),
         overlays: [popupOverlay],
         view: new ol.View({
             maxZoom: 18,
-            minZoom: 6,
+            minZoom: 5,
             center: ol.proj.transform(
                 [10.06897, 51.37247], 'EPSG:4326', 'EPSG:3857'),
-            zoom: 6
+            zoom: 5
         }),
         loadTilesWhileAnimating: true,
         loadTilesWhileInteracting: true
     });
     map.addControl(new ol.control.ZoomSlider());
-    $("#popup-closer").click(function() {
+    $("#popup-closer").click(function(){
         popupOverlay.setPosition(undefined);
         $(this).blur();
         return false;
     });
 }
-/**
- * This function sends a request to our Nominatim instance and evaluates the given coordinates to an adress
- * @param {Float} lon
- * @param {Float} lat
- * @return {Array} adress
+/*! iFrame Resizer (iframeSizer.contentWindow.min.js) - v3.5.5 - 2016-06-16
+ *  Desc: Include this file in any page being loaded into an iframe
+ *        to force the iframe to resize to the content size.
+ *  Requires: iframeResizer.min.js on host page.
+ *  Copyright: (c) 2016 David J. Bradshaw - dave@bradshaw.net
+ *  License: MIT
  */
-function getNearest(lon, lat) {
-    var url = "https://maps.metager.de/nominatim/reverse.php?format=json&lat=" + lat + "&lon=" + lon + "&zoom=18";
-    // Send the Request
-    $.get(url, function(data) {
-        if (typeof data !== "undefined" && typeof data["address"] !== "undefined") {
-            // Success we have an address
-            var address = data["address"];
 
-            var road = getRoad(address);
-            var house_number = getHouseNumber(address);
-            var city = getCity(address);
-            var id = data["place_id"];
-
-            var url = "/route/start/foot/"+lon+","+lat;
-
-            var popup = $("\
-                <div class=\"result col-xs-12\">\
-                    <p class=\"address\">" + road + " " + house_number + "</p>\
-                    <p class=\"city\">" + city + "</p>\
-                    <p class=\"address\">Longitude: " + lon + "</p>\
-                    <p class=\"address\">Latitude: " + lat + "</p>\
-                    <a href=\"https://maps.metager.de/nominatim/details.php?place_id=" + id + "\" target=\"_blank\" class=\"btn btn-default btn-xs\">Details</a>\
-                    <a href=\""+url+"\" class=\"btn btn-default btn-xs\">Route berechnen</a>\
-                    </div>");
-
-            // And now we can show the Popup where the user clicked
-            createPopup(lon, lat, popup);
-        }
-    });
-}
-
-function deinitResults() {
-    toggleResults("out");
-    $("#results").addClass("hidden");
-    $("#closer").addClass("hidden");
-    $("#results").html("");
-    updateMapSize();
-    initStartNavigation();
-}
-/*
- * Different things need to be done to be able to find the points to route to
- * First thinkg would be to prepare the Results Div
- */
-var vectorLayerRoutePreview;
-var markers = [];
-$(document).ready(function() {
-    // Put the Popstate Event:
-    $(window).unbind('popstate');
-    $(window).bind('popstate', function(event) {
-        var state = event.originalEvent.state;
-        if (state !== null && state.url !== undefined) {
-            document.location.href = state["url"];
-        } else if (state !== null && state["vehicle"] !== undefined && state["waypoints"] !== undefined) {
-            vehicle = state["vehicle"];
-            waypoints = clone(state["waypoints"]);
-            initRouteFinder();
-        } else {
-            waypoints = [];
-            initRouteFinder();
-        }
-    });
-    deinitSearchBox();
-    if (waypoints.length >= 1) {
-        adjustViewPosList(waypoints);
-    }
-    refreshUrl();
-    map.un("singleclick", mapClickFunction);
-    map.on('singleclick', function(evt) {
-        var pos = evt["coordinate"];
-        addWaypoint(pos);
-    });
-});
-
-function addWaypoint(pos) {
-    pos = ol.proj.transform(pos, 'EPSG:3857', 'EPSG:4326');
-    $.each(waypoints, function(index, value) {
-        if (value === '') {
-            waypoints[index] = pos;
-            refreshUrl();
-            return false;
-        }
-    });
-}
-
-function refreshUrl() {
-    var uri = '/route/start/' + vehicle + '/';
-    $.each(waypoints, function(index, value) {
-        uri += value.toString() + ";";
-    });
-    uri = uri.replace(/;+$/, '');
-    var stateObj = {
-        waypoints: clone(waypoints),
-        vehicle: vehicle
-    };
-    // Change URL
-    window.history.pushState(stateObj, '', uri);
-    initRouteFinder();
-}
-
-function changeVehicle(newVehicle) {
-    var uri = '/route/start/' + newVehicle + '/';
-    vehicle = newVehicle;
-    refreshUrl();
-}
-
-function initRouteFinder() {
-    $("#results").html("");
-    // Remove Existing Markers
-    clearMarkers();
-    var vehicleChooser = $("<div id=\"vehicle-chooser\">\
-			<label class=\"radio-inline\">\
-			  <input type=\"radio\" name=\"vehicle\" value=\"foot\"> <div><img src=\"/img/silhouette-walk.png\" height=\"20px\" /></div>\
-			</label>\
-			<label class=\"radio-inline\" >\
-			  <input type=\"radio\" name=\"vehicle\" value=\"bicycle\"> <div><img src=\"/img/bike.png\" height=\"20px\" /></div>\
-			</label>\
-			<label class=\"radio-inline\">\
-			  <input type=\"radio\" name=\"vehicle\" value=\"car\"> <div><img src=\"/img/car.png\" height=\"20px\" /></div>\
-			</label>\
-		</div>\
-		<div id=\"route-content\">\
-		</div>\
-		");
-    $("#results").append(vehicleChooser);
-    // Select the correct checkbox:
-    $("#vehicle-chooser input[value=" + vehicle + "]").prop("checked", true);
-    // Add the changed Listener to the Radio Buttons
-    $(vehicleChooser).find("input[type=radio]").off();
-    $(vehicleChooser).find("input[type=radio]").change(function() {
-        changeVehicle($("input[type=radio]:checked").val());
-    });
-    // Let's check for existing waypoints
-    if (typeof waypoints !== "undefined") {
-        if (waypoints.length === 0) {
-            waypoints.unshift('', '');
-        } else if (waypoints.length === 1) {
-            waypoints.unshift('');
-        }
-        var firstEmpty = false;
-        var waypointHtml = $('<div id="waypoint-container"></div>');
-        if (waypoints.length >= 1) {
-            $.each(waypoints, function(index, value) {
-                var html;
-                if (typeof value[0] !== "undefined") {
-                    html = $("<div id=\"" + index + "\" class=\"waypoint-list-item\" draggable=\"true\" title=\"" + value[0] + "\">" + value[0] + "</div>");
-                    // Add the correct value:
-                    positionToAdress(value[0], value[1], html);
-                    addPositionMarker(value[0], value[1], index);
-                } else {
-                    if (!firstEmpty) {
-                        html = $("<input id=\"" + index + "\" class=\"form-control\" placeholder=\"Klicke auf die Karte um diesen Wegpunkt einzufügen.\" value=\"\"></input>");
-                        firstEmpty = true;
-                    } else {
-                        html = $("<input id=\"" + index + "\" class=\"form-control\" placeholder=\"\" value=\"\"></input>");
-                    }
-                    addSearchEvent(html);
-                }
-                $(waypointHtml).append(html);
-            });
-        }
-        $("#route-content").append(waypointHtml);
-    }
-    // Describes the number of unfilled waypoints
-    var unfilled = 0;
-    if (waypoints[0] === '') {
-        unfilled++;
-    }
-    if (waypoints[waypoints.length - 1] === '') {
-        unfilled++;
-    }
-    if (typeof waypoints !== "undefined" && (waypoints.length - unfilled) >= 2) {
-        var from = waypoints[0][0] + "," + waypoints[0][1];
-        var lastIndex = waypoints.length - 1;
-        var to = waypoints[lastIndex][0] + "," + waypoints[lastIndex][1];
-        var points = "";
-        $.each(waypoints, function(index, value) {
-            if (value === '' || typeof value[0] === "undefined") {
-                return;
-            } else {
-                points += value.toString() + ";";
-            }
-        });
-        points = points.replace(/;+$/, '');
-        var startButton = $("<a href=\"/route/" + vehicle + "/" + points + "\" class=\"btn btn-default\">Route berechnen</a>");
-        var addWayPoint = $("<button type=\"button\" id=\"add-waypoint\" class=\"btn btn-default\">Wegpunkt hinzufügen</a>");
-        $("#route-content").append(startButton);
-        $("#route-content").append(addWayPoint);
-        // Add the Listener for adding Waypoints
-        $("#add-waypoint").click(function() {
-            clearMarkers();
-            waypoints.splice(waypoints.length, 0, '');
-            initRouteFinder();
-        });
-        // We should add a Place to display Informations About the Route
-        var routeInformation = $('<div id="route-information" class="row"><div id="length" class="col-md-6"></div><div id="duration" class="col-md-6"></div></div>')
-        $("#route-content").prepend(routeInformation);
-    }
-    generatePreviewRoute();
-    addDragAndDrop();
-    initResults();
-}
-/*
- * Function to convert lat/lon into an adress String and Put it into the value attribute of the given input-object
- * @param{float} lon
- * @param{float} lat
- * @apram{Input-Object} obj
- */
-function positionToAdress(lon, lat, obj) {
-    var url = "https://maps.metager.de/nominatim/reverse.php?format=json&lat=" + lat + "&lon=" + lon + "&zoom=18";
-    $.get(url, function(data) {
-        if (typeof data !== "undefined" && typeof data["display_name"] !== "undefined") {
-            obj.html(data["display_name"]);
-            obj.attr("title", data["display_name"]);
-        }
-    });
-}
-
-function addPositionMarker(lon, lat, index) {
-    // This will work upto an index of 25
-    // Caharacter Representation of the index:
-    var chr = String.fromCharCode(65 + index);
-    // So now the Pin
-    var el = $('<span id="' + chr + '" class="marker">' + chr + '</span>');
-    var pos = ol.proj.transform([parseFloat(lon), parseFloat(lat)], 'EPSG:4326', 'EPSG:3857');
-    markers.push(addMarker(el, pos));
-}
-/*
- * Clears all Markers which are on the map
- */
-function clearMarkers() {
-    $.each(markers, function(index, value) {
-        map.removeOverlay(value);
-    });
-    removeTemporarayMarker();
-    markers = [];
-    markerPositions = [];
-}
-/*
- * Generates Parameter to the Route until this point using the global waypoints variable
- * @return{String} QueryParameter
- */
-function generateBase64Parameter() {
-    if (typeof waypoints === "undefined") {
-        return null;
-    } else {
-        var newWayPoints = [];
-        $.each(waypoints, function(index, value) {
-            if (value !== '') {
-                newWayPoints.push(value);
-            }
-        });
-        var points = btoa(waypoints.toString());
-        return points;
-    }
-}
-/*
- * This Function generates an Overview of the Route that will be calculated
- * and prints it on the map
- */
-function generatePreviewRoute() {
-    // First thing is to remove the eventually already existing Layer
-    map.removeLayer(vectorLayerRoutePreview);
-    var vectorS = new ol.source.Vector();
-    var routeLineStyle = new ol.style.Style({
-        stroke: new ol.style.Stroke({
-            color: 'rgb(255,0,0)',
-            width: 5
-        }),
-        fill: new ol.style.Fill({
-            color: 'rgba(255,0,0,.03)'
-        })
-    });
-    if (waypoints.length < 2 || waypoints[0] === '' || (waypoints[waypoints.length - 1] === '' && waypoints.length === 2)) {
-        return;
-    } else {
-        var points = "";
-        $.each(waypoints, function(index, value) {
-            if (value === '' || typeof value[0] === "undefined") {
-                return;
-            } else {
-                points += value.toString() + ";";
-            }
-        });
-        points = points.replace(/;+$/, '');
-        // At this Point we can only Route between 2 Points so we have all the Information needed
-        var url = '/route/preview/' + vehicle + '/' + points;
-        // The Rest will be handled Asynchronious
-        $.get(url, function(data) {
-            var geojson = data["geojson"];
-            var duration = data["duration"];
-            var distance = data["distance"];
-            $("#route-information #length").html(parseDistance(distance));
-            $("#route-information #duration").html(parseDuration(duration));
-            var geom = (new ol.format.GeoJSON()).readGeometry(geojson, {
-                'dataProjection': 'EPSG:4326',
-                'featureProjection': 'EPSG:3857'
-            });
-            var feature = new ol.Feature({
-                'geometry': geom
-            });
-            feature.setStyle(routeLineStyle);
-            vectorS.addFeature(feature);
-            vectorLayerRoutePreview = new ol.layer.Vector({
-                source: vectorS
-            });
-            map.addLayer(vectorLayerRoutePreview);
-        });
-    }
-}
-
-function parseDistance(distance) {
-    distance = parseFloat(distance);
-    distance /= 1000;
-    var km = Math.round(distance * 10) / 10;
-    return km + " km";
-}
-
-function parseDuration(duration) {
-    duration = Math.floor(parseFloat(duration));
-    var hours = 0;
-    if (duration > 3600) {
-        hours = Math.floor(duration / 3600);
-        duration = duration % 3600;
-    }
-    var minute = 0;
-    if (duration > 60) {
-        minute = Math.round(duration / 60);
-        duration = duration % 60;
-    }
-    var result = "";
-    if (hours > 0) {
-        result += hours + " Std.";
-    }
-    if (minute > 0) {
-        result += " " + minute + " Min.";
-    }
-    return result;
-}
-/*
- * This functions appends the drag and drop event for all waypoints
- * This allows us to switch the Position of the waypoints
- */
-var draggedId = -5;
-
-function addDragAndDrop() {
-    $(".waypoint-list-item").on("dragstart", function(evt) {
-        evt.originalEvent.dataTransfer.setData('text', evt.target.id);
-        //Hide Original Element
-        setTimeout(function() {
-            $("#" + evt.target.id).addClass("hide");
-        });
-        draggedId = parseInt(evt.target.id);
-    });
-    $(".waypoint-list-item").on("dragend", function(evt) {
-        $("#waypoint-container .hide").removeClass("hide");
-    });
-    $("#waypoint-container div").each(function(index, element) {
-        $(element).on('dragover', function(evt) {
-            var targetId = parseInt(evt.target.id);
-            if (draggedId !== targetId) {
-                evt.originalEvent.preventDefault();
-                $("#waypoint-container .drop-target").remove();
-                $(this).after('<hr class="drop-target" />');
-            }
-        });
-        $(element).on('dragleave', function(evt) {
-            $("#waypoint-container .drop-target").remove();
-        });
-        $(element).on('drop', function(evt) {
-            evt.originalEvent.preventDefault();
-            var data = parseInt(evt.originalEvent.dataTransfer.getData('text'));
-            var target = parseInt($(this).attr("id"));
-            if (data !== target) {
-                if (data > target) target += 1;
-                waypoints.move(data, target);
-                refreshUrl();
-            }
-            draggedId = -5;
-        });
-    });
-    // We need a special treatment to allow placing a waypoint at the start
-    // For being able so we need to assign a special dragover,dragleave and drop event handler to the Nav-Tabs of the result
-    var element = $("#results ul.nav-tabs, #route-information");
-    $(element).on('dragover', function(evt) {
-        var targetId = -1;
-        if (draggedId !== targetId) {
-            evt.originalEvent.preventDefault();
-            $("#waypoint-container .drop-target").remove();
-            $("#waypoint-container").prepend('<hr class="drop-target" />');
-        }
-    });
-    $(element).on('dragleave', function(evt) {
-        $("#waypoint-container .drop-target").remove();
-    });
-    $(element).on('drop', function(evt) {
-        evt.originalEvent.preventDefault();
-        var data = parseInt(evt.originalEvent.dataTransfer.getData('text'));
-        var target = -1;
-        if (data !== target) {
-            if (data > target) target += 1;
-            waypoints.move(data, target);
-            initRouteFinder();
-        }
-        draggedId = -5;
-    });
-}
-Array.prototype.move = function(from, to) {
-    this.splice(to, 0, this.splice(from, 1)[0]);
-};
-/* 
- * This Function adds the Search Event to the input Box to allow searching for any Waypoint
- * @param element{Object} Input-Field that needs the Listeners to be attached
- */
-function addSearchEvent(element) {
-    $(element).focusin(function() {
-        console.log("test");
-        var searchButton = $("<a tab-index=\"-1\" href=\"#\" class=\"search-btn btn btn-default btn-sm\"><span class=\"glyphicon glyphicon-search\"></span></a>");
-        $(element).after(searchButton);
-        var placeholder = $(element).attr("placeholder");
-        $(element).attr("placeholder", "Suchworte eingeben");
-        $(element).keypress(function(e) {
-            if (e.which == 13) {
-                $(searchButton).click();
-            }
-        });
-        $(searchButton).mousedown(function(evt) {
-            evt.preventDefault();
-        });
-        $(searchButton).click(function() {
-            var searchResults = $("<div id=\"search-results\"><div class=\"loader\"><img src=\"/img/ajax-loader.gif\" /></div></div>");
-            $(element).after(searchResults);
-            var id = $(element).attr("id");
-            var query = $(element).val();
-            var url = "/route/search/" + encodeURI(query);
-            $.getJSON(url, function(data) {
-                var results = $("<ul class=\"list list-unstyled\"></ul>");
-                $.each(data, function(index, value) {
-                    var result = $("<li>" + value["display_name"] + "</li>");
-                    $(results).append(result);
-                    $(result).mousedown(function(evt) {
-                        waypoints[id] = [parseFloat(value["lon"]), parseFloat(value["lat"])];
-                        refreshUrl();
-                    });
-                    $(result).mouseover(function() {
-                        addTemporaryMarker(value["lon"], value["lat"]);
-                    });
-                    $(result).mouseout(function() {
-                        removeTemporarayMarker();
-                    });
-                });
-                $(searchResults).find(".loader").remove();
-                $(searchResults).append("<h5>Suchergebnisse für: \"" + query + "\"</h5>");
-                $(searchResults).append(results);
-            });
-        });
-        $(element).focusout(function(evt) {
-            $("#search-results").remove();
-            $(element).off();
-            $(element).val("");
-            addSearchEvent(element);
-            $(element).attr("placeholder", placeholder);
-            $(".search-btn").remove();
-        });
-    });
-}
-var marker = null;
-
-function addTemporaryMarker(lon, lat) {
-    // So now the Pin
-    var el = $('<span class="marker"></span>');
-    var pos = ol.proj.transform([parseFloat(lon), parseFloat(lat)], 'EPSG:4326', 'EPSG:3857');
-    if (marker !== null) {
-        map.removeOverlay(marker);
-        marker = null;
-    }
-    marker = addMarker(el, pos);
-}
-
-function removeTemporarayMarker() {
-    if (marker !== null) {
-        map.removeOverlay(marker);
-        marker = null;
-    }
-}
-
-function clone(obj) {
-    if (null == obj || "object" != typeof obj) return obj;
-    var copy = obj.constructor();
-    for (var attr in obj) {
-        if (obj.hasOwnProperty(attr)) copy[attr] = clone(obj[attr]);
-    }
-    return copy;
-}
-//# sourceMappingURL=findRoute.js.map
+!function(a,b){"use strict";function c(b,c,d){"addEventListener"in a?b.addEventListener(c,d,!1):"attachEvent"in a&&b.attachEvent("on"+c,d)}function d(b,c,d){"removeEventListener"in a?b.removeEventListener(c,d,!1):"detachEvent"in a&&b.detachEvent("on"+c,d)}function e(a){return a.charAt(0).toUpperCase()+a.slice(1)}function f(a){var b,c,d,e=null,f=0,g=function(){f=Ha(),e=null,d=a.apply(b,c),e||(b=c=null)};return function(){var h=Ha();f||(f=h);var i=ya-(h-f);return b=this,c=arguments,0>=i||i>ya?(e&&(clearTimeout(e),e=null),f=h,d=a.apply(b,c),e||(b=c=null)):e||(e=setTimeout(g,i)),d}}function g(a){return na+"["+pa+"] "+a}function h(b){ma&&"object"==typeof a.console&&console.log(g(b))}function i(b){"object"==typeof a.console&&console.warn(g(b))}function j(){k(),h("Initialising iFrame ("+location.href+")"),l(),o(),n("background",X),n("padding",_),B(),t(),u(),p(),D(),v(),ja=C(),O("init","Init message from host page"),Ea()}function k(){function a(a){return"true"===a?!0:!1}var c=ia.substr(oa).split(":");pa=c[0],Y=b!==c[1]?Number(c[1]):Y,aa=b!==c[2]?a(c[2]):aa,ma=b!==c[3]?a(c[3]):ma,ka=b!==c[4]?Number(c[4]):ka,V=b!==c[6]?a(c[6]):V,Z=c[7],ga=b!==c[8]?c[8]:ga,X=c[9],_=c[10],va=b!==c[11]?Number(c[11]):va,ja.enable=b!==c[12]?a(c[12]):!1,ra=b!==c[13]?c[13]:ra,Ba=b!==c[14]?c[14]:Ba}function l(){function b(){var b=a.iFrameResizer;h("Reading data from page: "+JSON.stringify(b)),Da="messageCallback"in b?b.messageCallback:Da,Ea="readyCallback"in b?b.readyCallback:Ea,ua="targetOrigin"in b?b.targetOrigin:ua,ga="heightCalculationMethod"in b?b.heightCalculationMethod:ga,Ba="widthCalculationMethod"in b?b.widthCalculationMethod:Ba}function c(a,b){return"function"==typeof a&&(h("Setup custom "+b+"CalcMethod"),Ga[b]=a,a="custom"),a}"iFrameResizer"in a&&Object===a.iFrameResizer.constructor&&(b(),ga=c(ga,"height"),Ba=c(Ba,"width")),h("TargetOrigin for parent set to: "+ua)}function m(a,b){return-1!==b.indexOf("-")&&(i("Negative CSS value ignored for "+a),b=""),b}function n(a,c){b!==c&&""!==c&&"null"!==c&&(document.body.style[a]=c,h("Body "+a+' set to "'+c+'"'))}function o(){b===Z&&(Z=Y+"px"),n("margin",m("margin",Z))}function p(){document.documentElement.style.height="",document.body.style.height="",h('HTML & body height set to "auto"')}function q(b){function f(){O(b.eventName,b.eventType)}var g={add:function(b){c(a,b,f)},remove:function(b){d(a,b,f)}};b.eventNames&&Array.prototype.map?(b.eventName=b.eventNames[0],b.eventNames.map(g[b.method])):g[b.method](b.eventName),h(e(b.method)+" event listener: "+b.eventType)}function r(a){q({method:a,eventType:"Animation Start",eventNames:["animationstart","webkitAnimationStart"]}),q({method:a,eventType:"Animation Iteration",eventNames:["animationiteration","webkitAnimationIteration"]}),q({method:a,eventType:"Animation End",eventNames:["animationend","webkitAnimationEnd"]}),q({method:a,eventType:"Input",eventName:"input"}),q({method:a,eventType:"Mouse Up",eventName:"mouseup"}),q({method:a,eventType:"Mouse Down",eventName:"mousedown"}),q({method:a,eventType:"Orientation Change",eventName:"orientationchange"}),q({method:a,eventType:"Print",eventName:["afterprint","beforeprint"]}),q({method:a,eventType:"Ready State Change",eventName:"readystatechange"}),q({method:a,eventType:"Touch Start",eventName:"touchstart"}),q({method:a,eventType:"Touch End",eventName:"touchend"}),q({method:a,eventType:"Touch Cancel",eventName:"touchcancel"}),q({method:a,eventType:"Transition Start",eventNames:["transitionstart","webkitTransitionStart","MSTransitionStart","oTransitionStart","otransitionstart"]}),q({method:a,eventType:"Transition Iteration",eventNames:["transitioniteration","webkitTransitionIteration","MSTransitionIteration","oTransitionIteration","otransitioniteration"]}),q({method:a,eventType:"Transition End",eventNames:["transitionend","webkitTransitionEnd","MSTransitionEnd","oTransitionEnd","otransitionend"]}),"child"===ra&&q({method:a,eventType:"IFrame Resized",eventName:"resize"})}function s(a,b,c,d){return b!==a&&(a in c||(i(a+" is not a valid option for "+d+"CalculationMethod."),a=b),h(d+' calculation method set to "'+a+'"')),a}function t(){ga=s(ga,fa,Ia,"height")}function u(){Ba=s(Ba,Aa,Ja,"width")}function v(){!0===V?(r("add"),G()):h("Auto Resize disabled")}function w(){h("Disable outgoing messages"),sa=!1}function x(){h("Remove event listener: Message"),d(a,"message",T)}function y(){null!==$&&$.disconnect()}function z(){r("remove"),y(),clearInterval(la)}function A(){w(),x(),!0===V&&z()}function B(){var a=document.createElement("div");a.style.clear="both",a.style.display="block",document.body.appendChild(a)}function C(){function d(){return{x:a.pageXOffset!==b?a.pageXOffset:document.documentElement.scrollLeft,y:a.pageYOffset!==b?a.pageYOffset:document.documentElement.scrollTop}}function e(a){var b=a.getBoundingClientRect(),c=d();return{x:parseInt(b.left,10)+parseInt(c.x,10),y:parseInt(b.top,10)+parseInt(c.y,10)}}function f(a){function c(a){var b=e(a);h("Moving to in page link (#"+d+") at x: "+b.x+" y: "+b.y),S(b.y,b.x,"scrollToOffset")}var d=a.split("#")[1]||a,f=decodeURIComponent(d),g=document.getElementById(f)||document.getElementsByName(f)[0];b!==g?c(g):(h("In page link (#"+d+") not found in iFrame, so sending to parent"),S(0,0,"inPageLink","#"+d))}function g(){""!==location.hash&&"#"!==location.hash&&f(location.href)}function j(){function a(a){function b(a){a.preventDefault(),f(this.getAttribute("href"))}"#"!==a.getAttribute("href")&&c(a,"click",b)}Array.prototype.forEach.call(document.querySelectorAll('a[href^="#"]'),a)}function k(){c(a,"hashchange",g)}function l(){setTimeout(g,ca)}function m(){Array.prototype.forEach&&document.querySelectorAll?(h("Setting up location.hash handlers"),j(),k(),l()):i("In page linking not fully supported in this browser! (See README.md for IE8 workaround)")}return ja.enable?m():h("In page linking not enabled"),{findTarget:f}}function D(){h("Enable public methods"),Ca.parentIFrame={autoResize:function(a){return!0===a&&!1===V?(V=!0,v()):!1===a&&!0===V&&(V=!1,z()),V},close:function(){S(0,0,"close"),A()},getId:function(){return pa},getPageInfo:function(a){"function"==typeof a?(Fa=a,S(0,0,"pageInfo")):(Fa=function(){},S(0,0,"pageInfoStop"))},moveToAnchor:function(a){ja.findTarget(a)},reset:function(){R("parentIFrame.reset")},scrollTo:function(a,b){S(b,a,"scrollTo")},scrollToOffset:function(a,b){S(b,a,"scrollToOffset")},sendMessage:function(a,b){S(0,0,"message",JSON.stringify(a),b)},setHeightCalculationMethod:function(a){ga=a,t()},setWidthCalculationMethod:function(a){Ba=a,u()},setTargetOrigin:function(a){h("Set targetOrigin: "+a),ua=a},size:function(a,b){var c=""+(a?a:"")+(b?","+b:"");O("size","parentIFrame.size("+c+")",a,b)}}}function E(){0!==ka&&(h("setInterval: "+ka+"ms"),la=setInterval(function(){O("interval","setInterval: "+ka)},Math.abs(ka)))}function F(){function c(a){function b(a){!1===a.complete&&(h("Attach listeners to "+a.src),a.addEventListener("load",g,!1),a.addEventListener("error",i,!1),l.push(a))}"attributes"===a.type&&"src"===a.attributeName?b(a.target):"childList"===a.type&&Array.prototype.forEach.call(a.target.querySelectorAll("img"),b)}function d(a){l.splice(l.indexOf(a),1)}function e(a){h("Remove listeners from "+a.src),a.removeEventListener("load",g,!1),a.removeEventListener("error",i,!1),d(a)}function f(a,c,d){e(a.target),O(c,d+": "+a.target.src,b,b)}function g(a){f(a,"imageLoad","Image loaded")}function i(a){f(a,"imageLoadFailed","Image load failed")}function j(a){O("mutationObserver","mutationObserver: "+a[0].target+" "+a[0].type),a.forEach(c)}function k(){var a=document.querySelector("body"),b={attributes:!0,attributeOldValue:!1,characterData:!0,characterDataOldValue:!1,childList:!0,subtree:!0};return n=new m(j),h("Create body MutationObserver"),n.observe(a,b),n}var l=[],m=a.MutationObserver||a.WebKitMutationObserver,n=k();return{disconnect:function(){"disconnect"in n&&(h("Disconnect body MutationObserver"),n.disconnect(),l.forEach(e))}}}function G(){var b=0>ka;a.MutationObserver||a.WebKitMutationObserver?b?E():$=F():(h("MutationObserver not supported in this browser!"),E())}function H(a,b){function c(a){var c=/^\d+(px)?$/i;if(c.test(a))return parseInt(a,W);var d=b.style.left,e=b.runtimeStyle.left;return b.runtimeStyle.left=b.currentStyle.left,b.style.left=a||0,a=b.style.pixelLeft,b.style.left=d,b.runtimeStyle.left=e,a}var d=0;return b=b||document.body,"defaultView"in document&&"getComputedStyle"in document.defaultView?(d=document.defaultView.getComputedStyle(b,null),d=null!==d?d[a]:0):d=c(b.currentStyle[a]),parseInt(d,W)}function I(a){a>ya/2&&(ya=2*a,h("Event throttle increased to "+ya+"ms"))}function J(a,b){for(var c=b.length,d=0,f=0,g=e(a),i=Ha(),j=0;c>j;j++)d=b[j].getBoundingClientRect()[a]+H("margin"+g,b[j]),d>f&&(f=d);return i=Ha()-i,h("Parsed "+c+" HTML elements"),h("Element position calculated in "+i+"ms"),I(i),f}function K(a){return[a.bodyOffset(),a.bodyScroll(),a.documentElementOffset(),a.documentElementScroll()]}function L(a,b){function c(){return i("No tagged elements ("+b+") found on page"),ea}var d=document.querySelectorAll("["+b+"]");return 0===d.length?c():J(a,d)}function M(){return document.querySelectorAll("body *")}function N(a,c,d,e){function f(){ea=m,za=n,S(ea,za,a)}function g(){function a(a,b){var c=Math.abs(a-b)<=va;return!c}return m=b!==d?d:Ia[ga](),n=b!==e?e:Ja[Ba](),a(ea,m)||aa&&a(za,n)}function i(){return!(a in{init:1,interval:1,size:1})}function j(){return ga in qa||aa&&Ba in qa}function k(){h("No change in size detected")}function l(){i()&&j()?R(c):a in{interval:1}||k()}var m,n;g()||"init"===a?(P(),f()):l()}function O(a,b,c,d){function e(){a in{reset:1,resetPage:1,init:1}||h("Trigger event: "+b)}function f(){return wa&&a in ba}f()?h("Trigger event cancelled: "+a):(e(),Ka(a,b,c,d))}function P(){wa||(wa=!0,h("Trigger event lock on")),clearTimeout(xa),xa=setTimeout(function(){wa=!1,h("Trigger event lock off"),h("--")},ca)}function Q(a){ea=Ia[ga](),za=Ja[Ba](),S(ea,za,a)}function R(a){var b=ga;ga=fa,h("Reset trigger event: "+a),P(),Q("reset"),ga=b}function S(a,c,d,e,f){function g(){b===f?f=ua:h("Message targetOrigin: "+f)}function i(){var g=a+":"+c,i=pa+":"+g+":"+d+(b!==e?":"+e:"");h("Sending message to host page ("+i+")"),ta.postMessage(na+i,f)}!0===sa&&(g(),i())}function T(b){function d(){return na===(""+b.data).substr(0,oa)}function e(){function d(){ia=b.data,ta=b.source,j(),da=!1,setTimeout(function(){ha=!1},ca)}document.body?d():(h("Waiting for page ready"),c(a,"readystatechange",e))}function f(){ha?h("Page reset ignored by init"):(h("Page size reset by host page"),Q("resetPage"))}function g(){O("resizeParent","Parent window requested size check")}function k(){var a=m();ja.findTarget(a)}function l(){return b.data.split("]")[1].split(":")[0]}function m(){return b.data.substr(b.data.indexOf(":")+1)}function n(){return"iFrameResize"in a}function o(){var a=m();h("MessageCallback called from parent: "+a),Da(JSON.parse(a)),h(" --")}function p(){var a=m();h("PageInfoFromParent called from parent: "+a),Fa(JSON.parse(a)),h(" --")}function q(){return b.data.split(":")[2]in{"true":1,"false":1}}function r(){switch(l()){case"reset":f();break;case"resize":g();break;case"inPageLink":case"moveToAnchor":k();break;case"message":o();break;case"pageInfo":p();break;default:n()||q()||i("Unexpected message ("+b.data+")")}}function s(){!1===da?r():q()?e():h('Ignored message of type "'+l()+'". Received before initialization.')}d()&&s()}function U(){"loading"!==document.readyState&&a.parent.postMessage("[iFrameResizerChild]Ready","*")}var V=!0,W=10,X="",Y=0,Z="",$=null,_="",aa=!1,ba={resize:1,click:1},ca=128,da=!0,ea=1,fa="bodyOffset",ga=fa,ha=!0,ia="",ja={},ka=32,la=null,ma=!1,na="[iFrameSizer]",oa=na.length,pa="",qa={max:1,min:1,bodyScroll:1,documentElementScroll:1},ra="child",sa=!0,ta=a.parent,ua="*",va=0,wa=!1,xa=null,ya=16,za=1,Aa="scroll",Ba=Aa,Ca=a,Da=function(){i("MessageCallback function not defined")},Ea=function(){},Fa=function(){},Ga={height:function(){return i("Custom height calculation function not defined"),document.documentElement.offsetHeight},width:function(){return i("Custom width calculation function not defined"),document.body.scrollWidth}},Ha=Date.now||function(){return(new Date).getTime()},Ia={bodyOffset:function(){return document.body.offsetHeight+H("marginTop")+H("marginBottom")},offset:function(){return Ia.bodyOffset()},bodyScroll:function(){return document.body.scrollHeight},custom:function(){return Ga.height()},documentElementOffset:function(){return document.documentElement.offsetHeight},documentElementScroll:function(){return document.documentElement.scrollHeight},max:function(){return Math.max.apply(null,K(Ia))},min:function(){return Math.min.apply(null,K(Ia))},grow:function(){return Ia.max()},lowestElement:function(){return Math.max(Ia.bodyOffset(),J("bottom",M()))},taggedElement:function(){return L("bottom","data-iframe-height")}},Ja={bodyScroll:function(){return document.body.scrollWidth},bodyOffset:function(){return document.body.offsetWidth},custom:function(){return Ga.width()},documentElementScroll:function(){return document.documentElement.scrollWidth},documentElementOffset:function(){return document.documentElement.offsetWidth},scroll:function(){return Math.max(Ja.bodyScroll(),Ja.documentElementScroll())},max:function(){return Math.max.apply(null,K(Ja))},min:function(){return Math.min.apply(null,K(Ja))},rightMostElement:function(){return J("right",M())},taggedElement:function(){return L("right","data-iframe-width")}},Ka=f(N);c(a,"message",T),U()}(window||{});
+//# sourceMappingURL=iframeResizer.contentWindow.map
+//# sourceMappingURL=iframeSearch.js.map

@@ -92938,7 +92938,7 @@ function followLocation() {
             map.addLayer(userPositionMarker);
             if (lockViewToPosition) {
                 // Fit the Extent of the Map to Fit the new Features Exactly
-                map.getView().fitExtent(userPositionMarker.getSource().getExtent(), map.getSize());
+                map.getView().fit(userPositionMarker.getSource().getExtent(), map.getSize());
             }
             // Change the color of the Icon so the user knows that the position is tracked:
             $("#follow-location").addClass("active");
