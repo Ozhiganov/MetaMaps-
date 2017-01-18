@@ -69,11 +69,21 @@
     margin-top: 10px;
 }
 
-#routing-steps > li {
+#routing-steps .step {
+    margin-left: 0;
+    margin-right: 0;
+}
+
+#routing-steps .step > td {
+    text-align: center;
+    vertical-align: middle;
+}
+
+#routing-steps .step {
     cursor: pointer;
 }
 
-#routing-steps > li:hover {
+#routing-steps .step:hover {
     background-color: #ececec;
 }
 
