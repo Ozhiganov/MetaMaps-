@@ -92579,6 +92579,7 @@ var vectorLayer;
 var id = null;
 var userPositionMarker = null;
 var lockViewToPosition = true;
+var gps = false;
 var featureStyle = new ol.style.Style({
     stroke: new ol.style.Stroke({
         color: 'rgb(153,39,208)',
@@ -92618,6 +92619,7 @@ var clearInputFunction = function() {
 $(document).ready(function() {
     // Initialize the Map
     initMap();
+    checkGPS();
     $("#closer").click(function() {
         toggleResults();
     });
@@ -92904,6 +92906,35 @@ function addMarker(el, pos) {
     });
     map.addOverlay(overlay);
     return overlay;
+}
+
+
+function checkGPS() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(position){
+            if(position.coords.accuracy > 500){
+                gps = false;
+                toggleGPSLocator(false);
+            }else{
+                gps = gps = true;
+                toggleGPSLocator(true);
+            }
+        }, function(error){
+            gps = false;
+            toggleGPSLocator(false);
+        });
+    } else {
+        gps = false;
+        toggleGPSLocator(false);
+    }
+}
+
+function toggleGPSLocator(visible){
+    if(visible){
+        $("#location-tool").removeClass("hidden");
+    }else{
+        $("#location-tool").addClass("hidden");
+    }
 }
 
 function followLocation() {

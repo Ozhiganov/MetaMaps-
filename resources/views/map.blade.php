@@ -79,7 +79,7 @@
             </div>
             <div class="col-xs-11 col-sm-6 col-md-4 col-lg-3 hidden" data-status="in" id="results">
             </div>
-            <ul id="location-tool" class="list-unstyled">
+            <ul id="location-tool" class="list-unstyled hidden">
                 <li id="lock-location" class="hidden"><span class="button glyphicon glyphicon-lock"></span><span class="info">Ansicht zentriert</span></li>
                 <li id="follow-location"><span class="button glyphicon glyphicon-record"></span></li>
             </ul>
