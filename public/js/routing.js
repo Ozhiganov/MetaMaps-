@@ -93364,11 +93364,11 @@ function parseManeuver(maneuver, takenRoute, legIndex, stepIndex) {
             }
             break;
         case "arrive":
-            var modifier = parseModifier(modifier);
-            if (modifier === undefined) {
+            var mod = parseModifier(modifier);
+            if (mod === undefined) {
                 stepString = "Sie haben das Ziel erreicht.";
             } else {
-                stepString = "Das Ziel befindet sich " + parseModifier(modifier);
+                stepString = "Das Ziel befindet sich " + mod;
             }
             break;
         case "new name":
