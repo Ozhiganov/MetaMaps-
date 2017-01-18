@@ -385,20 +385,35 @@ Array.prototype.move = function(from, to) {
  */
 function addSearchEvent(element) {
     $(element).focusin(function() {
-        if(gps){
+        var history = getHistory();
+        if(gps || history.length > 0){
             var sr = $("<div id=\"search-results\"></div>");
             var res = $("<ul class=\"list list-unstyled\"></ul>");
-            var ownPosition = $("<li><img src=\"/img/marker-icon.png\" /> Eigene Position</li>");
-            $(ownPosition).mousedown(function(){
-                navigator.geolocation.getCurrentPosition(function(position){
-                    var id = $(element).attr("id");
-                    waypoints[id] = [position.coords.longitude, position.coords.latitude];
-                    refreshUrl();
-                }, function(error){
-                    checkGPS();
+            if(gps){
+                var ownPosition = $("<li><img src=\"/img/marker-icon.png\" /> Eigene Position</li>");
+                $(ownPosition).mousedown(function(){
+                    navigator.geolocation.getCurrentPosition(function(position){
+                        var id = $(element).attr("id");
+                        waypoints[id] = [position.coords.longitude, position.coords.latitude];
+                        refreshUrl();
+                    }, function(error){
+                        checkGPS();
+                    });
                 });
+                $(res).append(ownPosition);
+            }
+            $.each(history, function(index, value){
+                console.log(value);
+                var r = $("<li>" + value.name + "</li>");
+                $(r).mousedown(function(){
+                    var id = $(element).attr("id");
+                    waypoints[id] = [value.lon, value.lat];
+                    addToHistory(value.name)
+                    refreshUrl();
+                });
+                $(res).append(r);
             });
-            $(res).append(ownPosition);
+            
             $(sr).append(res);
             $(element).after(sr);
         }
@@ -427,6 +442,8 @@ function addSearchEvent(element) {
                     var result = $("<li>" + value["display_name"] + "</li>");
                     $(results).append(result);
                     $(result).mousedown(function(evt) {
+                        console.log(value);
+                        addToHistory(value["display_name"], value["lon"], value["lat"]);
                         waypoints[id] = [parseFloat(value["lon"]), parseFloat(value["lat"])];
                         refreshUrl();
                     });
@@ -451,6 +468,86 @@ function addSearchEvent(element) {
             $(".search-btn").remove();
         });
     });
+}
+
+function getHistory(){
+    var präfix = "place-search:";
+    var result = [];
+
+    if(localStorage){
+        var reg = new RegExp("^" + präfix, '');
+        $.each(localStorage, function(key, value){
+            if(key.match(reg) !== null && value.match(/^\d+;\d+\.\d+,\d+\.\d+$/) !== null ){
+                var match = value.match(/([\d]+?);([\d\.]+),([\d\.]+)/);
+                var count = parseInt(match[1]);
+                var lon = parseFloat(match[2]);
+                var lat = parseFloat(match[3]);
+                var name = atob(key.replace(präfix, ''));
+                result.push({
+                    name: name,
+                    count: count,
+                    lon: lon,
+                    lat: lat
+                });
+            }
+        });
+        result.sort(function(a, b){
+            return b.count-a.count
+        });
+    }
+    return result;
+}
+
+function addToHistory(name, lon, lat){
+    if(localStorage){
+        var präfix = "place-search:";
+        var key = btoa(name);
+        // Check if item exists:
+        var item = localStorage.getItem(präfix + key);
+        if(item === null){
+            localStorage.setItem(präfix + key, "1;" + lon + "," + lat);
+        }else{
+            var count = parseInt(item.match(/^(\d+);/)[1]);
+            count++;
+            localStorage.setItem(präfix + key, count + ";" + lon + "," + lat);
+        }
+    }
+}
+
+function clearHistory(itemCount){
+    var präfix = "place-search:";
+    var result = [];
+
+    if(localStorage){
+        var reg = new RegExp("^" + präfix, '');
+        $.each(localStorage, function(key, value){
+            if(key.match(reg) !== null && value.match(/^\d+;\d+\.\d+,\d+\.\d+$/) !== null ){
+                var match = value.match(/([\d]+?);([\d\.]+),([\d\.]+)/);
+                var count = parseInt(match[1]);
+                var lon = parseFloat(match[2]);
+                var lat = parseFloat(match[3]);
+                var name = atob(key.replace(präfix, ''));
+                result.push({
+                    name: name,
+                    count: count,
+                    lon: lon,
+                    lat: lat
+                });
+                localStorage.removeItem(key);
+            }
+        });
+        result.sort(function(a, b){
+            return b.count-a.count
+        });
+        for(var i = 0; i < itemCount; i++){
+            if(i < result.length){
+                var key = btoa(name);
+                localStorage.setItem(präfix + key, result[i].count+ ";" + result[i].lon + "," + result[i].lat);
+            }else{
+                break;
+            }
+        }
+    }
 }
 var marker = null;
 
