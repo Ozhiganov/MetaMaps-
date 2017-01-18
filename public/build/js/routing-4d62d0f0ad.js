@@ -93225,8 +93225,12 @@ function parseImg(step){
             switch(step["maneuver"]["modifier"]){
                 case "left":
                     return "/img/turn-left.png";
+                case "sharp left":
+                    return "/img/turn-sharp-left.png";
                 case "right":
                     return "/img/turn-right.png";
+                case "sharp right":
+                    return "/img/turn-sharp-right.png";
                 case "uturn":
                     return "/img/uturn.png";
                 case "slight right":
@@ -93254,6 +93258,8 @@ function parseImg(step){
                     return "/img/fork-slight-right.png";
                 case "slight left":
                     return "/img/fork-slight-left.png";
+                case "straight":
+                    return "/img/straight.png";
                 default:
                    // console.log(step);
             }
