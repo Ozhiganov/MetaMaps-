@@ -62,7 +62,7 @@
             <div id="beta-info" class="alert alert-info alert-dismissible" role="alert">
               <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">×</span></button>
               <strong>Maps.metager.de:</strong> Auch Ihre geografischen Nutzungsdaten bleiben geschützt.
-            Beta-Version, bisher nur Deutschland-Karten, noch ohne Routenplaner - wir
+            Beta-Version, bisher nur Deutschland-Karten - wir
             arbeiten daran.
             </div>
             @endif
@@ -77,7 +77,7 @@
             <div class="hidden" id="closer" title="Ergebnisse einklappen">
                 >
             </div>
-            <div class="col-xs-11 col-sm-6 col-md-4 col-lg-3 hidden" data-status="in" id="results">
+            <div class="col-xs-11 col-sm-6 col-md-4 hidden" data-status="in" id="results">
             </div>
             <ul id="location-tool" class="list-unstyled hidden">
                 <li id="lock-location" class="hidden"><span class="button glyphicon glyphicon-lock"></span><span class="info">Ansicht zentriert</span></li>

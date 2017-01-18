@@ -92908,7 +92908,6 @@ function addMarker(el, pos) {
     return overlay;
 }
 
-
 function checkGPS() {
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(function(position){

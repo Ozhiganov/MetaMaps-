@@ -48,7 +48,7 @@ function refreshUrl() {
     $.each(waypoints, function(index, value) {
         uri += value.toString() + ";";
     });
-    uri = uri.replace(/;+$/, '');
+    uri = uri.replace(/;$/, '');
     var stateObj = {
         waypoints: clone(waypoints),
         vehicle: vehicle
@@ -98,14 +98,22 @@ function initRouteFinder() {
             waypoints.unshift('');
         }
         var firstEmpty = false;
-        var waypointHtml = $('<div id="waypoint-container"></div>');
+        var waypointHtml = $('<div id="waypoint-container" class="container-fluid"></div>');
         if (waypoints.length >= 1) {
             $.each(waypoints, function(index, value) {
                 var html;
                 if (typeof value[0] !== "undefined") {
-                    html = $("<div id=\"" + index + "\" class=\"waypoint-list-item\" draggable=\"true\" title=\"" + value[0] + "\">" + value[0] + "</div>");
+                    var chr = String.fromCharCode(65 + index);
+                    // So now the Pin
+                    var el = $('<span id="' + chr + '" class="marker">' + chr + '</span>');
+                    html = $('\
+                        <div id="' + index + '" class="waypoint-list-item row" draggable="true" title="' + value[0] + '">\
+                            <div class="waypoint-marker col-xs-2"></div>\
+                            <div class="adress-name col-xs-10">' + value[0] +'</div>\
+                        </div>');
+                    $(html).find(".waypoint-marker").append(el);
                     // Add the correct value:
-                    positionToAdress(value[0], value[1], html);
+                    positionToAdress(value[0], value[1], $(html).find(".adress-name"));
                     addPositionMarker(value[0], value[1], index);
                 } else {
                     if (!firstEmpty) {
@@ -142,15 +150,18 @@ function initRouteFinder() {
             }
         });
         points = points.replace(/;+$/, '');
-        var startButton = $("<a href=\"/route/" + vehicle + "/" + points + "\" class=\"btn btn-default\">Route berechnen</a>");
-        var addWayPoint = $("<button type=\"button\" id=\"add-waypoint\" class=\"btn btn-default\">Wegpunkt hinzufügen</a>");
-        $("#route-content").append(startButton);
-        $("#route-content").append(addWayPoint);
+        var startButton = $("<div class=\"col-xs-6\"><a id=\"calc-route\" href=\"/route/" + vehicle + "/" + points + "\" class=\"\">Route berechnen</a></div>");
+        var addWayPoint = $("<div class=\"col-xs-6\"><button type=\"button\" id=\"add-waypoint\" class=\"\">Wegpunkt hinzufügen</a></div>");
+        var buttons = $("<div id=\"find-route-options\" class=\"container-fluid\"><div class=\"row\"></div></div>");
+        $(buttons).find(".row").append(startButton);
+        $(buttons).find(".row").append(addWayPoint);
+        $("#route-content").append(buttons);
+
         // Add the Listener for adding Waypoints
         $("#add-waypoint").click(function() {
             clearMarkers();
             waypoints.splice(waypoints.length, 0, '');
-            initRouteFinder();
+            refreshUrl();
         });
         // We should add a Place to display Informations About the Route
         var routeInformation = $('<div id="route-information" class="row"><div id="length" class="col-md-6"></div><div id="duration" class="col-md-6"></div></div>')
@@ -374,7 +385,23 @@ Array.prototype.move = function(from, to) {
  */
 function addSearchEvent(element) {
     $(element).focusin(function() {
-        console.log("test");
+        if(gps){
+            var sr = $("<div id=\"search-results\"></div>");
+            var res = $("<ul class=\"list list-unstyled\"></ul>");
+            var ownPosition = $("<li><img src=\"/img/marker-icon.png\" /> Eigene Position</li>");
+            $(ownPosition).mousedown(function(){
+                navigator.geolocation.getCurrentPosition(function(position){
+                    var id = $(element).attr("id");
+                    waypoints[id] = [position.coords.longitude, position.coords.latitude];
+                    refreshUrl();
+                }, function(error){
+                    checkGPS();
+                });
+            });
+            $(res).append(ownPosition);
+            $(sr).append(res);
+            $(element).after(sr);
+        }
         var searchButton = $("<a tab-index=\"-1\" href=\"#\" class=\"search-btn btn btn-default btn-sm\"><span class=\"glyphicon glyphicon-search\"></span></a>");
         $(element).after(searchButton);
         var placeholder = $(element).attr("placeholder");
@@ -388,6 +415,7 @@ function addSearchEvent(element) {
             evt.preventDefault();
         });
         $(searchButton).click(function() {
+            $("#search-results").remove();
             var searchResults = $("<div id=\"search-results\"><div class=\"loader\"><img src=\"/img/ajax-loader.gif\" /></div></div>");
             $(element).after(searchResults);
             var id = $(element).attr("id");
