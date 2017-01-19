@@ -93200,19 +93200,19 @@ function initRouteFinder() {
     // Remove Existing Markers
     clearMarkers();
     var vehicleChooser = $("<div id=\"vehicle-chooser\">\
-			<label class=\"radio-inline\">\
-			  <input type=\"radio\" name=\"vehicle\" value=\"foot\"> <div><img src=\"/img/silhouette-walk.png\" height=\"20px\" /></div>\
-			</label>\
-			<label class=\"radio-inline\" >\
-			  <input type=\"radio\" name=\"vehicle\" value=\"bicycle\"> <div><img src=\"/img/bike.png\" height=\"20px\" /></div>\
-			</label>\
-			<label class=\"radio-inline\">\
-			  <input type=\"radio\" name=\"vehicle\" value=\"car\"> <div><img src=\"/img/car.png\" height=\"20px\" /></div>\
-			</label>\
-		</div>\
-		<div id=\"route-content\">\
-		</div>\
-		");
+            <label class=\"radio-inline\">\
+              <input type=\"radio\" name=\"vehicle\" value=\"foot\"> <div><img src=\"/img/silhouette-walk.png\" height=\"20px\" /></div>\
+            </label>\
+            <label class=\"radio-inline\" >\
+              <input type=\"radio\" name=\"vehicle\" value=\"bicycle\"> <div><img src=\"/img/bike.png\" height=\"20px\" /></div>\
+            </label>\
+            <label class=\"radio-inline\">\
+              <input type=\"radio\" name=\"vehicle\" value=\"car\"> <div><img src=\"/img/car.png\" height=\"20px\" /></div>\
+            </label>\
+        </div>\
+        <div id=\"route-content\">\
+        </div>\
+        ");
     $("#results").append(vehicleChooser);
     // Select the correct checkbox:
     $("#vehicle-chooser input[value=" + vehicle + "]").prop("checked", true);
@@ -93240,7 +93240,7 @@ function initRouteFinder() {
                     html = $('\
                         <div id="' + index + '" class="waypoint-list-item row" draggable="true" title="' + value[0] + '">\
                             <div class="waypoint-marker col-xs-2"></div>\
-                            <div class="adress-name col-xs-10">' + value[0] +'</div>\
+                            <div class="adress-name col-xs-10">' + value[0] + '</div>\
                         </div>');
                     $(html).find(".waypoint-marker").append(el);
                     // Add the correct value:
@@ -93287,7 +93287,6 @@ function initRouteFinder() {
         $(buttons).find(".row").append(startButton);
         $(buttons).find(".row").append(addWayPoint);
         $("#route-content").append(buttons);
-
         // Add the Listener for adding Waypoints
         $("#add-waypoint").click(function() {
             clearMarkers();
@@ -93517,36 +93516,54 @@ Array.prototype.move = function(from, to) {
 function addSearchEvent(element) {
     $(element).focusin(function() {
         var history = getHistory();
-        if(gps || history.length > 0){
+        if (gps || history.length > 0) {
             var sr = $("<div id=\"search-results\"></div>");
-            var res = $("<ul class=\"list list-unstyled\"></ul>");
-            if(gps){
+            if (gps) {
+                var res = $("<ul class=\"list list-unstyled\"></ul>");
                 var ownPosition = $("<li><img src=\"/img/marker-icon.png\" /> Eigene Position</li>");
-                $(ownPosition).mousedown(function(){
-                    navigator.geolocation.getCurrentPosition(function(position){
+                $(ownPosition).mousedown(function() {
+                    navigator.geolocation.getCurrentPosition(function(position) {
                         var id = $(element).attr("id");
                         waypoints[id] = [position.coords.longitude, position.coords.latitude];
                         refreshUrl();
-                    }, function(error){
+                    }, function(error) {
                         checkGPS();
                     });
                 });
                 $(res).append(ownPosition);
+                $(sr).append(res);
             }
-            $.each(history, function(index, value){
-                console.log(value);
-                var r = $("<li>" + value.name + "</li>");
-                $(r).mousedown(function(){
-                    var id = $(element).attr("id");
-                    waypoints[id] = [value.lon, value.lat];
-                    addToHistory(value.name)
-                    refreshUrl();
+            if(history.length > 0){
+                $(sr).append("<h5>Ergebnisse aus der <a href=\"/help/history\" target=\"_blank\">History</a></h5>");
+                var res = $("<ul class=\"list list-unstyled\"></ul>");
+                $.each(history, function(index, value) {
+                    var r = $("<li>" + value.name + "</li>");
+                    $(r).mousedown(function() {
+                        var id = $(element).attr("id");
+                        waypoints[id] = [value.lon, value.lat];
+                        addToHistory(value.name)
+                        refreshUrl();
+                    });
+                    $(res).append(r);
                 });
-                $(res).append(r);
-            });
-            
-            $(sr).append(res);
+                $(sr).append(res);
+            }
             $(element).after(sr);
+            $(element).unbind("keyup");
+            $(element).keyup(function(){
+                var val = escapeRegExp($(this).val());
+                var reg = new RegExp(val, 'i');
+                // Hide all Elements where the String does not match and unhide all where it matches:
+                $("#search-results li").each(function(index, value){
+                    var name = $(value).html();
+                    var el = $("#search-results li")[index];
+                    if(name.match(reg) !== null){
+                        $(el).removeClass("hidden");
+                    }else{
+                        $(el).addClass("hidden");
+                    }
+                });
+            });
         }
         var searchButton = $("<a tab-index=\"-1\" href=\"#\" class=\"search-btn btn btn-default btn-sm\"><span class=\"glyphicon glyphicon-search\"></span></a>");
         $(element).after(searchButton);
@@ -93573,7 +93590,6 @@ function addSearchEvent(element) {
                     var result = $("<li>" + value["display_name"] + "</li>");
                     $(results).append(result);
                     $(result).mousedown(function(evt) {
-                        console.log(value);
                         addToHistory(value["display_name"], value["lon"], value["lat"]);
                         waypoints[id] = [parseFloat(value["lon"]), parseFloat(value["lat"])];
                         refreshUrl();
@@ -93601,14 +93617,17 @@ function addSearchEvent(element) {
     });
 }
 
-function getHistory(){
+function escapeRegExp(str) {
+  return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
+}
+
+function getHistory() {
     var präfix = "place-search:";
     var result = [];
-
-    if(localStorage){
+    if (localStorage) {
         var reg = new RegExp("^" + präfix, '');
-        $.each(localStorage, function(key, value){
-            if(key.match(reg) !== null && value.match(/^\d+;\d+\.\d+,\d+\.\d+$/) !== null ){
+        $.each(localStorage, function(key, value) {
+            if (key.match(reg) !== null && value.match(/^\d+;\d+\.\d+,\d+\.\d+$/) !== null) {
                 var match = value.match(/([\d]+?);([\d\.]+),([\d\.]+)/);
                 var count = parseInt(match[1]);
                 var lon = parseFloat(match[2]);
@@ -93622,62 +93641,82 @@ function getHistory(){
                 });
             }
         });
-        result.sort(function(a, b){
-            return b.count-a.count
+        result.sort(function(a, b) {
+            return b.count - a.count
         });
     }
+    //console.log(result);
     return result;
 }
 
-function addToHistory(name, lon, lat){
-    if(localStorage){
-        var präfix = "place-search:";
-        var key = btoa(name);
-        // Check if item exists:
-        var item = localStorage.getItem(präfix + key);
-        if(item === null){
-            localStorage.setItem(präfix + key, "1;" + lon + "," + lat);
-        }else{
-            var count = parseInt(item.match(/^(\d+);/)[1]);
-            count++;
-            localStorage.setItem(präfix + key, count + ";" + lon + "," + lat);
-        }
+function saveHistory(history, präfix) {
+    if (localStorage) {
+        // Das abspeichern der neuen History verläuft in 2 Schritten:
+        // 1. Löschen der vorhanden History
+        // 2. Hinzufügen der neuen History
+        // 1. Löschen der vorhandenen History
+        clearHistory(präfix);
+        // 2. Hinzufügen der neuen History
+        $.each(history, function(index, value) {
+            var key = präfix + btoa(value.name);
+            var val = value.count + ";" + value.lon + "," + value.lat;
+            localStorage.setItem(key, val);
+        });
     }
 }
 
-function clearHistory(itemCount){
-    var präfix = "place-search:";
-    var result = [];
+function clearHistory(präfix) {
+    var oldhistory = getHistory();
+    $.each(oldhistory, function(index, value) {
+        var key = präfix + btoa(value.name);
+        localStorage.removeItem(key);
+    });
+}
 
-    if(localStorage){
-        var reg = new RegExp("^" + präfix, '');
-        $.each(localStorage, function(key, value){
-            if(key.match(reg) !== null && value.match(/^\d+;\d+\.\d+,\d+\.\d+$/) !== null ){
-                var match = value.match(/([\d]+?);([\d\.]+),([\d\.]+)/);
-                var count = parseInt(match[1]);
-                var lon = parseFloat(match[2]);
-                var lat = parseFloat(match[3]);
-                var name = atob(key.replace(präfix, ''));
-                result.push({
-                    name: name,
-                    count: count,
-                    lon: lon,
-                    lat: lat
-                });
-                localStorage.removeItem(key);
+function addToHistory(name, lon, lat) {
+    if (localStorage) {
+        var präfix = "place-search:";
+        var key = btoa(name);
+        var historyLimit = 10;
+        // Let's get the sorted List of Results
+        var history = getHistory();
+        // Check if item exists:
+        var item = localStorage.getItem(präfix + key);
+        if (item === null) {
+            // Item ist noch nicht in der History. Es wird an die erste Stelle gesetzt
+            if (history.length >= historyLimit) {
+                // Zuerst das letzte Element entfernen, da unsere History voll ist
+                history.pop();
             }
-        });
-        result.sort(function(a, b){
-            return b.count-a.count
-        });
-        for(var i = 0; i < itemCount; i++){
-            if(i < result.length){
-                var key = btoa(name);
-                localStorage.setItem(präfix + key, result[i].count+ ";" + result[i].lon + "," + result[i].lat);
-            }else{
-                break;
-            }
+            // Nun fügen wir das neue Element hinzu:
+            history.unshift({
+                name: name,
+                count: 10,
+                lon: lon,
+                lat: lat
+            });
+            console.log(history);
+        } else {
+            // Item ist bereits in der History. Es wird einen Platz nach oben gepackt.
+            var itemIndex = parseInt(item.match(/^\d+/)[0]);
+            // Der angezeigte Index ist eine Zahl zwischen 1 und 10 wobei 10 das erste Element ist und 1 das letzte
+            // Wir konvertieren diese Zahl zum Array-Index
+            itemIndex = Math.abs(itemIndex - 10);
+            // Wir verschieben das Array Element jetzt um einen Platz nach vorne, also z.B: Element an stelle 4 kommt an stelle 3 etc.
+            history.move(itemIndex, itemIndex - 1);
         }
+        // Jetzt müssen wir noch den Count Parameter für jedes Element aktualisieren:
+        var newHistory = [];
+        $.each(history, function(index, value) {
+            var c = historyLimit - index;
+            newHistory.push({
+                name: value.name,
+                count: c,
+                lon: value.lon,
+                lat: value.lat
+            });
+        });
+        saveHistory(newHistory, präfix);
     }
 }
 var marker = null;

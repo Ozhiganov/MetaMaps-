@@ -77,6 +77,11 @@
     width: 100%;
     padding: 7px;
     border: 1px solid grey;
+    z-index: 2001;
+}
+
+#search-results h5 {
+    font-weight: bold;
 }
 
 #search-results .loader {
