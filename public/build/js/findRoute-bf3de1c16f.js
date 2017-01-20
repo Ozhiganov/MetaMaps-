@@ -93594,7 +93594,7 @@ function addSearchEvent(element) {
                     $(r).mousedown(function() {
                         var id = $(element).attr("id");
                         waypoints[id] = [value.lon, value.lat];
-                        addToHistory(value.name)
+                        addToHistory(value.name, value.lon, value.lat);
                         refreshUrl();
                     });
                     $(res).append(r);
