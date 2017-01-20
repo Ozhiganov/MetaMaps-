@@ -93,7 +93,7 @@ function startLocationFollowing() {
                 timestamp: timestamp,
                 lon: lon,
                 lat: lat,
-                accuracy: Math.max(accuracy, 1.5);
+                accuracy: Math.max(accuracy, 1.5)
             };
             var dist = getDistance(currentPosition, newPosition);
             var minDist = 0;
