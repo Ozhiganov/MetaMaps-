@@ -111,7 +111,8 @@ function startLocationFollowing() {
                 positionstring = positionstring.replace(/;+$/, '');
                 timestampstring = timestampstring.replace(/;+$/, '');
                 radiusstring = radiusstring.replace(/;+$/, '');
-                var url = 'http://maps.metager.de:5000/match/v1/' + vehicle + '/' + positionstring + '?steps=true&geometries=geojson&timestamps=' + timestampstring + '&radiuses=' + radiusstring;
+
+                var url = '/route/match/'+vehicle+'/'+positionstring+'/'+timestampstring+'/'+radiusstring;
                 $.getJSON(url, function(r) {
                     // Aus den "gesnappten" Koordinaten berechnen wir nun die gefahrene Route
                     if (r.code === "Ok") {
@@ -185,7 +186,6 @@ function startLocationFollowing() {
                                     map.getView().setRotation(rotation);
                                     map.getView().setZoom(18);
                                     map.getView().setCenter(ol.proj.transform([position.lon,position.lat], 'EPSG:4326', 'EPSG:3857'));
-                                    console.log(data);
                                 }
                             });
                         }

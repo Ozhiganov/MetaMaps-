@@ -118,4 +118,27 @@ class RoutingController extends Controller
 
     }
 
+    public function match($vehicle, $points, $timestamp, $radiuses)
+    {
+        // This is the function to calculate the Route from $from to $to with the given vehicle
+        $port = 0;
+        switch ($vehicle) {
+            case "bicycle":
+                $port = 5001;
+                break;
+            case "car":
+                $port = 5002;
+                break;
+            default:
+                $port = 5000;
+        }
+        $url  = 'http://maps.metager.de:' . $port . '/match/v1/' . $vehicle . '/' . $points . '?steps=true&geometries=geojson&timestamps=' . $timestamp . '&radiuses=' . $radiuses;
+        $data = file_get_contents($url);
+
+        $response = Response::make($data, 200);
+        $response->header('Content-Type', 'application/json');
+
+        return $response;
+    }
+
 }

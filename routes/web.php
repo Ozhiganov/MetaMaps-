@@ -17,6 +17,7 @@ Route::get('/', function () {
 Route::group(['prefix' => 'route'], function () {
     Route::get('preview/{vehicle}/{points}', 'RoutingController@routingOverviewGeoJson');
     Route::get('find/{vehicle}/{points}/{hints?}', 'RoutingController@routingGeoJson');
+    Route::get('match/{vehicle}/{points}/{timestamp}/{radiuses}', 'RoutingController@match');
     Route::get('start/{vehicle}/{points?}', function ($vehicle, $points = "") {
         $waypoints = [];
         if ($points !== "") {
