@@ -93740,7 +93740,7 @@ function startLocationFollowing() {
             var timestamp = Math.floor(position.timestamp / 1000);
             var lon = parseFloat(position.coords.longitude);
             var lat = parseFloat(position.coords.latitude);
-            var accuracy = position.coords.accuracy;
+            var accuracy = Math.max(position.coords.accuracy, 1.0);
             var newPosition = {
                 timestamp: timestamp,
                 lon: lon,
@@ -93761,7 +93761,6 @@ function startLocationFollowing() {
                     break;
             }
             if (dist <= minDist || calculating) {
-                console.log(dist, minDist, calculating);
                 return;
             } else {
                 calculating = true;
@@ -93794,7 +93793,7 @@ function startLocationFollowing() {
                 var url = '/route/match/' + vehicle + '/' + positionstring + '/' + timestampstring + '/' + radiusstring;
                 $.getJSON(url, function(r) {
                     // Aus den "gesnappten" Koordinaten berechnen wir nun die gefahrene Route
-                    if (r.code === "Ok") {
+                    if (r.code === "Ok" && r.tracepoints !== null && r.tracepoints[r.tracepoints.length - 1] !== null) {
                         var position = {
                                 hint: r.tracepoints[r.tracepoints.length - 1].hint,
                                 lon: parseFloat(r.tracepoints[r.tracepoints.length - 1].location[0]),
