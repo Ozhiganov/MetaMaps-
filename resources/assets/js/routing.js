@@ -7,8 +7,22 @@ var routeLineStyle = new ol.style.Style({
         color: 'rgba(255,0,0,.03)'
     })
 });
+var route = {};
+var routeLayer = null;
+var routeMarkers = [];
 $(document).ready(function() {
-    $.getJSON('/route/' + route, function(response) {
+    var pointString = points;
+    if(points.match(/gps/) !== null){
+        var pos = getCurrentLocation();
+        pointString = points;
+        if(pos !== null){
+            pointString = pointString.replace(/gps/, pos.toString());
+        }else{
+            pointString = pointString.replace(/;{0,1}gps;{0,1}/, ';');
+        }
+    }
+    var url = '/route/find/' + vehicle + '/' + pointString;
+    $.getJSON(url, function(response) {
         route = response;
     }).success(function() {
         // If the Route could be loaded and there is a route between the points we can show it:
@@ -23,8 +37,7 @@ $(document).ready(function() {
 
 function addResults() {
     $("#results").html("");
-    var vehicleChooser = 
-        $("<div id=\"vehicle-chooser\">\
+    var vehicleChooser = $("<div id=\"vehicle-chooser\">\
             <label class=\"radio-inline\">\
               <input type=\"radio\" name=\"vehicle\" value=\"foot\"> <div><img src=\"/img/silhouette-walk.png\" height=\"20px\" /></div>\
             </label>\
@@ -39,21 +52,25 @@ function addResults() {
         </div>\
         ");
     $("#results").append(vehicleChooser);
-    $(vehicleChooser).find("input[value="+vehicle+"]").prop("checked", true);
+    $(vehicleChooser).find("input[value=" + vehicle + "]").prop("checked", true);
     // Add the changed Listener to the vehicle Chooser:
-    $(vehicleChooser).find("input[type=radio]").change(function(){
-       vehicle = $(vehicleChooser).find("input[type=radio]:checked").val();
-       var url = '/route/start/'+vehicle+'/';
-       $.each(route["waypoints"], function(index, value){
+    $(vehicleChooser).find("input[type=radio]").change(function() {
+        vehicle = $(vehicleChooser).find("input[type=radio]:checked").val();
+        var url = '/route/start/' + vehicle + '/';
+        $.each(route["waypoints"], function(index, value) {
             url += value["location"].toString() + ";";
-       });
-       url = url.replace(/;+$/, '');
-       document.location.href = url;
+        });
+        url = url.replace(/;+$/, '');
+        document.location.href = url;
     });
-
     // We should add a Place to display Informations About the Route
     var routeInformation = $('<div id="route-information" class="row"><div id="length" class="col-md-6"></div><div id="duration" class="col-md-6"></div></div>')
     $("#route-content").prepend(routeInformation);
+    // Add Button for starting the route assistent
+    if(points.match(/^gps/) !== null){
+        var routeAssistent = $('<div class="container-fluid"><div class="row"><div class="col-xs-12"><a id="route-assistent" href="javascript:startAssistent();">Routenführung starten</a></div></div></div>');
+        $("#route-content").prepend(routeAssistent);
+    }
     addRouteMetaData();
     insertSteps();
 }
@@ -68,11 +85,10 @@ function insertSteps() {
             var lon = step["maneuver"]["location"][0];
             var lat = step["maneuver"]["location"][1];
             var maneuver = $("<tr class=\"step\" data-lon=\"" + lon + "\" data-lat=\"" + lat + "\"></tr>");
-
             var directionImg = $("<td class=\"step-image\"></td>");
             var img = parseImg(step);
-            if(img !== ""){
-                $(directionImg).append("<img height=\"35px\" src=\""+ img + "\" />");
+            if (img !== "") {
+                $(directionImg).append("<img height=\"35px\" src=\"" + img + "\" />");
             }
             $(maneuver).append(directionImg);
             var stepString = parseManeuver(step["maneuver"], takenRoute, legIndex, stepIndex);
@@ -87,20 +103,18 @@ function insertSteps() {
             } else {
                 distance = distance + " m";
             }
-            if(step["maneuver"]["type"] === "arrive"){
+            if (step["maneuver"]["type"] === "arrive") {
                 distance = "";
             }
             $(maneuver).append($("<td>" + distance + "</td>"));
-            
             $(maneuver).mouseover(function() {
                 var lon = parseFloat($(this).attr("data-lon"));
                 var lat = parseFloat($(this).attr("data-lat"));
                 var layer = addPoint(lon, lat);
-                $(maneuver).mouseout(function(){
+                $(maneuver).mouseout(function() {
                     map.removeLayer(layer);
                 });
-
-                $(maneuver).click(function(){
+                $(maneuver).click(function() {
                     var point = ol.proj.transform([lon, lat], 'EPSG:4326', 'EPSG:3857');
                     map.getView().setCenter(point);
                     map.getView().setZoom(16);
@@ -112,8 +126,8 @@ function insertSteps() {
     $("#route-content").append(stepList);
 }
 
-function parseImg(step){
-    switch(step["maneuver"]["type"]){
+function parseImg(step) {
+    switch (step["maneuver"]["type"]) {
         case "depart":
         case "new name":
             return "/img/straight.png";
@@ -121,7 +135,7 @@ function parseImg(step){
         case "continue":
         case "end of road":
         case "turn":
-            switch(step["maneuver"]["modifier"]){
+            switch (step["maneuver"]["modifier"]) {
                 case "left":
                     return "/img/turn-left.png";
                 case "sharp left":
@@ -139,7 +153,7 @@ function parseImg(step){
                 case "straight":
                     return "/img/straight.png";
                 default:
-                   // console.log(step);
+                    // console.log(step);
             }
             break;
         case "roundabout":
@@ -148,7 +162,7 @@ function parseImg(step){
         case "merge":
         case "off ramp":
         case "fork":
-            switch(step["maneuver"]["modifier"]){
+            switch (step["maneuver"]["modifier"]) {
                 case "left":
                     return "/img/fork-left.png";
                 case "right":
@@ -160,25 +174,22 @@ function parseImg(step){
                 case "straight":
                     return "/img/straight.png";
                 default:
-                   // console.log(step);
+                    // console.log(step);
             }
         default:
-          //  console.log(step);
+            //  console.log(step);
     }
     return "";
 }
 
 function addPoint(lon, lat) {
-    var layer = 
-    	new ol.layer.Vector({
-            source: new ol.source.Vector({
-                features: [new ol.Feature({
-                    geometry: new ol.geom.Point(
-                        ol.proj.transform([lon, lat], 'EPSG:4326', 'EPSG:3857')
-                    )
-                })]
-            })
-        });
+    var layer = new ol.layer.Vector({
+        source: new ol.source.Vector({
+            features: [new ol.Feature({
+                geometry: new ol.geom.Point(ol.proj.transform([lon, lat], 'EPSG:4326', 'EPSG:3857'))
+            })]
+        })
+    });
     map.addLayer(layer);
     return layer;
 }
@@ -197,7 +208,7 @@ function parseManeuver(maneuver, takenRoute, legIndex, stepIndex) {
     var modifier = maneuver["modifier"];
     var targetStreet = takenRoute["legs"][legIndex]["steps"][stepIndex]["name"];
     var destinations = takenRoute["legs"][legIndex]["steps"][stepIndex]["destinations"];
-    if(!destinations){
+    if (!destinations) {
         destinations = takenRoute["legs"][legIndex]["steps"][stepIndex]["ref"]
     }
     switch (type) {
@@ -231,9 +242,9 @@ function parseManeuver(maneuver, takenRoute, legIndex, stepIndex) {
         case "roundabout":
         case "rotary":
             stepString = "Im Kreisverkehr ";
-            if(maneuver["exit"] !== null){
+            if (maneuver["exit"] !== null) {
                 stepString += "die ";
-                switch(parseInt(maneuver["exit"])){
+                switch (parseInt(maneuver["exit"])) {
                     case 1:
                         stepString += "erste ";
                         break;
@@ -263,7 +274,7 @@ function parseManeuver(maneuver, takenRoute, legIndex, stepIndex) {
                         break;
                 }
                 stepString += "Ausfahrt nehmen."
-                if(destinations){
+                if (destinations) {
                     stepString += " <nobr>(" + destinations + ")</nobr>";
                 }
             }
@@ -282,9 +293,9 @@ function parseManeuver(maneuver, takenRoute, legIndex, stepIndex) {
         case "merge":
             var mod = parseModifier(modifier);
             stepString = mod + " auffahren.";
-            if(targetStreet && !destinations){
+            if (targetStreet && !destinations) {
                 stepString = mod + " auffahren auf " + targetStreet + ".";
-            }else if(targetStreet && destinations){
+            } else if (targetStreet && destinations) {
                 stepString = mod + " halten um auf " + targetStreet + " (" + destinations + ") aufzufahren.";
             }
             break;
@@ -292,11 +303,11 @@ function parseManeuver(maneuver, takenRoute, legIndex, stepIndex) {
         case "fork":
             var mod = parseModifier(modifier);
             stepString = "An der Gabelung " + mod + " halten.";
-            if(targetStreet && !destinations){
+            if (targetStreet && !destinations) {
                 stepString = "An der Gabelung " + mod + " halten. Richtung " + targetStreet;
-            }else if(!targetStreet && destinations){
+            } else if (!targetStreet && destinations) {
                 stepString = "An der Gabelung " + mod + " halten. (" + destinations + ")";
-            }else if(targetStreet && destinations){
+            } else if (targetStreet && destinations) {
                 stepString = "An der Gabelung " + mod + " halten. Richtung " + targetStreet + " (" + destinations + ")";
             }
             break;
@@ -304,7 +315,6 @@ function parseManeuver(maneuver, takenRoute, legIndex, stepIndex) {
             console.log(takenRoute["legs"][legIndex]["steps"][stepIndex]);
             stepString = "Konnte diesen Schritt nicht zu einem String auswerten";
     }
-    
     return stepString;
 }
 
@@ -426,11 +436,20 @@ function addGraphics() { // We collect the minimal Position and the maximum Posi
         });
     });
     adjustViewBoundingBox(minPos, maxPos);
+    if(routeLayer !== null){
+        // Remove old Features
+        map.removeLayer(routeLayer);
+    }
+    // Remove old Markers
+    $.each(routeMarkers, function(index, value){
+        map.removeOverlay(value);
+    });
     // add Features
-    var vectorL = new ol.layer.Vector({
+
+    routeLayer = new ol.layer.Vector({
         source: vectorS
     });
-    map.addLayer(vectorL);
+    map.addLayer(routeLayer);
     // We should add some Pins to the Waypoint Locations
     $.each(route["waypoints"], function(index, value) {
         // This will work upto an index of 25
@@ -439,6 +458,20 @@ function addGraphics() { // We collect the minimal Position and the maximum Posi
         // So now the Pin
         var el = $('<span id="' + chr + '" class="marker">' + chr + '</span>');
         var pos = ol.proj.transform([parseFloat(value["location"][0]), parseFloat(value["location"][1])], 'EPSG:4326', 'EPSG:3857');
-        addMarker(el, pos);
+        routeMarkers.push(addMarker(el, pos));
     });
+}
+
+function startAssistent() {
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/js/routeAssistent.js', {
+            scope: '/'
+        }).then(function(reg) {
+            // registration worked
+            console.log('Registration succeeded. Scope is ' + reg.scope);
+        }).catch(function(error) {
+            // registration failed
+            console.error('Registration failed with ' + error);
+        });
+    };
 }

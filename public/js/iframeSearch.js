@@ -92725,7 +92725,10 @@ function updateMapSize() {
     var displayWidth = $(window).width();
     // Change Map Width
     $("#map").width(displayWidth - resultsWidth);
-    var navBarHeight = $("nav.navbar").height();
+    var navBarHeight = $("nav").height();
+    if($("nav").hasClass("hidden")){
+        navBarHeight = 0;
+    }
     var displayHeight = $(window).height();
     // Change The Map Height
     $("#map").height(displayHeight - navBarHeight);
@@ -92986,6 +92989,25 @@ function followLocation() {
         // Hide the lock View to Position Button
         $("#lock-location").addClass("hidden");
         $("#lock-location > span.info").css("display", "");
+    }
+}
+
+function getCurrentLocation() {
+    var lon = "";
+    var lat = "";
+    if (gps) {
+        navigator.geolocation.getCurrentPosition(function(position) {
+            lon = parseFloat(position.coords.longitude);
+            lat = parseFloat(position.coords.latitude);
+        }, function(error) {
+            checkGPS();
+        });
+        while (lon === "" && lat === "") {
+            sleep(100);
+        }
+        return [lon, lat];
+    } else {
+        return null;
     }
 }
 

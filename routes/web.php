@@ -16,6 +16,7 @@ Route::get('/', function () {
 
 Route::group(['prefix' => 'route'], function () {
     Route::get('preview/{vehicle}/{points}', 'RoutingController@routingOverviewGeoJson');
+    Route::get('find/{vehicle}/{points}/{hints?}', 'RoutingController@routingGeoJson');
     Route::get('start/{vehicle}/{points?}', function ($vehicle, $points = "") {
         $waypoints = [];
         if ($points !== "") {
@@ -24,6 +25,8 @@ Route::group(['prefix' => 'route'], function () {
             foreach ($points as $index => $value) {
                 if ($value === '') {
                     $waypoints[] = '';
+                } elseif ($value === "gps") {
+                    $waypoints[] = 'gps';
                 } else {
                     $pos         = explode(',', $value);
                     $pos[0]      = floatval($pos[0]);
@@ -42,25 +45,6 @@ Route::group(['prefix' => 'route'], function () {
         return $response;
     });
     Route::get('{vehicle}/{points}', 'RoutingController@calcRoute');
-    /* This is the Route for finding a route
-     * Means finding the Lat/Lon of the Start/End of Route
-     * and all possible other targets.
-     * Determining which Routing Service (Foot, Car, etc.).
-     */
-
-    Route::get('{routeHash}', function ($routeHash) {
-        $route = "";
-        if (!Cache::has($routeHash)) {
-            abort('404');
-        } else {
-            $route = Cache::get($routeHash);
-            $route = base64_decode($route);
-        }
-        $response = Response::make($route, 200);
-        $response->header('Content-Type', 'application/json');
-        return $response;
-    });
-
 });
 
 Route::get('map/{search}/{latMin}/{lonMin}/{latMax}/{lonMax}', function ($search, $latMin, $lonMin, $latMax, $lonMax) {

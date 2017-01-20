@@ -7265,4 +7265,12 @@ html, body, main, #map {
 .ol-attribution ul {
     font-size: .7em;
 }
+
+#route-assistent {
+    width: 100%;
+    display: block;
+    text-align: center;
+    padding: 9px 0;
+    cursor: pointer;
+}
 /*# sourceMappingURL=routing.css.map */

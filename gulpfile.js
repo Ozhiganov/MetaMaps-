@@ -17,7 +17,7 @@ elixir((mix) => {
     mix.styles(['bootstrap.min.css', 'ol.css', 'style.css', 'mapSearch.css', 'routing.css'], 'public/css/routing.css');
     mix.scripts(['jquery.min.js', 'bootstrap.min.js', 'ol.js', 'map.js', 'mapSearch.js'], 'public/js/mapSearch.js');
     mix.scripts(['jquery.min.js', 'bootstrap.min.js', 'ol.js', 'map.js', 'iframeSearch.js', 'iframeResizer.contentWindow.min.js'], 'public/js/iframeSearch.js');
-    mix.scripts(['jquery.min.js', 'bootstrap.min.js', 'ol.js', 'map.js', 'mapSearch.js', 'routing.js'], 'public/js/routing.js');
+    mix.scripts(['jquery.min.js', 'bootstrap.min.js', 'ol.js', 'map.js', 'mapSearch.js', 'routing.js', 'routeAssistent.js'], 'public/js/routing.js');
     mix.scripts(['jquery.min.js', 'bootstrap.min.js', 'ol.js', 'map.js', 'mapSearch.js', 'findRoute.js'], 'public/js/findRoute.js');
     mix.version(['public/css/mapSearch.css', 'public/css/iframeSearch.css', 'public/css/routing.css', 'public/js/mapSearch.js', 'public/js/iframeSearch.js', 'public/js/routing.js', 'public/js/findRoute.js']);
 });

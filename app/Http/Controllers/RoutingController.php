@@ -10,38 +10,10 @@ class RoutingController extends Controller
 {
     public function calcRoute($vehicle, $points)
     {
-        // This is the function to calculate the Route from $from to $to with the given vehicle
-        $port = 0;
-        switch ($vehicle) {
-            case "bicycle":
-                $port = 5001;
-                break;
-            case "car":
-                $port = 5002;
-                break;
-            default:
-                $port = 5000;
-        }
-        $url       = "http://maps.metager.de:$port/route/v1/$vehicle/$points?steps=true&geometries=geojson";
-        $cacheHash = md5($url);
-        if (Cache::has($cacheHash)) {
-            $result = Cache::get($cacheHash);
-        } else {
-            $result = "";
-            try {
-                $result = file_get_contents($url);
-                $result = base64_encode($result);
-                Cache::put($cacheHash, $result, 60);
-            } catch (\ErrorException $e) {
-                Log::error("Konnte den Routing Server nicht erreichen");
-                return redirect('/route/start/');
-            }
-        }
         return view('map')
             ->with('boundings', 'false')
             ->with('getPosition', 'false')
-            ->with('route', $cacheHash)
-            ->with('vars', ['vehicle' => $vehicle])
+            ->with('vars', ['vehicle' => $vehicle, 'points' => $points])
             ->with('css', [elixir('/css/routing.css')])
             ->with('scripts', [elixir('js/routing.js')]);
     }
@@ -96,4 +68,54 @@ class RoutingController extends Controller
 
         return $response;
     }
+
+    public function routingGeoJson($vehicle, $points, $hints = "")
+    {
+        // This is the function to calculate the Route from $from to $to with the given vehicle
+        $port = 0;
+        switch ($vehicle) {
+            case "bicycle":
+                $port = 5001;
+                break;
+            case "car":
+                $port = 5002;
+                break;
+            default:
+                $port = 5000;
+        }
+        $url = "http://maps.metager.de:$port/route/v1/$vehicle/$points?steps=true&geometries=geojson&overview=full";
+        if ($hints !== "") {
+            $url .= "&hints=$hints";
+        }
+        $cacheHash = md5($url);
+        if (Cache::has($cacheHash)) {
+            $result = Cache::get($cacheHash);
+        } else {
+            $result = "";
+            try {
+                $result = file_get_contents($url);
+                $result = base64_encode($result);
+                Cache::put($cacheHash, $result, 60);
+            } catch (\ErrorException $e) {
+                Log::error("Konnte den Routing Server nicht erreichen");
+            }
+        }
+
+        $result = base64_decode($result);
+
+        $result = json_decode($result, true);
+
+        if ($result["code"] === "Ok") {
+            $result   = json_encode($result);
+            $response = Response::make($result, 200);
+            $response->header('Content-Type', 'application/json');
+
+            return $response;
+        } else {
+
+            abort(404);
+        }
+
+    }
+
 }

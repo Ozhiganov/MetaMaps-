@@ -21,15 +21,24 @@ $(document).ready(function() {
         }
     });
     deinitSearchBox();
-    if (waypoints.length >= 1) {
-        adjustViewPosList(waypoints);
-    }
+    
     refreshUrl();
     map.un("singleclick", mapClickFunction);
     map.on('singleclick', function(evt) {
         var pos = evt["coordinate"];
         addWaypoint(pos);
     });
+    if (getWayPointLength() >= 1) {
+        var points = [];
+        $.each(waypoints, function(index, value){
+            if(value === 'gps'){
+                points.push(getCurrentLocation());
+            }else{
+                points.push(value);
+            }
+        });
+        adjustViewPosList(points);
+    }
 });
 
 function addWaypoint(pos) {
@@ -102,7 +111,7 @@ function initRouteFinder() {
         if (waypoints.length >= 1) {
             $.each(waypoints, function(index, value) {
                 var html;
-                if (typeof value[0] !== "undefined") {
+                if (typeof value[0] !== "undefined" || value === 'gps') {
                     var chr = String.fromCharCode(65 + index);
                     // So now the Pin
                     var el = $('<span id="' + chr + '" class="marker">' + chr + '</span>');
@@ -113,8 +122,20 @@ function initRouteFinder() {
                         </div>');
                     $(html).find(".waypoint-marker").append(el);
                     // Add the correct value:
-                    positionToAdress(value[0], value[1], $(html).find(".adress-name"));
-                    addPositionMarker(value[0], value[1], index);
+                    var lon = "";
+                    var lat = "";
+                    if (value === 'gps') {
+                        var pos = getCurrentLocation();
+                        lon = pos[0];
+                        lat = pos[1];
+                        positionToAdress('gps', $(html).find(".adress-name"));
+                    } else {
+                        lon = value[0];
+                        lat = value[1];
+                        positionToAdress([lat, lon], $(html).find(".adress-name"));
+                    }
+                    
+                    addPositionMarker(lon, lat, index);
                 } else {
                     if (!firstEmpty) {
                         html = $("<input id=\"" + index + "\" class=\"form-control\" placeholder=\"Klicke auf die Karte um diesen Wegpunkt einzufügen.\" value=\"\"></input>");
@@ -137,7 +158,7 @@ function initRouteFinder() {
     if (waypoints[waypoints.length - 1] === '') {
         unfilled++;
     }
-    if (typeof waypoints !== "undefined" && (waypoints.length - unfilled) >= 2) {
+    if (typeof waypoints !== "undefined" && (waypoints.length - unfilled) >= 2 ) {
         var from = waypoints[0][0] + "," + waypoints[0][1];
         var lastIndex = waypoints.length - 1;
         var to = waypoints[lastIndex][0] + "," + waypoints[lastIndex][1];
@@ -176,14 +197,23 @@ function initRouteFinder() {
  * @param{float} lat
  * @apram{Input-Object} obj
  */
-function positionToAdress(lon, lat, obj) {
-    var url = "https://maps.metager.de/nominatim/reverse.php?format=json&lat=" + lat + "&lon=" + lon + "&zoom=18";
-    $.get(url, function(data) {
-        if (typeof data !== "undefined" && typeof data["display_name"] !== "undefined") {
-            obj.html(data["display_name"]);
-            obj.attr("title", data["display_name"]);
-        }
-    });
+function positionToAdress(pos, obj) {
+    if (pos === 'gps') {
+        obj.html('Eigener Standort');
+        obj.attr('title', 'Eigener Standort');
+    } else {
+        var url = "https://maps.metager.de/nominatim/reverse.php?format=json&lat=" + pos[0] + "&lon=" + pos[1] + "&zoom=18";
+        $.get(url, function(data) {
+            if (typeof data !== "undefined" && typeof data["display_name"] !== "undefined") {
+                obj.html(data["display_name"]);
+                obj.attr("title", data["display_name"]);
+            }
+        });
+    }
+}
+
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 function addPositionMarker(lon, lat, index) {
@@ -249,7 +279,11 @@ function generatePreviewRoute() {
             if (value === '' || typeof value[0] === "undefined") {
                 return;
             } else {
-                points += value.toString() + ";";
+                if (value === 'gps') {
+                    points += getCurrentLocation().toString() + ";";
+                } else {
+                    points += value.toString() + ";";
+                }
             }
         });
         points = points.replace(/;+$/, '');
@@ -262,6 +296,7 @@ function generatePreviewRoute() {
             var distance = data["distance"];
             $("#route-information #length").html(parseDistance(distance));
             $("#route-information #duration").html(parseDuration(duration));
+
             var geom = (new ol.format.GeoJSON()).readGeometry(geojson, {
                 'dataProjection': 'EPSG:4326',
                 'featureProjection': 'EPSG:3857'
@@ -391,18 +426,14 @@ function addSearchEvent(element) {
                 var res = $("<ul class=\"list list-unstyled\"></ul>");
                 var ownPosition = $("<li><img src=\"/img/marker-icon.png\" /> Eigene Position</li>");
                 $(ownPosition).mousedown(function() {
-                    navigator.geolocation.getCurrentPosition(function(position) {
-                        var id = $(element).attr("id");
-                        waypoints[id] = [position.coords.longitude, position.coords.latitude];
-                        refreshUrl();
-                    }, function(error) {
-                        checkGPS();
-                    });
+                    var id = $(element).attr("id");
+                    waypoints[id] = 'gps';
+                    refreshUrl();
                 });
                 $(res).append(ownPosition);
                 $(sr).append(res);
             }
-            if(history.length > 0){
+            if (history.length > 0) {
                 $(sr).append("<h5>Ergebnisse aus der <a href=\"/help/history\" target=\"_blank\">History</a></h5>");
                 var res = $("<ul class=\"list list-unstyled\"></ul>");
                 $.each(history, function(index, value) {
@@ -419,16 +450,16 @@ function addSearchEvent(element) {
             }
             $(element).after(sr);
             $(element).unbind("keyup");
-            $(element).keyup(function(){
+            $(element).keyup(function() {
                 var val = escapeRegExp($(this).val());
                 var reg = new RegExp(val, 'i');
                 // Hide all Elements where the String does not match and unhide all where it matches:
-                $("#search-results li").each(function(index, value){
+                $("#search-results li").each(function(index, value) {
                     var name = $(value).html();
                     var el = $("#search-results li")[index];
-                    if(name.match(reg) !== null){
+                    if (name.match(reg) !== null) {
                         $(el).removeClass("hidden");
-                    }else{
+                    } else {
                         $(el).addClass("hidden");
                     }
                 });
@@ -487,7 +518,7 @@ function addSearchEvent(element) {
 }
 
 function escapeRegExp(str) {
-  return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
+    return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
 }
 
 function getHistory() {
@@ -514,7 +545,6 @@ function getHistory() {
             return b.count - a.count
         });
     }
-    //console.log(result);
     return result;
 }
 
@@ -564,7 +594,6 @@ function addToHistory(name, lon, lat) {
                 lon: lon,
                 lat: lat
             });
-            console.log(history);
         } else {
             // Item ist bereits in der History. Es wird einen Platz nach oben gepackt.
             var itemIndex = parseInt(item.match(/^\d+/)[0]);
@@ -615,4 +644,14 @@ function clone(obj) {
         if (obj.hasOwnProperty(attr)) copy[attr] = clone(obj[attr]);
     }
     return copy;
+}
+
+function getWayPointLength(){
+    var count = 0;
+    $.each(waypoints, function(index, value){
+        if(value !== ''){
+            count++;
+        }
+    });
+    return count;
 }
