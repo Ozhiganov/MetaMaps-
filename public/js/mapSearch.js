@@ -92580,6 +92580,7 @@ var id = null;
 var userPositionMarker = null;
 var lockViewToPosition = true;
 var gps = false;
+var gpsLocation = null;
 var featureStyle = new ol.style.Style({
     stroke: new ol.style.Stroke({
         color: 'rgb(153,39,208)',
@@ -92919,6 +92920,9 @@ function checkGPS() {
                 toggleGPSLocator(false);
             }else{
                 gps = gps = true;
+                lon = parseFloat(position.coords.longitude);
+                lat = parseFloat(position.coords.latitude);
+                gpsLocation = [lon, lat];
                 toggleGPSLocator(true);
             }
         }, function(error){
@@ -92992,20 +92996,19 @@ function followLocation() {
     }
 }
 
-function getCurrentLocation() {
+function updateCurrentLocation() {
     var lon = "";
     var lat = "";
     if (gps) {
         navigator.geolocation.getCurrentPosition(function(position) {
             lon = parseFloat(position.coords.longitude);
             lat = parseFloat(position.coords.latitude);
+            gpsLocation = [lon, lat];
         }, function(error) {
             checkGPS();
         });
-        while (lon === "" && lat === "") {
-            sleep(100);
-        }
-        return [lon, lat];
+
+        
     } else {
         return null;
     }

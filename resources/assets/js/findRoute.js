@@ -32,7 +32,7 @@ $(document).ready(function() {
         var points = [];
         $.each(waypoints, function(index, value){
             if(value === 'gps'){
-                points.push(getCurrentLocation());
+                points.push(gpsLocation);
             }else{
                 points.push(value);
             }
@@ -125,7 +125,7 @@ function initRouteFinder() {
                     var lon = "";
                     var lat = "";
                     if (value === 'gps') {
-                        var pos = getCurrentLocation();
+                        var pos = gpsLocation;
                         lon = pos[0];
                         lat = pos[1];
                         positionToAdress('gps', $(html).find(".adress-name"));
@@ -212,10 +212,6 @@ function positionToAdress(pos, obj) {
     }
 }
 
-function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
-
 function addPositionMarker(lon, lat, index) {
     // This will work upto an index of 25
     // Caharacter Representation of the index:
@@ -280,7 +276,7 @@ function generatePreviewRoute() {
                 return;
             } else {
                 if (value === 'gps') {
-                    points += getCurrentLocation().toString() + ";";
+                    points += gpsLocation.toString() + ";";
                 } else {
                     points += value.toString() + ";";
                 }

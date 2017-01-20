@@ -234,7 +234,7 @@ function drawGeojson(geojson, lineColor) {
 
 function reloadRoute() {
     if (points.match(/gps/) !== null) {
-        var pos = getCurrentLocation();
+        var pos = gpsLocation;
         var pointString = points;
         if (pos !== null) {
             pointString = pointString.replace(/gps/, pos.toString());

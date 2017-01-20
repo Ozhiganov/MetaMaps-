@@ -13,7 +13,7 @@ var routeMarkers = [];
 $(document).ready(function() {
     var pointString = points;
     if(points.match(/gps/) !== null){
-        var pos = getCurrentLocation();
+        var pos = gpsLocation;
         pointString = points;
         if(pos !== null){
             pointString = pointString.replace(/gps/, pos.toString());
