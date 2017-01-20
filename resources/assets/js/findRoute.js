@@ -4,7 +4,7 @@
  */
 var vectorLayerRoutePreview;
 var markers = [];
-$(document).ready(function() {
+function start(){
     // Put the Popstate Event:
     $(window).unbind('popstate');
     $(window).bind('popstate', function(event) {
@@ -39,7 +39,7 @@ $(document).ready(function() {
         });
         adjustViewPosList(points);
     }
-});
+};
 
 function addWaypoint(pos) {
     pos = ol.proj.transform(pos, 'EPSG:3857', 'EPSG:4326');

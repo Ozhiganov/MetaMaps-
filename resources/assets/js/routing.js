@@ -10,7 +10,7 @@ var routeLineStyle = new ol.style.Style({
 var route = {};
 var routeLayer = null;
 var routeMarkers = [];
-$(document).ready(function() {
+function start(){
     var pointString = points;
     if(points.match(/gps/) !== null){
         var pos = gpsLocation;
@@ -33,7 +33,7 @@ $(document).ready(function() {
             initResults();
         }
     });
-});
+};
 
 function addResults() {
     $("#results").html("");
@@ -68,7 +68,7 @@ function addResults() {
     $("#route-content").prepend(routeInformation);
     // Add Button for starting the route assistent
     if(points.match(/^gps/) !== null){
-        var routeAssistent = $('<div class="container-fluid"><div class="row"><div class="col-xs-12"><a id="route-assistent" href="javascript:startAssistent();">Routenführung starten</a></div></div></div>');
+        var routeAssistent = $('<div class="container-fluid"><div class="row"><div class="col-xs-12"><a id="route-assistent" href="javascript:updateCurrentLocation(startAssistent);">Routenführung starten</a></div></div></div>');
         $("#route-content").prepend(routeAssistent);
     }
     addRouteMetaData();

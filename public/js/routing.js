@@ -92620,7 +92620,7 @@ var clearInputFunction = function() {
 $(document).ready(function() {
     // Initialize the Map
     initMap();
-    checkGPS();
+    checkGPS(startApplication);
     $("#closer").click(function() {
         toggleResults();
     });
@@ -92912,7 +92912,8 @@ function addMarker(el, pos) {
     return overlay;
 }
 
-function checkGPS() {
+function checkGPS(callback) {
+
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(function(position){
             if(position.coords.accuracy > 500){
@@ -92925,13 +92926,28 @@ function checkGPS() {
                 gpsLocation = [lon, lat];
                 toggleGPSLocator(true);
             }
+            if(typeof callback === "function"){
+                callback();
+            }
         }, function(error){
             gps = false;
             toggleGPSLocator(false);
+            if(typeof callback === "function"){
+                callback();
+            }
         });
     } else {
         gps = false;
         toggleGPSLocator(false);
+        if(typeof callback === "function"){
+            callback();
+        }
+    }
+}
+
+function startApplication(){
+    if(typeof start === "function"){
+        start();
     }
 }
 
@@ -92996,7 +93012,7 @@ function followLocation() {
     }
 }
 
-function updateCurrentLocation() {
+function updateCurrentLocation(callback) {
     var lon = "";
     var lat = "";
     if (gps) {
@@ -93004,8 +93020,11 @@ function updateCurrentLocation() {
             lon = parseFloat(position.coords.longitude);
             lat = parseFloat(position.coords.latitude);
             gpsLocation = [lon, lat];
+            if(typeof callback === "function"){
+                callback();
+            }
         }, function(error) {
-            checkGPS();
+            checkGPS(callback);
         });
 
         
@@ -93166,7 +93185,7 @@ var routeLineStyle = new ol.style.Style({
 var route = {};
 var routeLayer = null;
 var routeMarkers = [];
-$(document).ready(function() {
+function start(){
     var pointString = points;
     if(points.match(/gps/) !== null){
         var pos = gpsLocation;
@@ -93189,7 +93208,7 @@ $(document).ready(function() {
             initResults();
         }
     });
-});
+};
 
 function addResults() {
     $("#results").html("");
@@ -93224,7 +93243,7 @@ function addResults() {
     $("#route-content").prepend(routeInformation);
     // Add Button for starting the route assistent
     if(points.match(/^gps/) !== null){
-        var routeAssistent = $('<div class="container-fluid"><div class="row"><div class="col-xs-12"><a id="route-assistent" href="javascript:startAssistent();">Routenführung starten</a></div></div></div>');
+        var routeAssistent = $('<div class="container-fluid"><div class="row"><div class="col-xs-12"><a id="route-assistent" href="javascript:updateCurrentLocation(startAssistent);">Routenführung starten</a></div></div></div>');
         $("#route-content").prepend(routeAssistent);
     }
     addRouteMetaData();
