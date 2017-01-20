@@ -58,7 +58,7 @@
             <!-- /.container-fluid -->
         </nav>
         <main>
-            @if(env('APP_ENV') === 'production')
+            @if(env('APP_ENV') === 'production' && 0==1)
             <div id="beta-info" class="alert alert-info alert-dismissible" role="alert">
               <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">×</span></button>
               <strong>Maps.metager.de:</strong> Auch Ihre geografischen Nutzungsdaten bleiben geschützt.

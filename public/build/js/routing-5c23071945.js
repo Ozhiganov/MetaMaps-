@@ -93658,6 +93658,7 @@ var waypoints = [];
 
 function startAssistent() {
     if (gps && points.match(/^gps;/) !== null) {
+        alert("Dieses Feature ist noch hochgradig experimentell und kann jederzeit abstürzen. Bitte benutzen Sie es nicht bei der Autofahrt und achten Sie konstant auf Ihre Umgebung, beachten Sie die Straßenverkehrsordnung und bedienen Sie dieses Interface (und Ihr Handy) nicht während der Fahrt.");
         positions = [];
         initWaypoints();
         prepareInterface();
