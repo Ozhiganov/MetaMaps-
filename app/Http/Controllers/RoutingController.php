@@ -132,10 +132,15 @@ class RoutingController extends Controller
             default:
                 $port = 5000;
         }
-        $url  = 'http://maps.metager.de:' . $port . '/match/v1/' . $vehicle . '/' . $points . '?steps=true&geometries=geojson&timestamps=' . $timestamp . '&radiuses=' . $radiuses;
-        $data = file_get_contents($url);
+        $url = 'http://maps.metager.de:' . $port . '/match/v1/' . $vehicle . '/' . $points . '?steps=true&geometries=geojson&timestamps=' . $timestamp . '&radiuses=' . $radiuses;
 
-        $response = Response::make($data, 200);
+        // make request
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        $output = curl_exec($ch);
+
+        $response = Response::make($output, 200);
         $response->header('Content-Type', 'application/json');
 
         return $response;

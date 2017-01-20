@@ -93740,12 +93740,12 @@ function startLocationFollowing() {
             var timestamp = Math.floor(position.timestamp / 1000);
             var lon = parseFloat(position.coords.longitude);
             var lat = parseFloat(position.coords.latitude);
-            var accuracy = Math.max(position.coords.accuracy, 1.0);
+            var accuracy = parseFloat(position.coords.accuracy);
             var newPosition = {
                 timestamp: timestamp,
                 lon: lon,
                 lat: lat,
-                accuracy: accuracy
+                accuracy: Math.max(accuracy, 1.5);
             };
             var dist = getDistance(currentPosition, newPosition);
             var minDist = 0;
@@ -93866,6 +93866,8 @@ function startLocationFollowing() {
                             calculating = false;
                         }
                     }else{
+                        console.log(r);
+                        positions.pop();
                         calculating = false;
                     }
                 });
