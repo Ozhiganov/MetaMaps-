@@ -75,7 +75,12 @@ function prepareInterface() {
 function deinitAssistent() {
     window.location.reload();
 }
-var currentPosition = {};
+var currentPosition = {
+    timestamp: Math.floor(Date.now() / 1000),
+    lon: gpsLocation[0],
+    lat: gpsLocation[1],
+    accuracy: 1.5
+};
 var calculating = false;
 
 function startLocationFollowing() {
@@ -96,12 +101,7 @@ function startLocationFollowing() {
                 lat: lat,
                 accuracy: Math.max(accuracy, 1.5)
             };
-            positions.push({
-                timestamp: timestamp,
-                lon: lon,
-                lat: lat,
-                accuracy: accuracy
-            });
+            
             var dist = getDistance(currentPosition, newPosition);
             var minDist = 0;
             switch (vehicle) {
@@ -115,11 +115,19 @@ function startLocationFollowing() {
                     minDist = 5;
                     break;
             }
-            if (dist <= (minDist + accuracy) || calculating) {
+            if (dist >= (minDist + accuracy) || calculating) {
                 return;
             } else {
                 calculating = true;
             }
+
+            positions.push({
+                timestamp: timestamp,
+                lon: lon,
+                lat: lat,
+                accuracy: accuracy
+            });
+
             currentPosition = {
                 timestamp: timestamp,
                 lon: lon,
