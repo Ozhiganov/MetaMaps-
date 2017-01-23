@@ -1,8 +1,8 @@
 var followingId = null;
 var positions = [];
-var drivenRoute = null;
 var routeAssistentVectorSource = new ol.source.Vector();
 var waypoints = [];
+var drivenRoutes = [];
 
 function startAssistent() {
     if (gps && points.match(/^gps;/) !== null) {
@@ -83,7 +83,7 @@ function startLocationFollowing() {
         options = {
             enableHighAccuracy: true,
             timeout: 5000,
-            maximumAge: 0
+            maximumAge: 1000
         };
         followingId = navigator.geolocation.watchPosition(function(position) {
             var timestamp = Math.floor(position.timestamp / 1000);
@@ -96,6 +96,12 @@ function startLocationFollowing() {
                 lat: lat,
                 accuracy: Math.max(accuracy, 1.5)
             };
+            positions.push({
+                timestamp: timestamp,
+                lon: lon,
+                lat: lat,
+                accuracy: accuracy
+            });
             var dist = getDistance(currentPosition, newPosition);
             var minDist = 0;
             switch (vehicle) {
@@ -109,7 +115,7 @@ function startLocationFollowing() {
                     minDist = 5;
                     break;
             }
-            if (dist <= minDist || calculating) {
+            if (dist <= (minDist + accuracy) || calculating) {
                 return;
             } else {
                 calculating = true;
@@ -120,13 +126,17 @@ function startLocationFollowing() {
                 lat: lat,
                 accuracy: accuracy
             };
-            positions.push({
-                timestamp: timestamp,
-                lon: lon,
-                lat: lat,
-                accuracy: accuracy
-            });
-            if (positions.length >= 2) {
+            if (positions.length === 1) {
+                // If Just one Position is in the array
+                // then it indicates the beginning of the route
+                // We start with the first step of the current route
+                console.log(route);
+                routeAssistentVectorSource.clear();
+                // Draw the Route
+                drawGeojson(route.routes[0].geometry, 'red');
+                updateNextStep();
+                calculating = false;
+            }else if (positions.length >= 2) {
                 // Generate url to retrieve
                 var positionstring = "";
                 var timestampstring = "";
@@ -151,10 +161,20 @@ function startLocationFollowing() {
                             // Wir nehmen vorerst immer das Beste Matching für die gefahrene Route.
                             // Vielleicht fällt mir später etwas besseres ein
                         if (r.matchings !== null && r.matchings[0] !== undefined) {
+                            // We have successfully calculated the driven route. Let's reset the points:
+                            drivenRoutes.push(r.matchings[0].geometry);
+                            // Clear Position data:
+                            while(positions.length > 1){
+                                positions.pop();
+                            }
                             // Clear the shown Route
                             routeAssistentVectorSource.clear();
-                            // Add the driven Route
-                            drawGeojson(r.matchings[0].geometry, 'grey');
+                            // Draw every driven Route on the map:
+                            $.each(drivenRoutes, function(index,value){
+                                // Add the driven Route
+                                drawGeojson(value, 'grey');
+                            });
+                            
                             // Get the Route until the target
                             var hintsComplete = true;
                             var pointString = "";
@@ -181,46 +201,22 @@ function startLocationFollowing() {
                             $.getJSON(url, function(data) {
                                 if (data.code === "Ok") {
                                     drawGeojson(data.routes[0].geometry, 'red');
-                                    // Add the information for the next steps and route meta data
-                                    // Route Metadata
-                                    var duration = parseFloat(data.routes[0].duration);
-                                    duration = parseDuration(duration)
-                                    $("nav #route-information #duration").html(duration);
-                                    var distance = parseFloat(data.routes[0].distance)
-                                    distance = parseDistance(distance);
-                                    $("nav #route-information #length").html(distance);
-                                    // Next Step
-                                    var step = data.routes[0].legs[0].steps[1];
-                                    var stepString = parseManeuver(step["maneuver"], data.routes[0], 0, 1);
-                                    $("nav #routing-steps .step-string").html(stepString);
-                                    var img = parseImg(step);
-                                    $("nav #routing-steps .step-image img").attr('src', img);
-                                    var stepDistance = parseDistance(parseFloat(data.routes[0].legs[0].steps[0].distance));
-                                    $("nav #routing-steps .step-length").html(stepDistance);
-                                    // So now that everything is Drawn we adjust the Map View
-                                    // The new Rotation is The bearing of the first step of the route:
-                                    var rotation = parseInt(data.routes[0].legs[0].steps[0].maneuver.bearing_after);
-                                    rotation = 360 - rotation;
-                                    // The Value needs to be in Radians
-                                    rotation *= Math.PI;
-                                    rotation /= 180;
-                                    map.getView().setRotation(rotation);
-                                    map.getView().setZoom(18);
-                                    map.getView().setCenter(ol.proj.transform([position.lon, position.lat], 'EPSG:4326', 'EPSG:3857'));
+                                    route = data;
+                                    updateNextStep();
                                 }
                             }).always(function() {
                                 calculating = false;
                             });
-                        }else{
+                        } else {
                             calculating = false;
                         }
-                    }else{
+                    } else {
                         console.log(r);
                         positions.pop();
                         calculating = false;
                     }
                 });
-            }else{
+            } else {
                 calculating = false;
             }
         }, function(error) {
@@ -228,6 +224,37 @@ function startLocationFollowing() {
             deinitAssistent();
         }, options);
     }
+}
+
+function updateNextStep() {
+    var data = route;
+    // This Function goes through the current Route Object and evaluates the next step:
+    // Add the information for the next steps and route meta data
+    // Route Metadata
+    var duration = parseFloat(data.routes[0].duration);
+    duration = parseDuration(duration)
+    $("nav #route-information #duration").html(duration);
+    var distance = parseFloat(data.routes[0].distance)
+    distance = parseDistance(distance);
+    $("nav #route-information #length").html(distance);
+    // Next Step
+    var step = data.routes[0].legs[0].steps[1];
+    var stepString = parseManeuver(step["maneuver"], data.routes[0], 0, 1);
+    $("nav #routing-steps .step-string").html(stepString);
+    var img = parseImg(step);
+    $("nav #routing-steps .step-image img").attr('src', img);
+    var stepDistance = parseDistance(parseFloat(data.routes[0].legs[0].steps[0].distance));
+    $("nav #routing-steps .step-length").html(stepDistance);
+    // So now that everything is Drawn we adjust the Map View
+    // The new Rotation is The bearing of the first step of the route:
+    var rotation = parseInt(data.routes[0].legs[0].steps[0].maneuver.bearing_after);
+    rotation = 360 - rotation;
+    // The Value needs to be in Radians
+    rotation *= Math.PI;
+    rotation /= 180;
+    map.getView().setRotation(rotation);
+    map.getView().setZoom(18);
+    map.getView().setCenter(ol.proj.transform([data.waypoints[0].location[0], data.waypoints[0].location[1]], 'EPSG:4326', 'EPSG:3857'));
 }
 var rad = function(x) {
     return x * Math.PI / 180;
