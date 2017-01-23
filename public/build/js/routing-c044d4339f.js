@@ -93727,16 +93727,19 @@ function prepareInterface() {
 function deinitAssistent() {
     window.location.reload();
 }
-var currentPosition = {
-    timestamp: Math.floor(Date.now() / 1000),
-    lon: gpsLocation[0],
-    lat: gpsLocation[1],
-    accuracy: 1.5
-};
+var currentPosition = null;
 var calculating = false;
 
 function startLocationFollowing() {
     if (followingId === null) {
+        if (currentPosition === null) {
+            currentPosition = {
+                timestamp: Math.floor(Date.now() / 1000),
+                lon: gpsLocation[0],
+                lat: gpsLocation[1],
+                accuracy: 1.5
+            };
+        }
         options = {
             enableHighAccuracy: true,
             timeout: 5000,
@@ -93753,7 +93756,6 @@ function startLocationFollowing() {
                 lat: lat,
                 accuracy: Math.max(accuracy, 1.5)
             };
-            
             var dist = getDistance(currentPosition, newPosition);
             var minDist = 0;
             switch (vehicle) {
@@ -93772,14 +93774,12 @@ function startLocationFollowing() {
             } else {
                 calculating = true;
             }
-
             positions.push({
                 timestamp: timestamp,
                 lon: lon,
                 lat: lat,
                 accuracy: accuracy
             });
-
             currentPosition = {
                 timestamp: timestamp,
                 lon: lon,
@@ -93796,7 +93796,7 @@ function startLocationFollowing() {
                 drawGeojson(route.routes[0].geometry, 'red');
                 updateNextStep();
                 calculating = false;
-            }else if (positions.length >= 2) {
+            } else if (positions.length >= 2) {
                 // Generate url to retrieve
                 var positionstring = "";
                 var timestampstring = "";
@@ -93824,17 +93824,16 @@ function startLocationFollowing() {
                             // We have successfully calculated the driven route. Let's reset the points:
                             drivenRoutes.push(r.matchings[0].geometry);
                             // Clear Position data:
-                            while(positions.length > 1){
+                            while (positions.length > 1) {
                                 positions.pop();
                             }
                             // Clear the shown Route
                             routeAssistentVectorSource.clear();
                             // Draw every driven Route on the map:
-                            $.each(drivenRoutes, function(index,value){
+                            $.each(drivenRoutes, function(index, value) {
                                 // Add the driven Route
                                 drawGeojson(value, 'grey');
                             });
-                            
                             // Get the Route until the target
                             var hintsComplete = true;
                             var pointString = "";
