@@ -83,7 +83,7 @@ class RoutingController extends Controller
             default:
                 $port = 5000;
         }
-        $url = "http://maps.metager.de:$port/route/v1/$vehicle/$points?steps=true&geometries=geojson&overview=full";
+        $url = "http://maps.metager.de:$port/route/v1/$vehicle/$points?steps=true&geometries=geojson&overview=full&annotations=true";
         if ($hints !== "") {
             $url .= "&hints=$hints";
         }

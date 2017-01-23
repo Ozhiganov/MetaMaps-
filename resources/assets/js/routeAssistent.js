@@ -4,10 +4,14 @@ var routeAssistentVectorSource = new ol.source.Vector();
 var waypoints = [];
 var drivenRoutes = [];
 var userPosOverlay = null;
+var currentGeometry = null;
+var durations = null;
+var distances = null;
+var distanceToNextPoint = null;
 
 function startAssistent() {
     if (gps && points.match(/^gps;/) !== null) {
-        //alert("Dieses Feature ist noch hochgradig experimentell und kann jederzeit abstürzen. Bitte benutzen Sie es nicht bei der Autofahrt und achten Sie konstant auf Ihre Umgebung, beachten Sie die Straßenverkehrsordnung und bedienen Sie dieses Interface (und Ihr Handy) nicht während der Fahrt.");
+        alert("Dieses Feature ist noch hochgradig experimentell und kann jederzeit abstürzen. Bitte benutzen Sie es nicht bei der Autofahrt und achten Sie konstant auf Ihre Umgebung, beachten Sie die Straßenverkehrsordnung und bedienen Sie dieses Interface (und Ihr Handy) nicht während der Fahrt.");
         positions = [];
         initWaypoints();
         prepareInterface();
@@ -169,21 +173,48 @@ function startLocationFollowing() {
                 // In that case we would have to recalculate anyways because of 2.
                 // 3. is standard and we check for recalc
                 var recalc = false;
+                var wgs84Sphere = new ol.Sphere(6378137);
                 if (arraysEqual(routeStepGeometry.getFirstCoordinate(), pointOnGeometry) || arraysEqual(routeStepGeometry.getLastCoordinate(), pointOnGeometry)) {
                     recalc = true;
                 } else {
                     // Now we check for 1.
                     // Sphere with the Radius of Earth
-                    var wgs84Sphere = new ol.Sphere(6378137);
                     var c1 = ol.proj.transform(pointOnGeometry, 'EPSG:3857', 'EPSG:4326');
                     var c2 = [currentPosition.lon, currentPosition.lat];
                     var d = wgs84Sphere.haversineDistance(c1, c2);
-                    if (d > accuracy) {
+                    if (d > Math.max(accuracy, 15)) {
                         recalc = true;
                     }
                 }
                 if (!recalc) {
                     updateUserPosition(pointOnGeometry);
+                    if (currentGeometry !== null && currentGeometry.length > 0) {
+                        // Let's Update the remaining time until step:
+                        // Calc distance to next waypoint:
+                        var c1 = ol.proj.transform(pointOnGeometry, 'EPSG:3857', 'EPSG:4326');
+                        var c2 = currentGeometry[0];
+                        var d = wgs84Sphere.haversineDistance(c1, c2);
+                        if (distanceToNextPoint !== null && d > distanceToNextPoint) {
+                            // The Distance is getting bigger => means we passed that point
+                            currentGeometry.shift();
+                            distances.shift();
+                            durations.shift();
+                        }
+                        distanceToNextPoint = d;
+                        var newDistance = d;
+                        var newDuration = durations[0];
+                        for(var i = 1; i < distances.length; i++){
+                            newDistance += distances[i];
+                            newDuration += durations[i];
+                        }
+                        var newStepDistance = d;
+                        for(var i = 1; i < currentGeometry.length; i++){
+                            newStepDistance += distances[i];
+                        }
+                        $("#length").html(parseDistance(newDistance));
+                        $("#duration").html(parseDuration(newDuration));
+                        $("#routing-steps .step .step-length").html(parseDistance(newStepDistance));
+                    }
                     calculating = false;
                 } else {
                     // Generate url to retrieve
@@ -211,7 +242,9 @@ function startLocationFollowing() {
                                 // Vielleicht fällt mir später etwas besseres ein
                             if (r.matchings !== null && r.matchings[0] !== undefined) {
                                 // We have successfully calculated the driven route. Let's reset the points:
-                                drivenRoutes.push(r.matchings[0].geometry);
+                                $.each(r.matchings, function(index, value) {
+                                    drivenRoutes.push(r.matchings[0].geometry);
+                                });
                                 // Clear Position data:
                                 while (positions.length > 1) {
                                     positions.pop();
@@ -249,6 +282,10 @@ function startLocationFollowing() {
                                 $.getJSON(url, function(data) {
                                     if (data.code === "Ok") {
                                         drawGeojson(data.routes[0].geometry, 'red');
+                                        currentGeometry = data.routes[0].legs[0].steps[0].geometry.coordinates;
+                                        currentGeometry.shift();
+                                        durations = data.routes[0].legs[0].annotation.duration;
+                                        distances = data.routes[0].legs[0].annotation.distance;
                                         route = data;
                                         updateNextStep();
                                     }
@@ -276,7 +313,7 @@ function startLocationFollowing() {
 }
 
 function updateUserPosition(pos) {
-    if(userPosOverlay !== null){
+    if (userPosOverlay !== null) {
         map.removeOverlay(userPosOverlay);
         userPosOverlay = null;
     }
@@ -302,9 +339,9 @@ function updateNextStep() {
     // Add the information for the next steps and route meta data
     // Route Metadata
     var duration = parseFloat(data.routes[0].duration);
-    duration = parseDuration(duration)
+    duration = parseDuration(duration);
     $("nav #route-information #duration").html(duration);
-    var distance = parseFloat(data.routes[0].distance)
+    distance = parseFloat(data.routes[0].distance)
     distance = parseDistance(distance);
     $("nav #route-information #length").html(distance);
     // Next Step
