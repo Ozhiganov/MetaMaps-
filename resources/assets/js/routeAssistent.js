@@ -117,7 +117,8 @@ function startLocationFollowing() {
                     minDist = 5;
                     break;
             }
-            if (dist >= (minDist + accuracy) || calculating) {
+            if (dist <= (minDist + accuracy) || calculating) {
+                console.log(dist + "/" + minDist + " m");
                 return;
             } else {
                 calculating = true;
