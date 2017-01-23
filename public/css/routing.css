@@ -7273,4 +7273,15 @@ html, body, main, #map {
     padding: 9px 0;
     cursor: pointer;
 }
+
+#user-pos {
+    background-image: url('/img/navigation-arrow.svg');
+    width: 50px;
+    height: 50px;
+    display: block;
+    text-align: center;
+    padding-top: 5px;
+    color: white;
+    font-weight: bold;
+}
 /*# sourceMappingURL=routing.css.map */

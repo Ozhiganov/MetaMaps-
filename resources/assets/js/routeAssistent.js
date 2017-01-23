@@ -3,10 +3,11 @@ var positions = [];
 var routeAssistentVectorSource = new ol.source.Vector();
 var waypoints = [];
 var drivenRoutes = [];
+var userPosOverlay = null;
 
 function startAssistent() {
     if (gps && points.match(/^gps;/) !== null) {
-        alert("Dieses Feature ist noch hochgradig experimentell und kann jederzeit abstürzen. Bitte benutzen Sie es nicht bei der Autofahrt und achten Sie konstant auf Ihre Umgebung, beachten Sie die Straßenverkehrsordnung und bedienen Sie dieses Interface (und Ihr Handy) nicht während der Fahrt.");
+        //alert("Dieses Feature ist noch hochgradig experimentell und kann jederzeit abstürzen. Bitte benutzen Sie es nicht bei der Autofahrt und achten Sie konstant auf Ihre Umgebung, beachten Sie die Straßenverkehrsordnung und bedienen Sie dieses Interface (und Ihr Handy) nicht während der Fahrt.");
         positions = [];
         initWaypoints();
         prepareInterface();
@@ -118,7 +119,6 @@ function startLocationFollowing() {
                     break;
             }
             if (dist <= (minDist + accuracy) || calculating) {
-                console.log(dist + "/" + minDist + " m");
                 return;
             } else {
                 calculating = true;
@@ -146,84 +146,125 @@ function startLocationFollowing() {
                 updateNextStep();
                 calculating = false;
             } else if (positions.length >= 2) {
-                // Generate url to retrieve
-                var positionstring = "";
-                var timestampstring = "";
-                var radiusstring = "";
-                $.each(positions, function(index, value) {
-                    positionstring += value.lon + "," + value.lat + ";";
-                    timestampstring += value.timestamp + ";";
-                    radiusstring += value.accuracy + ";";
+                // We have to decide whether we will retrieve two exact Routes (driven and upcoming)
+                // or whether we want to derive a new User Position on the Route of the new GPS Location
+                // The latter one would use some mobile Data to make a new HTTP Request
+                // The first one could save that data taking the risk that the user could've left the route
+                // We calculate the risk in the following way:
+                // We derive the perpendicular distance of the GPS Coordinate to the current Route Step (straight line)
+                // We get a possible Position of the User on the Route. There could be some possible situations the user is in:
+                // 1. The distance of the Point to the Route is higher than the GPS accuracy
+                //  => The user has left the route and we need to recalculate
+                // 2. The point is beyond the Point where the next step would begin
+                //  => The user either has left the route or passed the next waypoint and we need to recalculate
+                // 3. The distance of the Point to the Route is less or equal the gps Accuracy AND the Point on the route is before the next waypoitn
+                //  => The user is on the route and hasn't passed the next waypoint so no recalculation is needed
+                var routeStepGeometry = route.routes[0].legs[0].steps[0].geometry;
+                routeStepGeometry = (new ol.format.GeoJSON()).readGeometry(routeStepGeometry, {
+                    'dataProjection': 'EPSG:4326',
+                    'featureProjection': 'EPSG:3857'
                 });
-                positionstring = positionstring.replace(/;+$/, '');
-                timestampstring = timestampstring.replace(/;+$/, '');
-                radiusstring = radiusstring.replace(/;+$/, '');
-                var url = '/route/match/' + vehicle + '/' + positionstring + '/' + timestampstring + '/' + radiusstring;
-                $.getJSON(url, function(r) {
-                    // Aus den "gesnappten" Koordinaten berechnen wir nun die gefahrene Route
-                    if (r.code === "Ok" && r.tracepoints !== null && r.tracepoints[r.tracepoints.length - 1] !== null) {
-                        var position = {
-                                hint: r.tracepoints[r.tracepoints.length - 1].hint,
-                                lon: parseFloat(r.tracepoints[r.tracepoints.length - 1].location[0]),
-                                lat: parseFloat(r.tracepoints[r.tracepoints.length - 1].location[1])
-                            }
-                            // Wir nehmen vorerst immer das Beste Matching für die gefahrene Route.
-                            // Vielleicht fällt mir später etwas besseres ein
-                        if (r.matchings !== null && r.matchings[0] !== undefined) {
-                            // We have successfully calculated the driven route. Let's reset the points:
-                            drivenRoutes.push(r.matchings[0].geometry);
-                            // Clear Position data:
-                            while (positions.length > 1) {
-                                positions.pop();
-                            }
-                            // Clear the shown Route
-                            routeAssistentVectorSource.clear();
-                            // Draw every driven Route on the map:
-                            $.each(drivenRoutes, function(index, value) {
-                                // Add the driven Route
-                                drawGeojson(value, 'grey');
-                            });
-                            // Get the Route until the target
-                            var hintsComplete = true;
-                            var pointString = "";
-                            var hintString = "";
-                            $.each(waypoints, function(index, value) {
-                                if (value === 'gps') {
-                                    pointString += position.lon + "," + position.lat + ";";
-                                    hintString += position.hint + ";";
-                                } else {
-                                    pointString += value.lon + "," + value.lat + ";";
-                                    if (value.hint !== "") {
-                                        hintString += value.hint + ";";
+                var pointOnGeometry = routeStepGeometry.getClosestPoint(ol.proj.transform([currentPosition.lon, currentPosition.lat], 'EPSG:4326', 'EPSG:3857'));
+                // First thing we do is to check whether the point is the beginning or ending of the Line
+                // In that case we would have to recalculate anyways because of 2.
+                // 3. is standard and we check for recalc
+                var recalc = false;
+                if (arraysEqual(routeStepGeometry.getFirstCoordinate(), pointOnGeometry) || arraysEqual(routeStepGeometry.getLastCoordinate(), pointOnGeometry)) {
+                    recalc = true;
+                } else {
+                    // Now we check for 1.
+                    // Sphere with the Radius of Earth
+                    var wgs84Sphere = new ol.Sphere(6378137);
+                    var c1 = ol.proj.transform(pointOnGeometry, 'EPSG:3857', 'EPSG:4326');
+                    var c2 = [currentPosition.lon, currentPosition.lat];
+                    var d = wgs84Sphere.haversineDistance(c1, c2);
+                    if (d > accuracy) {
+                        recalc = true;
+                    }
+                }
+                if (!recalc) {
+                    updateUserPosition(pointOnGeometry);
+                    calculating = false;
+                } else {
+                    // Generate url to retrieve
+                    var positionstring = "";
+                    var timestampstring = "";
+                    var radiusstring = "";
+                    $.each(positions, function(index, value) {
+                        positionstring += value.lon + "," + value.lat + ";";
+                        timestampstring += value.timestamp + ";";
+                        radiusstring += value.accuracy + ";";
+                    });
+                    positionstring = positionstring.replace(/;+$/, '');
+                    timestampstring = timestampstring.replace(/;+$/, '');
+                    radiusstring = radiusstring.replace(/;+$/, '');
+                    var url = '/route/match/' + vehicle + '/' + positionstring + '/' + timestampstring + '/' + radiusstring;
+                    $.getJSON(url, function(r) {
+                        // Aus den "gesnappten" Koordinaten berechnen wir nun die gefahrene Route
+                        if (r.code === "Ok" && r.tracepoints !== null && r.tracepoints[r.tracepoints.length - 1] !== null) {
+                            var position = {
+                                    hint: r.tracepoints[r.tracepoints.length - 1].hint,
+                                    lon: parseFloat(r.tracepoints[r.tracepoints.length - 1].location[0]),
+                                    lat: parseFloat(r.tracepoints[r.tracepoints.length - 1].location[1])
+                                }
+                                // Wir nehmen vorerst immer das Beste Matching für die gefahrene Route.
+                                // Vielleicht fällt mir später etwas besseres ein
+                            if (r.matchings !== null && r.matchings[0] !== undefined) {
+                                // We have successfully calculated the driven route. Let's reset the points:
+                                drivenRoutes.push(r.matchings[0].geometry);
+                                // Clear Position data:
+                                while (positions.length > 1) {
+                                    positions.pop();
+                                }
+                                // Clear the shown Route
+                                routeAssistentVectorSource.clear();
+                                // Draw every driven Route on the map:
+                                $.each(drivenRoutes, function(index, value) {
+                                    // Add the driven Route
+                                    drawGeojson(value, 'grey');
+                                });
+                                // Get the Route until the target
+                                var hintsComplete = true;
+                                var pointString = "";
+                                var hintString = "";
+                                $.each(waypoints, function(index, value) {
+                                    if (value === 'gps') {
+                                        pointString += position.lon + "," + position.lat + ";";
+                                        hintString += position.hint + ";";
                                     } else {
-                                        hintsComplete = false;
+                                        pointString += value.lon + "," + value.lat + ";";
+                                        if (value.hint !== "") {
+                                            hintString += value.hint + ";";
+                                        } else {
+                                            hintsComplete = false;
+                                        }
                                     }
+                                });
+                                pointString = pointString.replace(/;$/, '');
+                                hintString = hintString.replace(/;$/, '');
+                                var url = '/route/find/' + vehicle + '/' + pointString;
+                                if (hintsComplete) {
+                                    url += "/" + hintString;
                                 }
-                            });
-                            pointString = pointString.replace(/;$/, '');
-                            hintString = hintString.replace(/;$/, '');
-                            var url = '/route/find/' + vehicle + '/' + pointString;
-                            if (hintsComplete) {
-                                url += "/" + hintString;
-                            }
-                            $.getJSON(url, function(data) {
-                                if (data.code === "Ok") {
-                                    drawGeojson(data.routes[0].geometry, 'red');
-                                    route = data;
-                                    updateNextStep();
-                                }
-                            }).always(function() {
+                                $.getJSON(url, function(data) {
+                                    if (data.code === "Ok") {
+                                        drawGeojson(data.routes[0].geometry, 'red');
+                                        route = data;
+                                        updateNextStep();
+                                    }
+                                }).always(function() {
+                                    calculating = false;
+                                });
+                            } else {
                                 calculating = false;
-                            });
+                            }
                         } else {
+                            console.log(r);
+                            positions.pop();
                             calculating = false;
                         }
-                    } else {
-                        console.log(r);
-                        positions.pop();
-                        calculating = false;
-                    }
-                });
+                    });
+                }
             } else {
                 calculating = false;
             }
@@ -232,6 +273,27 @@ function startLocationFollowing() {
             deinitAssistent();
         }, options);
     }
+}
+
+function updateUserPosition(pos) {
+    if(userPosOverlay !== null){
+        map.removeOverlay(userPosOverlay);
+        userPosOverlay = null;
+    }
+    var el = $('<img src="/img/navigation-arrow.svg" width="30px" />');
+    userPosOverlay = new ol.Overlay({
+        position: pos,
+        element: el.get(0),
+        offset: [-15, -15],
+        stopEvent: false,
+    });
+    map.getView().setCenter(pos);
+    map.addOverlay(userPosOverlay);
+}
+
+function arraysEqual(a1, a2) {
+    /* WARNING: arrays must not contain {objects} or behavior may be undefined */
+    return JSON.stringify(a1) == JSON.stringify(a2);
 }
 
 function updateNextStep() {
@@ -263,6 +325,7 @@ function updateNextStep() {
     map.getView().setRotation(rotation);
     map.getView().setZoom(18);
     map.getView().setCenter(ol.proj.transform([data.waypoints[0].location[0], data.waypoints[0].location[1]], 'EPSG:4326', 'EPSG:3857'));
+    updateUserPosition(ol.proj.transform([data.waypoints[0].location[0], data.waypoints[0].location[1]], 'EPSG:4326', 'EPSG:3857'));
 }
 var rad = function(x) {
     return x * Math.PI / 180;
@@ -290,15 +353,6 @@ function removeRoute() {
 }
 
 function drawGeojson(geojson, lineColor) {
-    var drivenRouteLineStyle = new ol.style.Style({
-        stroke: new ol.style.Stroke({
-            color: lineColor,
-            width: 5
-        }),
-        fill: new ol.style.Fill({
-            color: lineColor
-        })
-    });
     var geom = (new ol.format.GeoJSON()).readGeometry(geojson, {
         'dataProjection': 'EPSG:4326',
         'featureProjection': 'EPSG:3857'
@@ -306,7 +360,18 @@ function drawGeojson(geojson, lineColor) {
     var feature = new ol.Feature({
         'geometry': geom
     });
-    feature.setStyle(drivenRouteLineStyle);
+    if (lineColor !== null) {
+        var drivenRouteLineStyle = new ol.style.Style({
+            stroke: new ol.style.Stroke({
+                color: lineColor,
+                width: 5
+            }),
+            fill: new ol.style.Fill({
+                color: lineColor
+            })
+        });
+        feature.setStyle(drivenRouteLineStyle);
+    }
     routeAssistentVectorSource.addFeature(feature);
 }
 

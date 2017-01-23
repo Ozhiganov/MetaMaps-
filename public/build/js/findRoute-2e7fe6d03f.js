@@ -92628,6 +92628,7 @@ $(document).ready(function() {
     $(window).resize(function() {
         updateResultsPosition();
         updateCloserPosition();
+        updateMapSize();
     });
     $("#follow-location > span.button").click(function() {
         followLocation();
@@ -93173,45 +93174,85 @@ function deinitResults() {
     updateMapSize();
     initStartNavigation();
 }
-var routeLineStyle = new ol.style.Style({
-    stroke: new ol.style.Stroke({
-        color: 'rgb(255,0,0)',
-        width: 5
-    }),
-    fill: new ol.style.Fill({
-        color: 'rgba(255,0,0,.03)'
-    })
-});
-var route = {};
-var routeLayer = null;
-var routeMarkers = [];
+/*
+ * Different things need to be done to be able to find the points to route to
+ * First thinkg would be to prepare the Results Div
+ */
+var vectorLayerRoutePreview;
+var markers = [];
 function start(){
-    var pointString = points;
-    if(points.match(/gps/) !== null){
-        var pos = gpsLocation;
-        pointString = points;
-        if(pos !== null){
-            pointString = pointString.replace(/gps/, pos.toString());
-        }else{
-            pointString = pointString.replace(/;{0,1}gps;{0,1}/, ';');
-        }
-    }
-    var url = '/route/find/' + vehicle + '/' + pointString;
-    $.getJSON(url, function(response) {
-        route = response;
-    }).success(function() {
-        // If the Route could be loaded and there is a route between the points we can show it:
-        if (typeof route["code"] !== 'undefined' && route["code"] === "Ok" && route["routes"].length >= 1) {
-            deinitSearchBox();
-            addGraphics();
-            addResults();
-            initResults();
+    // Put the Popstate Event:
+    $(window).unbind('popstate');
+    $(window).bind('popstate', function(event) {
+        var state = event.originalEvent.state;
+        if (state !== null && state.url !== undefined) {
+            document.location.href = state["url"];
+        } else if (state !== null && state["vehicle"] !== undefined && state["waypoints"] !== undefined) {
+            vehicle = state["vehicle"];
+            waypoints = clone(state["waypoints"]);
+            initRouteFinder();
+        } else {
+            waypoints = [];
+            initRouteFinder();
         }
     });
+    deinitSearchBox();
+    
+    refreshUrl();
+    map.un("singleclick", mapClickFunction);
+    map.on('singleclick', function(evt) {
+        var pos = evt["coordinate"];
+        addWaypoint(pos);
+    });
+    if (getWayPointLength() >= 1) {
+        var points = [];
+        $.each(waypoints, function(index, value){
+            if(value === 'gps'){
+                points.push(gpsLocation);
+            }else{
+                points.push(value);
+            }
+        });
+        adjustViewPosList(points);
+    }
 };
 
-function addResults() {
+function addWaypoint(pos) {
+    pos = ol.proj.transform(pos, 'EPSG:3857', 'EPSG:4326');
+    $.each(waypoints, function(index, value) {
+        if (value === '') {
+            waypoints[index] = pos;
+            refreshUrl();
+            return false;
+        }
+    });
+}
+
+function refreshUrl() {
+    var uri = '/route/start/' + vehicle + '/';
+    $.each(waypoints, function(index, value) {
+        uri += value.toString() + ";";
+    });
+    uri = uri.replace(/;$/, '');
+    var stateObj = {
+        waypoints: clone(waypoints),
+        vehicle: vehicle
+    };
+    // Change URL
+    window.history.pushState(stateObj, '', uri);
+    initRouteFinder();
+}
+
+function changeVehicle(newVehicle) {
+    var uri = '/route/start/' + newVehicle + '/';
+    vehicle = newVehicle;
+    refreshUrl();
+}
+
+function initRouteFinder() {
     $("#results").html("");
+    // Remove Existing Markers
+    clearMarkers();
     var vehicleChooser = $("<div id=\"vehicle-chooser\">\
             <label class=\"radio-inline\">\
               <input type=\"radio\" name=\"vehicle\" value=\"foot\"> <div><img src=\"/img/silhouette-walk.png\" height=\"20px\" /></div>\
@@ -93227,323 +93268,221 @@ function addResults() {
         </div>\
         ");
     $("#results").append(vehicleChooser);
-    $(vehicleChooser).find("input[value=" + vehicle + "]").prop("checked", true);
-    // Add the changed Listener to the vehicle Chooser:
+    // Select the correct checkbox:
+    $("#vehicle-chooser input[value=" + vehicle + "]").prop("checked", true);
+    // Add the changed Listener to the Radio Buttons
+    $(vehicleChooser).find("input[type=radio]").off();
     $(vehicleChooser).find("input[type=radio]").change(function() {
-        vehicle = $(vehicleChooser).find("input[type=radio]:checked").val();
-        var url = '/route/start/' + vehicle + '/';
-        $.each(route["waypoints"], function(index, value) {
-            url += value["location"].toString() + ";";
-        });
-        url = url.replace(/;+$/, '');
-        document.location.href = url;
+        changeVehicle($("input[type=radio]:checked").val());
     });
-    // We should add a Place to display Informations About the Route
-    var routeInformation = $('<div id="route-information" class="row"><div id="length" class="col-md-6"></div><div id="duration" class="col-md-6"></div></div>')
-    $("#route-content").prepend(routeInformation);
-    // Add Button for starting the route assistent
-    if(points.match(/^gps/) !== null){
-        var routeAssistent = $('<div class="container-fluid"><div class="row"><div class="col-xs-12"><a id="route-assistent" href="javascript:updateCurrentLocation(startAssistent);">Routenführung starten</a></div></div></div>');
-        $("#route-content").prepend(routeAssistent);
-    }
-    addRouteMetaData();
-    insertSteps();
-}
-
-function insertSteps() {
-    var takenRoute = route["routes"][0];
-    var stepList = $("<table id=\"routing-steps\" class=\"table\"></table>");
-    // Parse Each Leg
-    $.each(takenRoute["legs"], function(legIndex, leg) {
-        // Parse all steps for the Leg
-        $.each(leg["steps"], function(stepIndex, step) {
-            var lon = step["maneuver"]["location"][0];
-            var lat = step["maneuver"]["location"][1];
-            var maneuver = $("<tr class=\"step\" data-lon=\"" + lon + "\" data-lat=\"" + lat + "\"></tr>");
-            var directionImg = $("<td class=\"step-image\"></td>");
-            var img = parseImg(step);
-            if (img !== "") {
-                $(directionImg).append("<img height=\"35px\" src=\"" + img + "\" />");
-            }
-            $(maneuver).append(directionImg);
-            var stepString = parseManeuver(step["maneuver"], takenRoute, legIndex, stepIndex);
-            //$(maneuver).append($("<div class=\"col-xs-8\">" + stepString + "</p>"));
-            $(maneuver).append($("<td>" + stepString + "</td>"));
-            var distance = parseFloat(step["distance"]);
-            distance = Math.ceil(distance);
-            if (distance > 1000) {
-                distance /= 1000;
-                distance = Math.round(distance * 10) / 10;
-                distance = distance + " km";
-            } else {
-                distance = distance + " m";
-            }
-            if (step["maneuver"]["type"] === "arrive") {
-                distance = "";
-            }
-            $(maneuver).append($("<td>" + distance + "</td>"));
-            $(maneuver).mouseover(function() {
-                var lon = parseFloat($(this).attr("data-lon"));
-                var lat = parseFloat($(this).attr("data-lat"));
-                var layer = addPoint(lon, lat);
-                $(maneuver).mouseout(function() {
-                    map.removeLayer(layer);
-                });
-                $(maneuver).click(function() {
-                    var point = ol.proj.transform([lon, lat], 'EPSG:4326', 'EPSG:3857');
-                    map.getView().setCenter(point);
-                    map.getView().setZoom(16);
-                });
+    // Let's check for existing waypoints
+    if (typeof waypoints !== "undefined") {
+        if (waypoints.length === 0) {
+            waypoints.unshift('', '');
+        } else if (waypoints.length === 1) {
+            waypoints.unshift('');
+        }
+        var firstEmpty = false;
+        var waypointHtml = $('<div id="waypoint-container" class="container-fluid"></div>');
+        if (waypoints.length >= 1) {
+            $.each(waypoints, function(index, value) {
+                var html;
+                if (typeof value[0] !== "undefined" || value === 'gps') {
+                    var chr = String.fromCharCode(65 + index);
+                    // So now the Pin
+                    var el = $('<span id="' + chr + '" class="marker">' + chr + '</span>');
+                    html = $('\
+                        <div id="' + index + '" class="waypoint-list-item row" draggable="true" title="' + value[0] + '">\
+                            <div class="waypoint-marker col-xs-2"></div>\
+                            <div class="adress-name col-xs-10">' + value[0] + '</div>\
+                        </div>');
+                    $(html).find(".waypoint-marker").append(el);
+                    // Add the correct value:
+                    var lon = "";
+                    var lat = "";
+                    if (value === 'gps') {
+                        var pos = gpsLocation;
+                        lon = pos[0];
+                        lat = pos[1];
+                        positionToAdress('gps', $(html).find(".adress-name"));
+                    } else {
+                        lon = value[0];
+                        lat = value[1];
+                        positionToAdress([lat, lon], $(html).find(".adress-name"));
+                    }
+                    
+                    addPositionMarker(lon, lat, index);
+                } else {
+                    if (!firstEmpty) {
+                        html = $("<input id=\"" + index + "\" class=\"form-control\" placeholder=\"Klicke auf die Karte um diesen Wegpunkt einzufügen.\" value=\"\"></input>");
+                        firstEmpty = true;
+                    } else {
+                        html = $("<input id=\"" + index + "\" class=\"form-control\" placeholder=\"\" value=\"\"></input>");
+                    }
+                    addSearchEvent(html);
+                }
+                $(waypointHtml).append(html);
             });
-            $(stepList).append(maneuver);
-        });
-    });
-    $("#route-content").append(stepList);
-}
-
-function parseImg(step) {
-    switch (step["maneuver"]["type"]) {
-        case "depart":
-        case "new name":
-            return "/img/straight.png";
-        case "roundabout turn":
-        case "continue":
-        case "end of road":
-        case "turn":
-            switch (step["maneuver"]["modifier"]) {
-                case "left":
-                    return "/img/turn-left.png";
-                case "sharp left":
-                    return "/img/turn-sharp-left.png";
-                case "right":
-                    return "/img/turn-right.png";
-                case "sharp right":
-                    return "/img/turn-sharp-right.png";
-                case "uturn":
-                    return "/img/uturn.png";
-                case "slight right":
-                    return "/img/fork-slight-right.png";
-                case "slight left":
-                    return "/img/fork-slight-left.png";
-                case "straight":
-                    return "/img/straight.png";
-                default:
-                    // console.log(step);
-            }
-            break;
-        case "roundabout":
-        case "rotary":
-            return "/img/roundabout.png";
-        case "merge":
-        case "off ramp":
-        case "fork":
-            switch (step["maneuver"]["modifier"]) {
-                case "left":
-                    return "/img/fork-left.png";
-                case "right":
-                    return "/img/fork-right.png";
-                case "slight right":
-                    return "/img/fork-slight-right.png";
-                case "slight left":
-                    return "/img/fork-slight-left.png";
-                case "straight":
-                    return "/img/straight.png";
-                default:
-                    // console.log(step);
-            }
-        default:
-            //  console.log(step);
+        }
+        $("#route-content").append(waypointHtml);
     }
-    return "";
+    // Describes the number of unfilled waypoints
+    var unfilled = 0;
+    if (waypoints[0] === '') {
+        unfilled++;
+    }
+    if (waypoints[waypoints.length - 1] === '') {
+        unfilled++;
+    }
+    if (typeof waypoints !== "undefined" && (waypoints.length - unfilled) >= 2 ) {
+        var from = waypoints[0][0] + "," + waypoints[0][1];
+        var lastIndex = waypoints.length - 1;
+        var to = waypoints[lastIndex][0] + "," + waypoints[lastIndex][1];
+        var points = "";
+        $.each(waypoints, function(index, value) {
+            if (value === '' || typeof value[0] === "undefined") {
+                return;
+            } else {
+                points += value.toString() + ";";
+            }
+        });
+        points = points.replace(/;+$/, '');
+        var startButton = $("<div class=\"col-xs-6\"><a id=\"calc-route\" href=\"/route/" + vehicle + "/" + points + "\" class=\"\">Route berechnen</a></div>");
+        var addWayPoint = $("<div class=\"col-xs-6\"><button type=\"button\" id=\"add-waypoint\" class=\"\">Wegpunkt hinzufügen</a></div>");
+        var buttons = $("<div id=\"find-route-options\" class=\"container-fluid\"><div class=\"row\"></div></div>");
+        $(buttons).find(".row").append(startButton);
+        $(buttons).find(".row").append(addWayPoint);
+        $("#route-content").append(buttons);
+        // Add the Listener for adding Waypoints
+        $("#add-waypoint").click(function() {
+            clearMarkers();
+            waypoints.splice(waypoints.length, 0, '');
+            refreshUrl();
+        });
+        // We should add a Place to display Informations About the Route
+        var routeInformation = $('<div id="route-information" class="row"><div id="length" class="col-md-6"></div><div id="duration" class="col-md-6"></div></div>')
+        $("#route-content").prepend(routeInformation);
+    }
+    generatePreviewRoute();
+    addDragAndDrop();
+    initResults();
+}
+/*
+ * Function to convert lat/lon into an adress String and Put it into the value attribute of the given input-object
+ * @param{float} lon
+ * @param{float} lat
+ * @apram{Input-Object} obj
+ */
+function positionToAdress(pos, obj) {
+    if (pos === 'gps') {
+        obj.html('Eigener Standort');
+        obj.attr('title', 'Eigener Standort');
+    } else {
+        var url = "https://maps.metager.de/nominatim/reverse.php?format=json&lat=" + pos[0] + "&lon=" + pos[1] + "&zoom=18";
+        $.get(url, function(data) {
+            if (typeof data !== "undefined" && typeof data["display_name"] !== "undefined") {
+                obj.html(data["display_name"]);
+                obj.attr("title", data["display_name"]);
+            }
+        });
+    }
 }
 
-function addPoint(lon, lat) {
-    var layer = new ol.layer.Vector({
-        source: new ol.source.Vector({
-            features: [new ol.Feature({
-                geometry: new ol.geom.Point(ol.proj.transform([lon, lat], 'EPSG:4326', 'EPSG:3857'))
-            })]
+function addPositionMarker(lon, lat, index) {
+    // This will work upto an index of 25
+    // Caharacter Representation of the index:
+    var chr = String.fromCharCode(65 + index);
+    // So now the Pin
+    var el = $('<span id="' + chr + '" class="marker">' + chr + '</span>');
+    var pos = ol.proj.transform([parseFloat(lon), parseFloat(lat)], 'EPSG:4326', 'EPSG:3857');
+    markers.push(addMarker(el, pos));
+}
+/*
+ * Clears all Markers which are on the map
+ */
+function clearMarkers() {
+    $.each(markers, function(index, value) {
+        map.removeOverlay(value);
+    });
+    removeTemporarayMarker();
+    markers = [];
+    markerPositions = [];
+}
+/*
+ * Generates Parameter to the Route until this point using the global waypoints variable
+ * @return{String} QueryParameter
+ */
+function generateBase64Parameter() {
+    if (typeof waypoints === "undefined") {
+        return null;
+    } else {
+        var newWayPoints = [];
+        $.each(waypoints, function(index, value) {
+            if (value !== '') {
+                newWayPoints.push(value);
+            }
+        });
+        var points = btoa(waypoints.toString());
+        return points;
+    }
+}
+/*
+ * This Function generates an Overview of the Route that will be calculated
+ * and prints it on the map
+ */
+function generatePreviewRoute() {
+    // First thing is to remove the eventually already existing Layer
+    map.removeLayer(vectorLayerRoutePreview);
+    var vectorS = new ol.source.Vector();
+    var routeLineStyle = new ol.style.Style({
+        stroke: new ol.style.Stroke({
+            color: 'rgb(255,0,0)',
+            width: 5
+        }),
+        fill: new ol.style.Fill({
+            color: 'rgba(255,0,0,.03)'
         })
     });
-    map.addLayer(layer);
-    return layer;
-}
-
-function addRouteMetaData() {
-    var distance = route["routes"][0]["distance"];
-    var duration = route["routes"][0]["duration"];
-    $("#route-information #length").html(parseDistance(distance));
-    $("#route-information #duration").html(parseDuration(duration));
-}
-
-function parseManeuver(maneuver, takenRoute, legIndex, stepIndex) {
-    //console.log(maneuver);
-    var stepString = "";
-    var type = maneuver["type"];
-    var modifier = maneuver["modifier"];
-    var targetStreet = takenRoute["legs"][legIndex]["steps"][stepIndex]["name"];
-    var destinations = takenRoute["legs"][legIndex]["steps"][stepIndex]["destinations"];
-    if (!destinations) {
-        destinations = takenRoute["legs"][legIndex]["steps"][stepIndex]["ref"]
-    }
-    switch (type) {
-        case "depart":
-            var direction = parseBearing(maneuver["bearing_after"]);
-            var start = takenRoute["legs"][legIndex]["steps"][stepIndex]["name"];
-            stepString = "Auf " + start + " nach " + direction;
-            var nextStreet = takenRoute["legs"][legIndex]["steps"][stepIndex + 1]["name"];
-            if (nextStreet !== start) {
-                stepString += " Richtung " + nextStreet;
-            }
-            break;
-        case "roundabout turn":
-        case "continue":
-        case "end of road":
-        case "turn":
-            var direction = "";
-            if (maneuver["modifier"] === "uturn") {
-                stepString = "Bei " + targetStreet + " wenden";
+    if (waypoints.length < 2 || waypoints[0] === '' || (waypoints[waypoints.length - 1] === '' && waypoints.length === 2)) {
+        return;
+    } else {
+        var points = "";
+        $.each(waypoints, function(index, value) {
+            if (value === '' || typeof value[0] === "undefined") {
+                return;
             } else {
-                var modifier = parseModifier(maneuver["modifier"]);
-                if (modifier !== "Weiter") {
-                    modifier += " abbiegen";
-                }
-                stepString = modifier;
-            }
-            if (targetStreet !== "") {
-                stepString += " auf " + targetStreet;
-            }
-            break;
-        case "roundabout":
-        case "rotary":
-            stepString = "Im Kreisverkehr ";
-            if (maneuver["exit"] !== null) {
-                stepString += "die ";
-                switch (parseInt(maneuver["exit"])) {
-                    case 1:
-                        stepString += "erste ";
-                        break;
-                    case 2:
-                        stepString += "zweite ";
-                        break;
-                    case 3:
-                        stepString += "dritte ";
-                        break;
-                    case 4:
-                        stepString += "vierte ";
-                        break;
-                    case 5:
-                        stepString += "fünfte ";
-                        break;
-                    case 6:
-                        stepString += "sechste ";
-                        break;
-                    case 7:
-                        stepString += "siebte ";
-                        break;
-                    case 8:
-                        stepString += "achte ";
-                        break;
-                    case 9:
-                        stepString += "neunte ";
-                        break;
-                }
-                stepString += "Ausfahrt nehmen."
-                if (destinations) {
-                    stepString += " <nobr>(" + destinations + ")</nobr>";
+                if (value === 'gps') {
+                    points += gpsLocation.toString() + ";";
+                } else {
+                    points += value.toString() + ";";
                 }
             }
-            break;
-        case "arrive":
-            var mod = parseModifier(modifier);
-            if (mod === undefined) {
-                stepString = "Sie haben das Ziel erreicht.";
-            } else {
-                stepString = "Das Ziel befindet sich " + mod;
-            }
-            break;
-        case "new name":
-            stepString = "Weiter auf " + targetStreet;
-            break;
-        case "merge":
-            var mod = parseModifier(modifier);
-            stepString = mod + " auffahren.";
-            if (targetStreet && !destinations) {
-                stepString = mod + " auffahren auf " + targetStreet + ".";
-            } else if (targetStreet && destinations) {
-                stepString = mod + " halten um auf " + targetStreet + " (" + destinations + ") aufzufahren.";
-            }
-            break;
-        case "off ramp":
-        case "fork":
-            var mod = parseModifier(modifier);
-            stepString = "An der Gabelung " + mod + " halten.";
-            if (targetStreet && !destinations) {
-                stepString = "An der Gabelung " + mod + " halten. Richtung " + targetStreet;
-            } else if (!targetStreet && destinations) {
-                stepString = "An der Gabelung " + mod + " halten. (" + destinations + ")";
-            } else if (targetStreet && destinations) {
-                stepString = "An der Gabelung " + mod + " halten. Richtung " + targetStreet + " (" + destinations + ")";
-            }
-            break;
-        default:
-            console.log(takenRoute["legs"][legIndex]["steps"][stepIndex]);
-            stepString = "Konnte diesen Schritt nicht zu einem String auswerten";
-    }
-    return stepString;
-}
+        });
+        points = points.replace(/;+$/, '');
+        // At this Point we can only Route between 2 Points so we have all the Information needed
+        var url = '/route/preview/' + vehicle + '/' + points;
+        // The Rest will be handled Asynchronious
+        $.get(url, function(data) {
+            var geojson = data["geojson"];
+            var duration = data["duration"];
+            var distance = data["distance"];
+            $("#route-information #length").html(parseDistance(distance));
+            $("#route-information #duration").html(parseDuration(duration));
 
-function parseModifier(modifier) {
-    var direction = "";
-    switch (modifier) {
-        case undefined:
-            direction = undefined;
-            break;
-        case "sharp right":
-            direction = "Scharf rechts";
-            break;
-        case "right":
-            direction = "Rechts";
-            break;
-        case "slight right":
-            direction = "Leicht Rechts";
-            break;
-        case "straight":
-            direction = "Weiter";
-            break;
-        case "slight left":
-            direction = "Leicht Links";
-            break;
-        case "left":
-            direction = "Links";
-            break;
-        case "sharp left":
-            direction = "Scharf Links";
-            break;
-        default:
-            direction = "Konnte Richtungs-Modifizierer nicht auswerten: " + modifier;
-    }
-    return direction;
-}
-
-function parseBearing(bearing) {
-    bearing = parseFloat(bearing);
-    if ((bearing >= 0 && bearing < 22.5) || bearing >= 337.5) {
-        return "Norden";
-    } else if (bearing >= 22.5 && bearing < 67.5) {
-        return "Nordosten";
-    } else if (bearing >= 67.5 && bearing < 112.5) {
-        return "Osten";
-    } else if (bearing >= 112.5 && bearing < 157.5) {
-        return "Südosten";
-    } else if (bearing >= 157.5 && bearing < 202.5) {
-        return "Süden";
-    } else if (bearing >= 202.5 && bearing < 247.5) {
-        return "Südwesten";
-    } else if (bearing >= 247.5 && bearing < 292.5) {
-        return "Westen";
-    } else if (bearing >= 292.5 && bearing < 337.5) {
-        return "Nordwesten";
+            var geom = (new ol.format.GeoJSON()).readGeometry(geojson, {
+                'dataProjection': 'EPSG:4326',
+                'featureProjection': 'EPSG:3857'
+            });
+            var feature = new ol.Feature({
+                'geometry': geom
+            });
+            feature.setStyle(routeLineStyle);
+            vectorS.addFeature(feature);
+            vectorLayerRoutePreview = new ol.layer.Vector({
+                source: vectorS
+            });
+            map.addLayer(vectorLayerRoutePreview);
+        });
     }
 }
 
@@ -93575,414 +93514,317 @@ function parseDuration(duration) {
     }
     return result;
 }
+/*
+ * This functions appends the drag and drop event for all waypoints
+ * This allows us to switch the Position of the waypoints
+ */
+var draggedId = -5;
 
-function addGraphics() { // We collect the minimal Position and the maximum Position within the route so we can Adjust the View:
-    var minPos = [];
-    var maxPos = [];
-    var vectorS = new ol.source.Vector();
-    // We will show the first Route:
-    $.each(route["routes"][0]["legs"], function(index, value) {
-        // For each leg we collect all the steps:
-        $.each(value["steps"], function(index, value) {
-            var geojson = value["geometry"];
-            // Let's look through the Points to find the minimal
-            $.each(geojson["coordinates"], function(index, value) {
-                if (typeof minPos[0] === "undefined" || parseFloat(value[0]) < minPos[0]) {
-                    minPos[0] = value[0];
-                } else if (typeof maxPos[0] === "undefined" || parseFloat(value[0]) > maxPos[0]) {
-                    maxPos[0] = value[0];
-                }
-                if (typeof minPos[1] === "undefined" || parseFloat(value[1]) < minPos[1]) {
-                    minPos[1] = value[1];
-                } else if (typeof maxPos[1] === "undefined" || parseFloat(value[1]) > maxPos[1]) {
-                    maxPos[1] = value[1];
-                }
-            });
-            var geom = (new ol.format.GeoJSON()).readGeometry(geojson, {
-                'dataProjection': 'EPSG:4326',
-                'featureProjection': 'EPSG:3857'
-            });
-            var feature = new ol.Feature({
-                'geometry': geom
-            });
-            feature.setStyle(routeLineStyle);
-            // feature.setId(index);
-            vectorS.addFeature(feature);
+function addDragAndDrop() {
+    $(".waypoint-list-item").on("dragstart", function(evt) {
+        evt.originalEvent.dataTransfer.setData('text', evt.target.id);
+        //Hide Original Element
+        setTimeout(function() {
+            $("#" + evt.target.id).addClass("hide");
+        });
+        draggedId = parseInt(evt.target.id);
+    });
+    $(".waypoint-list-item").on("dragend", function(evt) {
+        $("#waypoint-container .hide").removeClass("hide");
+    });
+    $("#waypoint-container div").each(function(index, element) {
+        $(element).on('dragover', function(evt) {
+            var targetId = parseInt(evt.target.id);
+            if (draggedId !== targetId) {
+                evt.originalEvent.preventDefault();
+                $("#waypoint-container .drop-target").remove();
+                $(this).after('<hr class="drop-target" />');
+            }
+        });
+        $(element).on('dragleave', function(evt) {
+            $("#waypoint-container .drop-target").remove();
+        });
+        $(element).on('drop', function(evt) {
+            evt.originalEvent.preventDefault();
+            var data = parseInt(evt.originalEvent.dataTransfer.getData('text'));
+            var target = parseInt($(this).attr("id"));
+            if (data !== target) {
+                if (data > target) target += 1;
+                waypoints.move(data, target);
+                refreshUrl();
+            }
+            draggedId = -5;
         });
     });
-    adjustViewBoundingBox(minPos, maxPos);
-    if(routeLayer !== null){
-        // Remove old Features
-        map.removeLayer(routeLayer);
-    }
-    // Remove old Markers
-    $.each(routeMarkers, function(index, value){
-        map.removeOverlay(value);
-    });
-    // add Features
-
-    routeLayer = new ol.layer.Vector({
-        source: vectorS
-    });
-    map.addLayer(routeLayer);
-    // We should add some Pins to the Waypoint Locations
-    $.each(route["waypoints"], function(index, value) {
-        // This will work upto an index of 25
-        // Caharacter Representation of the index:
-        var chr = String.fromCharCode(65 + index);
-        // So now the Pin
-        var el = $('<span id="' + chr + '" class="marker">' + chr + '</span>');
-        var pos = ol.proj.transform([parseFloat(value["location"][0]), parseFloat(value["location"][1])], 'EPSG:4326', 'EPSG:3857');
-        routeMarkers.push(addMarker(el, pos));
-    });
-}
-
-function startAssistent() {
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/js/routeAssistent.js', {
-            scope: '/'
-        }).then(function(reg) {
-            // registration worked
-            console.log('Registration succeeded. Scope is ' + reg.scope);
-        }).catch(function(error) {
-            // registration failed
-            console.error('Registration failed with ' + error);
-        });
-    };
-}
-var followingId = null;
-var positions = [];
-var routeAssistentVectorSource = new ol.source.Vector();
-var waypoints = [];
-var drivenRoutes = [];
-
-function startAssistent() {
-    if (gps && points.match(/^gps;/) !== null) {
-        alert("Dieses Feature ist noch hochgradig experimentell und kann jederzeit abstürzen. Bitte benutzen Sie es nicht bei der Autofahrt und achten Sie konstant auf Ihre Umgebung, beachten Sie die Straßenverkehrsordnung und bedienen Sie dieses Interface (und Ihr Handy) nicht während der Fahrt.");
-        positions = [];
-        initWaypoints();
-        prepareInterface();
-        initAssistentGraphics();
-        reloadRoute();
-        startLocationFollowing();
-    }
-}
-
-function initWaypoints() {
-    var result = points.split(';');
-    $.each(result, function(index, value) {
-        if (value === 'gps') {
-            waypoints.push('gps');
-        } else {
-            waypoints.push({
-                hint: '',
-                lon: parseFloat(value.split(',')[0]),
-                lat: parseFloat(value.split(',')[1])
-            });
+    // We need a special treatment to allow placing a waypoint at the start
+    // For being able so we need to assign a special dragover,dragleave and drop event handler to the Nav-Tabs of the result
+    var element = $("#results ul.nav-tabs, #route-information");
+    $(element).on('dragover', function(evt) {
+        var targetId = -1;
+        if (draggedId !== targetId) {
+            evt.originalEvent.preventDefault();
+            $("#waypoint-container .drop-target").remove();
+            $("#waypoint-container").prepend('<hr class="drop-target" />');
         }
     });
-}
-
-function initAssistentGraphics() {
-    // Set The Route Layer to the new one:
-    routeLayer.setSource(routeAssistentVectorSource);
-    // Remove old Markers
-    $.each(routeMarkers, function(index, value) {
-        map.removeOverlay(value);
+    $(element).on('dragleave', function(evt) {
+        $("#waypoint-container .drop-target").remove();
+    });
+    $(element).on('drop', function(evt) {
+        evt.originalEvent.preventDefault();
+        var data = parseInt(evt.originalEvent.dataTransfer.getData('text'));
+        var target = -1;
+        if (data !== target) {
+            if (data > target) target += 1;
+            waypoints.move(data, target);
+            initRouteFinder();
+        }
+        draggedId = -5;
     });
 }
-
-function prepareInterface() {
-    // Change Navigation-Bar to make it show the next Steps
-    // Hide Navigation Bar
-    $("nav").removeClass("navbar");
-    $("nav").removeClass("navbar-default");
-    // Create the Layout for the next Step:
-    var nextStep = $('\
-        <div id="route-content">\
-            <div id="route-information" class="row">\
-                <div id="length" class="col-xs-6"></div>\
-                <div id="duration" class="col-xs-6"></div>\
-            </div>\
-            <table id="routing-steps" class="table">\
-                <tbody>\
-                    <tr class="step">\
-                        <td class="step-image"><img height="35px" src=""></td>\
-                        <td class="step-string"></td>\
-                        <td class="step-length"></td>\
-                    </tr>\
-                </tbody>\
-            </table>\
-        </div>\
-  ');
-    $("nav").html(nextStep);
-    //Hide Results
-    deinitResults();
-    // Remove Zoom Bar
-    $(".ol-zoom, .ol-zoomslider, #location-tool").addClass("hidden");
-    //Update Map Size
-    updateMapSize();
-}
-
-function deinitAssistent() {
-    window.location.reload();
-}
-var currentPosition = null;
-var calculating = false;
-
-function startLocationFollowing() {
-    if (followingId === null) {
-        if (currentPosition === null) {
-            currentPosition = {
-                timestamp: Math.floor(Date.now() / 1000),
-                lon: gpsLocation[0],
-                lat: gpsLocation[1],
-                accuracy: 1.5
-            };
-        }
-        options = {
-            enableHighAccuracy: true,
-            timeout: 5000,
-            maximumAge: 1000
-        };
-        followingId = navigator.geolocation.watchPosition(function(position) {
-            var timestamp = Math.floor(position.timestamp / 1000);
-            var lon = parseFloat(position.coords.longitude);
-            var lat = parseFloat(position.coords.latitude);
-            var accuracy = parseFloat(position.coords.accuracy);
-            var newPosition = {
-                timestamp: timestamp,
-                lon: lon,
-                lat: lat,
-                accuracy: Math.max(accuracy, 1.5)
-            };
-            var dist = getDistance(currentPosition, newPosition);
-            var minDist = 0;
-            switch (vehicle) {
-                case "car":
-                    minDist = 20;
-                    break;
-                case "bicycle":
-                    minDist = 10;
-                    break;
-                case "foot":
-                    minDist = 5;
-                    break;
-            }
-            if (dist <= (minDist + accuracy) || calculating) {
-                console.log(dist + "/" + minDist + " m");
-                return;
-            } else {
-                calculating = true;
-            }
-            positions.push({
-                timestamp: timestamp,
-                lon: lon,
-                lat: lat,
-                accuracy: accuracy
-            });
-            currentPosition = {
-                timestamp: timestamp,
-                lon: lon,
-                lat: lat,
-                accuracy: accuracy
-            };
-            if (positions.length === 1) {
-                // If Just one Position is in the array
-                // then it indicates the beginning of the route
-                // We start with the first step of the current route
-                console.log(route);
-                routeAssistentVectorSource.clear();
-                // Draw the Route
-                drawGeojson(route.routes[0].geometry, 'red');
-                updateNextStep();
-                calculating = false;
-            } else if (positions.length >= 2) {
-                // Generate url to retrieve
-                var positionstring = "";
-                var timestampstring = "";
-                var radiusstring = "";
-                $.each(positions, function(index, value) {
-                    positionstring += value.lon + "," + value.lat + ";";
-                    timestampstring += value.timestamp + ";";
-                    radiusstring += value.accuracy + ";";
+Array.prototype.move = function(from, to) {
+    this.splice(to, 0, this.splice(from, 1)[0]);
+};
+/* 
+ * This Function adds the Search Event to the input Box to allow searching for any Waypoint
+ * @param element{Object} Input-Field that needs the Listeners to be attached
+ */
+function addSearchEvent(element) {
+    $(element).focusin(function() {
+        var history = getHistory();
+        if (gps || history.length > 0) {
+            var sr = $("<div id=\"search-results\"></div>");
+            if (gps) {
+                var res = $("<ul class=\"list list-unstyled\"></ul>");
+                var ownPosition = $("<li><img src=\"/img/marker-icon.png\" /> Eigene Position</li>");
+                $(ownPosition).mousedown(function() {
+                    var id = $(element).attr("id");
+                    waypoints[id] = 'gps';
+                    refreshUrl();
                 });
-                positionstring = positionstring.replace(/;+$/, '');
-                timestampstring = timestampstring.replace(/;+$/, '');
-                radiusstring = radiusstring.replace(/;+$/, '');
-                var url = '/route/match/' + vehicle + '/' + positionstring + '/' + timestampstring + '/' + radiusstring;
-                $.getJSON(url, function(r) {
-                    // Aus den "gesnappten" Koordinaten berechnen wir nun die gefahrene Route
-                    if (r.code === "Ok" && r.tracepoints !== null && r.tracepoints[r.tracepoints.length - 1] !== null) {
-                        var position = {
-                                hint: r.tracepoints[r.tracepoints.length - 1].hint,
-                                lon: parseFloat(r.tracepoints[r.tracepoints.length - 1].location[0]),
-                                lat: parseFloat(r.tracepoints[r.tracepoints.length - 1].location[1])
-                            }
-                            // Wir nehmen vorerst immer das Beste Matching für die gefahrene Route.
-                            // Vielleicht fällt mir später etwas besseres ein
-                        if (r.matchings !== null && r.matchings[0] !== undefined) {
-                            // We have successfully calculated the driven route. Let's reset the points:
-                            drivenRoutes.push(r.matchings[0].geometry);
-                            // Clear Position data:
-                            while (positions.length > 1) {
-                                positions.pop();
-                            }
-                            // Clear the shown Route
-                            routeAssistentVectorSource.clear();
-                            // Draw every driven Route on the map:
-                            $.each(drivenRoutes, function(index, value) {
-                                // Add the driven Route
-                                drawGeojson(value, 'grey');
-                            });
-                            // Get the Route until the target
-                            var hintsComplete = true;
-                            var pointString = "";
-                            var hintString = "";
-                            $.each(waypoints, function(index, value) {
-                                if (value === 'gps') {
-                                    pointString += position.lon + "," + position.lat + ";";
-                                    hintString += position.hint + ";";
-                                } else {
-                                    pointString += value.lon + "," + value.lat + ";";
-                                    if (value.hint !== "") {
-                                        hintString += value.hint + ";";
-                                    } else {
-                                        hintsComplete = false;
-                                    }
-                                }
-                            });
-                            pointString = pointString.replace(/;$/, '');
-                            hintString = hintString.replace(/;$/, '');
-                            var url = '/route/find/' + vehicle + '/' + pointString;
-                            if (hintsComplete) {
-                                url += "/" + hintString;
-                            }
-                            $.getJSON(url, function(data) {
-                                if (data.code === "Ok") {
-                                    drawGeojson(data.routes[0].geometry, 'red');
-                                    route = data;
-                                    updateNextStep();
-                                }
-                            }).always(function() {
-                                calculating = false;
-                            });
-                        } else {
-                            calculating = false;
-                        }
+                $(res).append(ownPosition);
+                $(sr).append(res);
+            }
+            if (history.length > 0) {
+                $(sr).append("<h5>Ergebnisse aus der <a href=\"/help/history\" target=\"_blank\">History</a></h5>");
+                var res = $("<ul class=\"list list-unstyled\"></ul>");
+                $.each(history, function(index, value) {
+                    var r = $("<li>" + value.name + "</li>");
+                    $(r).mousedown(function() {
+                        var id = $(element).attr("id");
+                        waypoints[id] = [value.lon, value.lat];
+                        addToHistory(value.name, value.lon, value.lat);
+                        refreshUrl();
+                    });
+                    $(res).append(r);
+                });
+                $(sr).append(res);
+            }
+            $(element).after(sr);
+            $(element).unbind("keyup");
+            $(element).keyup(function() {
+                var val = escapeRegExp($(this).val());
+                var reg = new RegExp(val, 'i');
+                // Hide all Elements where the String does not match and unhide all where it matches:
+                $("#search-results li").each(function(index, value) {
+                    var name = $(value).html();
+                    var el = $("#search-results li")[index];
+                    if (name.match(reg) !== null) {
+                        $(el).removeClass("hidden");
                     } else {
-                        console.log(r);
-                        positions.pop();
-                        calculating = false;
+                        $(el).addClass("hidden");
                     }
                 });
-            } else {
-                calculating = false;
-            }
-        }, function(error) {
-            // Follow Location couldn't be started. Abort now
-            deinitAssistent();
-        }, options);
-    }
-}
-
-function updateNextStep() {
-    var data = route;
-    // This Function goes through the current Route Object and evaluates the next step:
-    // Add the information for the next steps and route meta data
-    // Route Metadata
-    var duration = parseFloat(data.routes[0].duration);
-    duration = parseDuration(duration)
-    $("nav #route-information #duration").html(duration);
-    var distance = parseFloat(data.routes[0].distance)
-    distance = parseDistance(distance);
-    $("nav #route-information #length").html(distance);
-    // Next Step
-    var step = data.routes[0].legs[0].steps[1];
-    var stepString = parseManeuver(step["maneuver"], data.routes[0], 0, 1);
-    $("nav #routing-steps .step-string").html(stepString);
-    var img = parseImg(step);
-    $("nav #routing-steps .step-image img").attr('src', img);
-    var stepDistance = parseDistance(parseFloat(data.routes[0].legs[0].steps[0].distance));
-    $("nav #routing-steps .step-length").html(stepDistance);
-    // So now that everything is Drawn we adjust the Map View
-    // The new Rotation is The bearing of the first step of the route:
-    var rotation = parseInt(data.routes[0].legs[0].steps[0].maneuver.bearing_after);
-    rotation = 360 - rotation;
-    // The Value needs to be in Radians
-    rotation *= Math.PI;
-    rotation /= 180;
-    map.getView().setRotation(rotation);
-    map.getView().setZoom(18);
-    map.getView().setCenter(ol.proj.transform([data.waypoints[0].location[0], data.waypoints[0].location[1]], 'EPSG:4326', 'EPSG:3857'));
-}
-var rad = function(x) {
-    return x * Math.PI / 180;
-};
-var getDistance = function(p1, p2) {
-    var R = 6378137; // Earth’s mean radius in meter
-    var dLat = rad(p2.lat - p1.lat);
-    var dLong = rad(p2.lon - p1.lon);
-    var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(rad(p1.lat)) * Math.cos(rad(p2.lat)) * Math.sin(dLong / 2) * Math.sin(dLong / 2);
-    var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    var d = R * c;
-    return d; // returns the distance in meter
-};
-
-function removeRoute() {
-    if (routeLayer !== null) {
-        // Remove old Features
-        map.removeLayer(routeLayer);
-    }
-    // Remove old Markers
-    $.each(routeMarkers, function(index, value) {
-        map.removeOverlay(value);
-    });
-    vectorS = new ol.source.Vector();
-}
-
-function drawGeojson(geojson, lineColor) {
-    var drivenRouteLineStyle = new ol.style.Style({
-        stroke: new ol.style.Stroke({
-            color: lineColor,
-            width: 5
-        }),
-        fill: new ol.style.Fill({
-            color: lineColor
-        })
-    });
-    var geom = (new ol.format.GeoJSON()).readGeometry(geojson, {
-        'dataProjection': 'EPSG:4326',
-        'featureProjection': 'EPSG:3857'
-    });
-    var feature = new ol.Feature({
-        'geometry': geom
-    });
-    feature.setStyle(drivenRouteLineStyle);
-    routeAssistentVectorSource.addFeature(feature);
-}
-
-function reloadRoute() {
-    if (points.match(/gps/) !== null) {
-        var pos = gpsLocation;
-        var pointString = points;
-        if (pos !== null) {
-            pointString = pointString.replace(/gps/, pos.toString());
-        } else {
-            pointString = pointString.replace(/;{0,1}gps;{0,1}/, ';');
+            });
         }
-    }
-    var url = '/route/find/' + vehicle + '/' + pointString;
-    $.getJSON(url, function(response) {
-        route = response;
-        // Add The Hints to the waypoints:
-        $.each(route.waypoints, function(index, value) {
-            if (waypoints[index] !== 'gps') {
-                waypoints[index].hint = value.hint;
+        var searchButton = $("<a tab-index=\"-1\" href=\"#\" class=\"search-btn btn btn-default btn-sm\"><span class=\"glyphicon glyphicon-search\"></span></a>");
+        $(element).after(searchButton);
+        var placeholder = $(element).attr("placeholder");
+        $(element).attr("placeholder", "Suchworte eingeben");
+        $(element).keypress(function(e) {
+            if (e.which == 13) {
+                $(searchButton).click();
             }
         });
-    }).success(function() {
-        //addGraphics();
+        $(searchButton).mousedown(function(evt) {
+            evt.preventDefault();
+        });
+        $(searchButton).click(function() {
+            $("#search-results").remove();
+            var searchResults = $("<div id=\"search-results\"><div class=\"loader\"><img src=\"/img/ajax-loader.gif\" /></div></div>");
+            $(element).after(searchResults);
+            var id = $(element).attr("id");
+            var query = $(element).val();
+            var url = "/route/search/" + encodeURI(query);
+            $.getJSON(url, function(data) {
+                var results = $("<ul class=\"list list-unstyled\"></ul>");
+                $.each(data, function(index, value) {
+                    var result = $("<li>" + value["display_name"] + "</li>");
+                    $(results).append(result);
+                    $(result).mousedown(function(evt) {
+                        addToHistory(value["display_name"], value["lon"], value["lat"]);
+                        waypoints[id] = [parseFloat(value["lon"]), parseFloat(value["lat"])];
+                        refreshUrl();
+                    });
+                    $(result).mouseover(function() {
+                        addTemporaryMarker(value["lon"], value["lat"]);
+                    });
+                    $(result).mouseout(function() {
+                        removeTemporarayMarker();
+                    });
+                });
+                $(searchResults).find(".loader").remove();
+                $(searchResults).append("<h5>Suchergebnisse für: \"" + query + "\"</h5>");
+                $(searchResults).append(results);
+            });
+        });
+        $(element).focusout(function(evt) {
+            $("#search-results").remove();
+            $(element).off();
+            $(element).val("");
+            addSearchEvent(element);
+            $(element).attr("placeholder", placeholder);
+            $(".search-btn").remove();
+        });
     });
 }
-//# sourceMappingURL=routing.js.map
+
+function escapeRegExp(str) {
+    return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
+}
+
+function getHistory() {
+    var präfix = "place-search:";
+    var result = [];
+    if (localStorage) {
+        var reg = new RegExp("^" + präfix, '');
+        $.each(localStorage, function(key, value) {
+            if (key.match(reg) !== null && value.match(/^\d+;\d+\.\d+,\d+\.\d+$/) !== null) {
+                var match = value.match(/([\d]+?);([\d\.]+),([\d\.]+)/);
+                var count = parseInt(match[1]);
+                var lon = parseFloat(match[2]);
+                var lat = parseFloat(match[3]);
+                var name = atob(key.replace(präfix, ''));
+                result.push({
+                    name: name,
+                    count: count,
+                    lon: lon,
+                    lat: lat
+                });
+            }
+        });
+        result.sort(function(a, b) {
+            return b.count - a.count
+        });
+    }
+    return result;
+}
+
+function saveHistory(history, präfix) {
+    if (localStorage) {
+        // Das abspeichern der neuen History verläuft in 2 Schritten:
+        // 1. Löschen der vorhanden History
+        // 2. Hinzufügen der neuen History
+        // 1. Löschen der vorhandenen History
+        clearHistory(präfix);
+        // 2. Hinzufügen der neuen History
+        $.each(history, function(index, value) {
+            var key = präfix + btoa(value.name);
+            var val = value.count + ";" + value.lon + "," + value.lat;
+            localStorage.setItem(key, val);
+        });
+    }
+}
+
+function clearHistory(präfix) {
+    var oldhistory = getHistory();
+    $.each(oldhistory, function(index, value) {
+        var key = präfix + btoa(value.name);
+        localStorage.removeItem(key);
+    });
+}
+
+function addToHistory(name, lon, lat) {
+    if (localStorage) {
+        var präfix = "place-search:";
+        var key = btoa(name);
+        var historyLimit = 10;
+        // Let's get the sorted List of Results
+        var history = getHistory();
+        // Check if item exists:
+        var item = localStorage.getItem(präfix + key);
+        if (item === null) {
+            // Item ist noch nicht in der History. Es wird an die erste Stelle gesetzt
+            if (history.length >= historyLimit) {
+                // Zuerst das letzte Element entfernen, da unsere History voll ist
+                history.pop();
+            }
+            // Nun fügen wir das neue Element hinzu:
+            history.unshift({
+                name: name,
+                count: 10,
+                lon: lon,
+                lat: lat
+            });
+        } else {
+            // Item ist bereits in der History. Es wird einen Platz nach oben gepackt.
+            var itemIndex = parseInt(item.match(/^\d+/)[0]);
+            // Der angezeigte Index ist eine Zahl zwischen 1 und 10 wobei 10 das erste Element ist und 1 das letzte
+            // Wir konvertieren diese Zahl zum Array-Index
+            itemIndex = Math.abs(itemIndex - 10);
+            // Wir verschieben das Array Element jetzt um einen Platz nach vorne, also z.B: Element an stelle 4 kommt an stelle 3 etc.
+            history.move(itemIndex, itemIndex - 1);
+        }
+        // Jetzt müssen wir noch den Count Parameter für jedes Element aktualisieren:
+        var newHistory = [];
+        $.each(history, function(index, value) {
+            var c = historyLimit - index;
+            newHistory.push({
+                name: value.name,
+                count: c,
+                lon: value.lon,
+                lat: value.lat
+            });
+        });
+        saveHistory(newHistory, präfix);
+    }
+}
+var marker = null;
+
+function addTemporaryMarker(lon, lat) {
+    // So now the Pin
+    var el = $('<span class="marker"></span>');
+    var pos = ol.proj.transform([parseFloat(lon), parseFloat(lat)], 'EPSG:4326', 'EPSG:3857');
+    if (marker !== null) {
+        map.removeOverlay(marker);
+        marker = null;
+    }
+    marker = addMarker(el, pos);
+}
+
+function removeTemporarayMarker() {
+    if (marker !== null) {
+        map.removeOverlay(marker);
+        marker = null;
+    }
+}
+
+function clone(obj) {
+    if (null == obj || "object" != typeof obj) return obj;
+    var copy = obj.constructor();
+    for (var attr in obj) {
+        if (obj.hasOwnProperty(attr)) copy[attr] = clone(obj[attr]);
+    }
+    return copy;
+}
+
+function getWayPointLength(){
+    var count = 0;
+    $.each(waypoints, function(index, value){
+        if(value !== ''){
+            count++;
+        }
+    });
+    return count;
+}
+//# sourceMappingURL=findRoute.js.map

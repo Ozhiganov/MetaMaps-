@@ -92628,6 +92628,7 @@ $(document).ready(function() {
     $(window).resize(function() {
         updateResultsPosition();
         updateCloserPosition();
+        updateMapSize();
     });
     $("#follow-location > span.button").click(function() {
         followLocation();
