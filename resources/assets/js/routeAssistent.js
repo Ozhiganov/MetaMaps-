@@ -103,213 +103,229 @@ function startLocationFollowing() {
             var lon = parseFloat(position.coords.longitude);
             var lat = parseFloat(position.coords.latitude);
             var accuracy = parseFloat(position.coords.accuracy);
-            var newPosition = {
-                timestamp: timestamp,
-                lon: lon,
-                lat: lat,
-                accuracy: Math.max(accuracy, 1.5)
-            };
-            var dist = getDistance(currentPosition, newPosition);
-            var minDist = 0;
-            switch (vehicle) {
-                case "car":
-                    minDist = 20;
-                    break;
-                case "bicycle":
-                    minDist = 10;
-                    break;
-                case "foot":
-                    minDist = 5;
-                    break;
-            }
-            if (dist <= (minDist + accuracy) || calculating) {
-                return;
-            } else {
-                calculating = true;
-            }
-            positions.push({
-                timestamp: timestamp,
-                lon: lon,
-                lat: lat,
-                accuracy: accuracy
-            });
             currentPosition = {
-                timestamp: timestamp,
+                timestamp: Math.floor(timestamp / 1000),
                 lon: lon,
                 lat: lat,
                 accuracy: accuracy
             };
-            if (positions.length === 1) {
-                // If Just one Position is in the array
-                // then it indicates the beginning of the route
-                // We start with the first step of the current route
-                console.log(route);
-                routeAssistentVectorSource.clear();
-                // Draw the Route
-                drawGeojson(route.routes[0].geometry, 'red');
-                updateNextStep();
-                calculating = false;
-            } else if (positions.length >= 2) {
-                // We have to decide whether we will retrieve two exact Routes (driven and upcoming)
-                // or whether we want to derive a new User Position on the Route of the new GPS Location
-                // The latter one would use some mobile Data to make a new HTTP Request
-                // The first one could save that data taking the risk that the user could've left the route
-                // We calculate the risk in the following way:
-                // We derive the perpendicular distance of the GPS Coordinate to the current Route Step (straight line)
-                // We get a possible Position of the User on the Route. There could be some possible situations the user is in:
-                // 1. The distance of the Point to the Route is higher than the GPS accuracy
-                //  => The user has left the route and we need to recalculate
-                // 2. The point is beyond the Point where the next step would begin
-                //  => The user either has left the route or passed the next waypoint and we need to recalculate
-                // 3. The distance of the Point to the Route is less or equal the gps Accuracy AND the Point on the route is before the next waypoitn
-                //  => The user is on the route and hasn't passed the next waypoint so no recalculation is needed
-                var routeStepGeometry = route.routes[0].legs[0].steps[0].geometry;
-                routeStepGeometry = (new ol.format.GeoJSON()).readGeometry(routeStepGeometry, {
-                    'dataProjection': 'EPSG:4326',
-                    'featureProjection': 'EPSG:3857'
-                });
-                var pointOnGeometry = routeStepGeometry.getClosestPoint(ol.proj.transform([currentPosition.lon, currentPosition.lat], 'EPSG:4326', 'EPSG:3857'));
-                // First thing we do is to check whether the point is the beginning or ending of the Line
-                // In that case we would have to recalculate anyways because of 2.
-                // 3. is standard and we check for recalc
-                var recalc = false;
-                var wgs84Sphere = new ol.Sphere(6378137);
-                if (arraysEqual(routeStepGeometry.getFirstCoordinate(), pointOnGeometry) || arraysEqual(routeStepGeometry.getLastCoordinate(), pointOnGeometry)) {
-                    recalc = true;
-                } else {
-                    // Now we check for 1.
-                    // Sphere with the Radius of Earth
-                    var c1 = ol.proj.transform(pointOnGeometry, 'EPSG:3857', 'EPSG:4326');
-                    var c2 = [currentPosition.lon, currentPosition.lat];
-                    var d = wgs84Sphere.haversineDistance(c1, c2);
-                    if (d > Math.max(accuracy, 15)) {
-                        recalc = true;
-                    }
+            // We have to decide whether we will retrieve two exact Routes (driven and upcoming)
+            // or whether we want to derive a new User Position on the Route of the new GPS Location
+            // The latter one would use some mobile Data to make a new HTTP Request
+            // The first one could save that data taking the risk that the user could've left the route
+            // We calculate the risk in the following way:
+            // We derive the perpendicular distance of the GPS Coordinate to the current Route Step (straight line)
+            // We get a possible Position of the User on the Route. There could be some possible situations the user is in:
+            // 1. The distance of the Point to the Route is higher than the GPS accuracy
+            //  => The user has left the route and we need to recalculate
+            // 2. The point is beyond the Point where the next step would begin
+            //  => The user either has left the route or passed the next waypoint and we need to recalculate
+            // 3. The distance of the Point to the Route is less or equal the gps Accuracy AND the Point on the route is before the next waypoitn
+            //  => The user is on the route and hasn't passed the next waypoint so no recalculation is needed
+
+            // First thing we do is to check whether the point is the beginning or ending of the Line
+            // In that case we would have to recalculate anyways because of 2.
+            // 3. is standard and we check for recalc
+            var recalc = false;
+            var pointOnRoute = getNextPointOnRoute(ol.proj.transform([currentPosition.lon, currentPosition.lat], 'EPSG:4326', 'EPSG:3857'), currentPosition.accuracy);
+            if (pointOnRoute !== null) {
+                console.log(pointOnRoute);
+                // If Leg Index or stepIndex is not 0 Then we need to change the Route Object
+                var i = pointOnRoute.legIndex;
+                while (i > 0) {
+                    // Update Route Distance
+                    route.routes[0].distance -= route.routes[0].legs[0].distance;
+                    route.routes[0].duration -= route.routes[0].legs[0].duration;
+                    route.routes[0].legs.shift();
+                    i--;
                 }
-                if (!recalc) {
-                    updateUserPosition(pointOnGeometry);
-                    if (currentGeometry !== null && currentGeometry.length > 0) {
-                        // Let's Update the remaining time until step:
-                        // Calc distance to next waypoint:
-                        var c1 = ol.proj.transform(pointOnGeometry, 'EPSG:3857', 'EPSG:4326');
-                        var c2 = currentGeometry[0];
-                        var d = wgs84Sphere.haversineDistance(c1, c2);
-                        if (distanceToNextPoint !== null && d > distanceToNextPoint) {
-                            // The Distance is getting bigger => means we passed that point
-                            currentGeometry.shift();
-                            distances.shift();
-                            durations.shift();
-                        }
-                        distanceToNextPoint = d;
-                        var newDistance = d;
-                        var newDuration = durations[0];
-                        for(var i = 1; i < distances.length; i++){
-                            newDistance += distances[i];
-                            newDuration += durations[i];
-                        }
-                        var newStepDistance = d;
-                        for(var i = 1; i < currentGeometry.length; i++){
-                            newStepDistance += distances[i];
-                        }
-                        $("#length").html(parseDistance(newDistance));
-                        $("#duration").html(parseDuration(newDuration));
-                        $("#routing-steps .step .step-length").html(parseDistance(newStepDistance));
+                i = pointOnRoute.stepIndex;
+                while (i > 0) {
+                    // Update Route Distance
+                    route.routes[0].distance -= route.routes[0].legs[0].steps[0].distance;
+                    route.routes[0].duration -= route.routes[0].legs[0].steps[0].duration;
+                    if (route.routes[0].legs[0].steps[0].distance > 0) {
+                        route.routes[0].legs[0].annotation.distance = route.routes[0].legs[0].annotation.distance.slice(route.routes[0].legs[0].steps[0].geometry.coordinates.length - 1);
                     }
-                    calculating = false;
-                } else {
-                    // Generate url to retrieve
-                    var positionstring = "";
-                    var timestampstring = "";
-                    var radiusstring = "";
-                    $.each(positions, function(index, value) {
-                        positionstring += value.lon + "," + value.lat + ";";
-                        timestampstring += value.timestamp + ";";
-                        radiusstring += value.accuracy + ";";
-                    });
-                    positionstring = positionstring.replace(/;+$/, '');
-                    timestampstring = timestampstring.replace(/;+$/, '');
-                    radiusstring = radiusstring.replace(/;+$/, '');
-                    var url = '/route/match/' + vehicle + '/' + positionstring + '/' + timestampstring + '/' + radiusstring;
-                    $.getJSON(url, function(r) {
-                        // Aus den "gesnappten" Koordinaten berechnen wir nun die gefahrene Route
-                        if (r.code === "Ok" && r.tracepoints !== null && r.tracepoints[r.tracepoints.length - 1] !== null) {
-                            var position = {
-                                    hint: r.tracepoints[r.tracepoints.length - 1].hint,
-                                    lon: parseFloat(r.tracepoints[r.tracepoints.length - 1].location[0]),
-                                    lat: parseFloat(r.tracepoints[r.tracepoints.length - 1].location[1])
-                                }
-                                // Wir nehmen vorerst immer das Beste Matching für die gefahrene Route.
-                                // Vielleicht fällt mir später etwas besseres ein
-                            if (r.matchings !== null && r.matchings[0] !== undefined) {
-                                // We have successfully calculated the driven route. Let's reset the points:
-                                $.each(r.matchings, function(index, value) {
-                                    drivenRoutes.push(r.matchings[0].geometry);
-                                });
-                                // Clear Position data:
-                                while (positions.length > 1) {
-                                    positions.pop();
-                                }
-                                // Clear the shown Route
-                                routeAssistentVectorSource.clear();
-                                // Draw every driven Route on the map:
-                                $.each(drivenRoutes, function(index, value) {
-                                    // Add the driven Route
-                                    drawGeojson(value, 'grey');
-                                });
-                                // Get the Route until the target
-                                var hintsComplete = true;
-                                var pointString = "";
-                                var hintString = "";
-                                $.each(waypoints, function(index, value) {
-                                    if (value === 'gps') {
-                                        pointString += position.lon + "," + position.lat + ";";
-                                        hintString += position.hint + ";";
-                                    } else {
-                                        pointString += value.lon + "," + value.lat + ";";
-                                        if (value.hint !== "") {
-                                            hintString += value.hint + ";";
-                                        } else {
-                                            hintsComplete = false;
-                                        }
-                                    }
-                                });
-                                pointString = pointString.replace(/;$/, '');
-                                hintString = hintString.replace(/;$/, '');
-                                var url = '/route/find/' + vehicle + '/' + pointString;
-                                if (hintsComplete) {
-                                    url += "/" + hintString;
-                                }
-                                $.getJSON(url, function(data) {
-                                    if (data.code === "Ok") {
-                                        drawGeojson(data.routes[0].geometry, 'red');
-                                        currentGeometry = data.routes[0].legs[0].steps[0].geometry.coordinates;
-                                        currentGeometry.shift();
-                                        durations = data.routes[0].legs[0].annotation.duration;
-                                        distances = data.routes[0].legs[0].annotation.distance;
-                                        route = data;
-                                        updateNextStep();
-                                    }
-                                }).always(function() {
-                                    calculating = false;
-                                });
-                            } else {
-                                calculating = false;
+                    if (route.routes[0].legs[0].steps[0].duration > 0) {
+                        route.routes[0].legs[0].annotation.duration = route.routes[0].legs[0].annotation.duration.slice(route.routes[0].legs[0].steps[0].geometry.coordinates.length - 1);
+                    }
+                    route.routes[0].geometry.coordinates = route.routes[0].geometry.coordinates.slice(route.routes[0].legs[0].steps[0].geometry.length - 1);
+                    route.routes[0].legs[0].steps.shift();
+                    i--;
+                }
+                updateNextStep(pointOnRoute.point);
+            }
+            /* if (!recalc) {
+                 updateUserPosition(pointOnGeometry);
+                 if (currentGeometry !== null && currentGeometry.length > 0) {
+                     // Let's Update the remaining time until step:
+                     // Calc distance to next waypoint:
+                     var c1 = ol.proj.transform(pointOnGeometry, 'EPSG:3857', 'EPSG:4326');
+                     var c2 = currentGeometry[0];
+                     var d = wgs84Sphere.haversineDistance(c1, c2);
+                     if (distanceToNextPoint !== null && d > distanceToNextPoint) {
+                         // The Distance is getting bigger => means we passed that point
+                         currentGeometry.shift();
+                         distances.shift();
+                         durations.shift();
+                     }
+                     distanceToNextPoint = d;
+                     var newDistance = d;
+                     var newDuration = durations[0];
+                     for(var i = 1; i < distances.length; i++){
+                         newDistance += distances[i];
+                         newDuration += durations[i];
+                     }
+                     var newStepDistance = d;
+                     for(var i = 1; i < currentGeometry.length; i++){
+                         newStepDistance += distances[i];
+                     }
+                     $("#length").html(parseDistance(newDistance));
+                     $("#duration").html(parseDuration(newDuration));
+                     $("#routing-steps .step .step-length").html(parseDistance(newStepDistance));
+                 }
+                 calculating = false;
+             }*/
+            else {
+                // Generate url to retrieve
+                var positionstring = "";
+                var timestampstring = "";
+                var radiusstring = "";
+                $.each(positions, function(index, value) {
+                    positionstring += value.lon + "," + value.lat + ";";
+                    timestampstring += value.timestamp + ";";
+                    radiusstring += value.accuracy + ";";
+                });
+                positionstring = positionstring.replace(/;+$/, '');
+                timestampstring = timestampstring.replace(/;+$/, '');
+                radiusstring = radiusstring.replace(/;+$/, '');
+                var url = '/route/match/' + vehicle + '/' + positionstring + '/' + timestampstring + '/' + radiusstring;
+                $.getJSON(url, function(r) {
+                    // Aus den "gesnappten" Koordinaten berechnen wir nun die gefahrene Route
+                    if (r.code === "Ok" && r.tracepoints !== null && r.tracepoints[r.tracepoints.length - 1] !== null) {
+                        var position = {
+                                hint: r.tracepoints[r.tracepoints.length - 1].hint,
+                                lon: parseFloat(r.tracepoints[r.tracepoints.length - 1].location[0]),
+                                lat: parseFloat(r.tracepoints[r.tracepoints.length - 1].location[1])
                             }
+                            // Wir nehmen vorerst immer das Beste Matching für die gefahrene Route.
+                            // Vielleicht fällt mir später etwas besseres ein
+                        if (r.matchings !== null && r.matchings[0] !== undefined) {
+                            // We have successfully calculated the driven route. Let's reset the points:
+                            $.each(r.matchings, function(index, value) {
+                                drivenRoutes.push(r.matchings[0].geometry);
+                            });
+                            // Clear Position data:
+                            while (positions.length > 1) {
+                                positions.pop();
+                            }
+                            // Clear the shown Route
+                            routeAssistentVectorSource.clear();
+                            // Draw every driven Route on the map:
+                            $.each(drivenRoutes, function(index, value) {
+                                // Add the driven Route
+                                drawGeojson(value, 'grey');
+                            });
+                            // Get the Route until the target
+                            var hintsComplete = true;
+                            var pointString = "";
+                            var hintString = "";
+                            $.each(waypoints, function(index, value) {
+                                if (value === 'gps') {
+                                    pointString += position.lon + "," + position.lat + ";";
+                                    hintString += position.hint + ";";
+                                } else {
+                                    pointString += value.lon + "," + value.lat + ";";
+                                    if (value.hint !== "") {
+                                        hintString += value.hint + ";";
+                                    } else {
+                                        hintsComplete = false;
+                                    }
+                                }
+                            });
+                            pointString = pointString.replace(/;$/, '');
+                            hintString = hintString.replace(/;$/, '');
+                            var url = '/route/find/' + vehicle + '/' + pointString;
+                            if (hintsComplete) {
+                                url += "/" + hintString;
+                            }
+                            $.getJSON(url, function(data) {
+                                if (data.code === "Ok") {
+                                    drawGeojson(data.routes[0].geometry, 'red');
+                                    currentGeometry = data.routes[0].legs[0].steps[0].geometry.coordinates;
+                                    currentGeometry.shift();
+                                    durations = data.routes[0].legs[0].annotation.duration;
+                                    distances = data.routes[0].legs[0].annotation.distance;
+                                    route = data;
+                                    updateNextStep();
+                                }
+                            }).always(function() {
+                                calculating = false;
+                            });
                         } else {
-                            console.log(r);
-                            positions.pop();
                             calculating = false;
                         }
-                    });
-                }
-            } else {
-                calculating = false;
+                    } else {
+                        console.log(r);
+                        positions.pop();
+                        calculating = false;
+                    }
+                });
             }
         }, function(error) {
             // Follow Location couldn't be started. Abort now
             deinitAssistent();
         }, options);
     }
+}
+
+function getNextPointOnRoute(gpsPoint, accuracy) {
+    var r = route.routes[0];
+    var wgs84Sphere = new ol.Sphere(6378137);
+    // Wir Ziehen einen Punkt auf den nächsten 4 Schritten in betracht
+    // Wenn der Punkt dort nicht zu finden ist, müssen wir neu berechnen
+    var stepCounter = 1;
+    var result = null;
+    $.each(r.legs, function(legIndex, leg) {
+        if (stepCounter >= 5) {
+            return;
+        }
+        $.each(leg.steps, function(stepIndex, step) {
+            var stepGeom = (new ol.format.GeoJSON()).readGeometry(step.geometry, {
+                'dataProjection': 'EPSG:4326',
+                'featureProjection': 'EPSG:3857'
+            });
+            var pointOnStep = stepGeom.getClosestPoint(gpsPoint);
+            // We need to calculate the distance between the GPS-Point and the Point on the Route:
+            var c1 = ol.proj.transform(gpsPoint, 'EPSG:3857', 'EPSG:4326');
+            var c2 = ol.proj.transform(pointOnStep, 'EPSG:3857', 'EPSG:4326');
+            var distance = wgs84Sphere.haversineDistance(c1, c2);
+            if (distance > Math.max(accuracy, 30)) {
+                // The Distance of the Point is too high to be on this route step
+                stepCounter++;
+                return;
+            } else {
+                // The Point is on this Route Step
+                result = {
+                    legIndex: legIndex,
+                    stepIndex: stepIndex,
+                    point: pointOnStep
+                };
+                // It could possibly be at the end of this step in that case we will see if we can go on to the next step
+                if ((arraysEqual(stepGeom.getFirstCoordinate(), pointOnStep) || arraysEqual(stepGeom.getLastCoordinate(), pointOnStep)) && distance < Math.max(accuracy, 18)) {
+                    stepCounter++;
+                    return;
+                } else {
+                    // Otherwise we take that point and return
+                    stepCounter = 5;
+                    return false;
+                }
+            }
+            stepCounter++;
+        });
+    });
+    return result;
 }
 
 function updateUserPosition(pos) {
@@ -325,6 +341,7 @@ function updateUserPosition(pos) {
         stopEvent: false,
     });
     map.getView().setCenter(pos);
+    map.getView().setZoom(18);
     map.addOverlay(userPosOverlay);
 }
 
@@ -333,7 +350,7 @@ function arraysEqual(a1, a2) {
     return JSON.stringify(a1) == JSON.stringify(a2);
 }
 
-function updateNextStep() {
+function updateNextStep(gpsPos) {
     var data = route;
     // This Function goes through the current Route Object and evaluates the next step:
     // Add the information for the next steps and route meta data
@@ -360,9 +377,11 @@ function updateNextStep() {
     rotation *= Math.PI;
     rotation /= 180;
     map.getView().setRotation(rotation);
-    map.getView().setZoom(18);
-    map.getView().setCenter(ol.proj.transform([data.waypoints[0].location[0], data.waypoints[0].location[1]], 'EPSG:4326', 'EPSG:3857'));
-    updateUserPosition(ol.proj.transform([data.waypoints[0].location[0], data.waypoints[0].location[1]], 'EPSG:4326', 'EPSG:3857'));
+    if (gpsPos !== null) {
+        updateUserPosition(gpsPos);
+    } else {
+        updateUserPosition(ol.proj.transform([data.waypoints[0].location[0], data.waypoints[0].location[1]], 'EPSG:4326', 'EPSG:3857'));
+    }
 }
 var rad = function(x) {
     return x * Math.PI / 180;
