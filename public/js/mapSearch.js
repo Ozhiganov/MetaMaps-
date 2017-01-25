@@ -92620,7 +92620,9 @@ var clearInputFunction = function() {
 $(document).ready(function() {
     // Initialize the Map
     initMap();
-    checkGPS(startApplication);
+    if(getPosition){
+        checkGPS(startApplication);
+    }
     $("#closer").click(function() {
         toggleResults();
     });

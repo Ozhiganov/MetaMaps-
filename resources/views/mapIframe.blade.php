@@ -28,6 +28,7 @@
         <script src="{{elixir('js/iframeSearch.js')}}">
         </script>
         <script>
+            var getPosition = false;
             $(document).ready(function(){
                 {!! $script !!}
                 updateMapExtent();
