@@ -1,7 +1,7 @@
 function initMap() {
 
     popupOverlay = new ol.Overlay(/** @type {olx.OverlayOptions} */ ({
-        element: $("#popup"),
+        element: $("#popup").get(0),
         autoPan: true,
         autoPanAnimation: {
             duration: 250

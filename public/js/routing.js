@@ -92733,8 +92733,14 @@ function updateMapSize() {
     }
     var displayHeight = $(window).height();
     // Change The Map Height
-    $("#map").height(displayHeight - navBarHeight);
-    $("#map").css("margin-top", navBarHeight);
+    // It's possible that the <main> element has a max-height defined
+    if($("main").css("max-height") !== "none"){
+        $("#map").height($("main").css("max-height"));
+    }else{
+        $("#map").css("margin-top", navBarHeight);
+        $("#map").height(displayHeight - navBarHeight);
+    }
+
     map.updateSize();
     setTimeout(function() {
         $("#search input[name=q]").attr("data-move-search", "");
@@ -93782,7 +93788,6 @@ function startLocationFollowing() {
             var recalc = false;
             var pointOnRoute = getNextPointOnRoute(ol.proj.transform([currentPosition.lon, currentPosition.lat], 'EPSG:4326', 'EPSG:3857'), currentPosition.accuracy);
             if (pointOnRoute !== null) {
-                console.log(pointOnRoute);
                 // If Leg Index or stepIndex is not 0 Then we need to change the Route Object
                 var i = pointOnRoute.legIndex;
                 while (i > 0) {
@@ -93807,6 +93812,12 @@ function startLocationFollowing() {
                     route.routes[0].legs[0].steps.shift();
                     i--;
                 }
+
+                // Now we for sure have the current step at position 0
+                // Every step has a geometry Object describing the line we need to take.
+                // If we can find out at which point of that line we are we can adjust the bearing of the map to
+                // follow the bearing of the User
+                // In Addition we can then adjust the distance and duration to be at the current state
                 updateNextStep(pointOnRoute.point);
             }
             /* if (!recalc) {
@@ -93931,6 +93942,16 @@ function startLocationFollowing() {
             deinitAssistent();
         }, options);
     }
+}
+
+/*
+ * Calculates the bearing between two given lat/lon Points
+ * @param p1 {Array} Array [lon,lat]
+ * @param p2 {Array} Array [lon,lat]
+ * @return bearing in degrees
+*/
+function getBearing(p1, p2){
+    var x = Math.cos(p2[1]) * Math.sin(p2[0]-p1[0]);
 }
 
 function getNextPointOnRoute(gpsPoint, accuracy) {

@@ -92733,8 +92733,14 @@ function updateMapSize() {
     }
     var displayHeight = $(window).height();
     // Change The Map Height
-    $("#map").height(displayHeight - navBarHeight);
-    $("#map").css("margin-top", navBarHeight);
+    // It's possible that the <main> element has a max-height defined
+    if($("main").css("max-height") !== "none"){
+        $("#map").height($("main").css("max-height"));
+    }else{
+        $("#map").css("margin-top", navBarHeight);
+        $("#map").height(displayHeight - navBarHeight);
+    }
+
     map.updateSize();
     setTimeout(function() {
         $("#search input[name=q]").attr("data-move-search", "");
@@ -93058,7 +93064,7 @@ function createPopup(lon, lat, html) {
 function initMap() {
 
     popupOverlay = new ol.Overlay(/** @type {olx.OverlayOptions} */ ({
-        element: $("#popup"),
+        element: $("#popup").get(0),
         autoPan: true,
         autoPanAnimation: {
             duration: 250
