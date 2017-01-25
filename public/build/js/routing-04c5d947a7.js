@@ -93840,7 +93840,7 @@ function startLocationFollowing() {
                 if (route.routes[0].distance < 5) {
                     deinitAssistent();
                 }
-                updateNextStep(pointOnRoute.point);
+                updateNextStep(pointOnRoute.point, bearingGps);
                 redrawRoute(pointOnRoute.point);
             } else {
                 // We need to recalculate
@@ -93993,7 +93993,7 @@ function arraysEqual(a1, a2) {
     return JSON.stringify(a1) == JSON.stringify(a2);
 }
 
-function updateNextStep(gpsPos) {
+function updateNextStep(gpsPos, bearing) {
     var data = route;
     // This Function goes through the current Route Object and evaluates the next step:
     // Add the information for the next steps and route meta data
@@ -94015,6 +94015,9 @@ function updateNextStep(gpsPos) {
     // So now that everything is Drawn we adjust the Map View
     // The new Rotation is The bearing of the first step of the route:
     var rotation = parseInt(data.routes[0].legs[0].steps[0].maneuver.bearing_after);
+    if(bearing !== null){
+        rotation = bearing;
+    }
     rotation = 360 - rotation;
     // The Value needs to be in Radians
     rotation *= Math.PI;
