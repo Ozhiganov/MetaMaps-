@@ -2,7 +2,6 @@
 
 $(document).ready(function() {
     initStartNavigation();
-    if (!boundings && getPosition) receiveLocation();
     if (boundings) {
         adjustViewBoundingBox(minPos, maxPos);
     }

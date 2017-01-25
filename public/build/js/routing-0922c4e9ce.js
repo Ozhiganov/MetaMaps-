@@ -92622,6 +92622,8 @@ $(document).ready(function() {
     initMap();
     if(getPosition){
         checkGPS(startApplication);
+    }else{
+        startApplication();
     }
     $("#closer").click(function() {
         toggleResults();
@@ -92639,26 +92641,6 @@ $(document).ready(function() {
         toggleViewLock();
     });
 });
-var options = {
-    enableHighAccuracy: true,
-    timeout: 5000,
-    maximumAge: 0
-};
-
-function success(pos) {
-    var crd = pos.coords;
-    map.getView().setCenter(ol.proj.transform([crd.longitude, crd.latitude], 'EPSG:4326', 'EPSG:3857'));
-    map.getView().setZoom(12);
-    updateMapExtent();
-}
-
-function error(err) {
-    console.warn('ERROR(' + err.code + '): ' + err.message);
-}
-
-function receiveLocation() {
-    navigator.geolocation.getCurrentPosition(success, error, options);
-}
 
 function updateMapExtent() {
     var tmpExtent = map.getView().calculateExtent([$("#map").width(), $("#map").height()]);
@@ -92928,12 +92910,19 @@ function checkGPS(callback) {
             if(position.coords.accuracy > 500){
                 gps = false;
                 toggleGPSLocator(false);
+                lon = parseFloat(position.coords.longitude);
+                lat = parseFloat(position.coords.latitude);
+                gpsLocation = [lon, lat];
             }else{
                 gps = gps = true;
                 lon = parseFloat(position.coords.longitude);
                 lat = parseFloat(position.coords.latitude);
                 gpsLocation = [lon, lat];
                 toggleGPSLocator(true);
+            }
+            if(gpsLocation !== null){
+                map.getView().setCenter(ol.proj.transform(gpsLocation, 'EPSG:4326', 'EPSG:3857'));
+                map.getView().setZoom(12);
             }
             if(typeof callback === "function"){
                 callback();
@@ -93067,7 +93056,6 @@ function createPopup(lon, lat, html) {
 
 $(document).ready(function() {
     initStartNavigation();
-    if (!boundings && getPosition) receiveLocation();
     if (boundings) {
         adjustViewBoundingBox(minPos, maxPos);
     }
