@@ -93150,7 +93150,12 @@ function getNearest(lon, lat) {
             var city = getCity(address);
             var id = data["place_id"];
 
-            var url = "/route/start/foot/"+lon+","+lat;
+            var url = "";
+            if(gps){
+                url = "/route/start/foot/gps;"+lon+","+lat;
+            }else{
+                url = "/route/start/foot/"+lon+","+lat;
+            }
 
             var popup = $("\
                 <div class=\"result col-xs-12\">\
@@ -93199,7 +93204,7 @@ function start(){
         }
     });
     deinitSearchBox();
-    
+
     refreshUrl();
     map.un("singleclick", mapClickFunction);
     map.on('singleclick', function(evt) {

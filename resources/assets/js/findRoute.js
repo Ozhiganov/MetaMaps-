@@ -21,7 +21,7 @@ function start(){
         }
     });
     deinitSearchBox();
-    
+
     refreshUrl();
     map.un("singleclick", mapClickFunction);
     map.on('singleclick', function(evt) {

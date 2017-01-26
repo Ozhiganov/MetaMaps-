@@ -36,7 +36,12 @@ $.each(searchResults, function(index, value) {
         opening_hours = opening_hours.replace(/;/g, ",<br />");
         population = typeof value["extratags"]["population"] !== 'undefined' ? " (" + numberWithPoints(value["extratags"]["population"]) + " Einwohner)" : "";
     }
-    var routingUrl = "/route/start/foot/" + ";" + value["lon"]+","+value["lat"];
+    var routingUrl = "";
+    if(gps){
+        routingUrl = "/route/start/foot/" + "gps;" + value["lon"]+","+value["lat"];
+    }else{
+        routingUrl = "/route/start/foot/" + ";" + value["lon"]+","+value["lat"];
+    }
     var targetForRouting = "_self";
     if(window!=window.top){
         targetForRouting = "_blank";
