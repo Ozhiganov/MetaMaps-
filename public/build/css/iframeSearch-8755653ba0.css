@@ -7012,9 +7012,9 @@ html, body, main, #map {
     padding: 0;
     z-index: 20001;
     overflow: visible;
-    -webkit-box-shadow: -5px 0px 1px 0px rgba(50, 50, 50, 0.16);
+    /*-webkit-box-shadow: -5px 0px 1px 0px rgba(50, 50, 50, 0.16);
     -moz-box-shadow: -5px 0px 1px 0px rgba(50, 50, 50, 0.16);
-    box-shadow: -5px 0px 1px 0px rgba(50, 50, 50, 0.16);
+    box-shadow: -5px 0px 1px 0px rgba(50, 50, 50, 0.16);*/
 }
 
 #closer {
@@ -7032,9 +7032,9 @@ html, body, main, #map {
     font-weight: bold;
     border-right: 0;
     cursor: pointer;
-    -webkit-box-shadow: -2px 0px 1px 0px rgba(50, 50, 50, 0.16);
+    /*-webkit-box-shadow: -2px 0px 1px 0px rgba(50, 50, 50, 0.16);
     -moz-box-shadow: -2px 0px 1px 0px rgba(50, 50, 50, 0.16);
-    box-shadow: -2px 0px 1px 0px rgba(50, 50, 50, 0.16);
+    box-shadow: -2px 0px 1px 0px rgba(50, 50, 50, 0.16);*/
     top: 0;
 }
 
@@ -7093,209 +7093,33 @@ html, body, main, #map {
 .ol-zoomslider-thumb {
     background: #ff8000;
 }
+body {
+    max-height: 310px;
+    margin-bottom: 10px;
+}
+
+main {
+    max-height: 300px;
+}
+
+#map-container {
+    padding: 0;
+}
+
 #map {
-    height: 100vh;
+    height: 300px;
+    cursor: pointer;
 }
 
 #results {
-    height: 100vh;
-    padding-top: 51px;
+    height: 300px;
 }
 
-#closer {
-    top: 50px;
-}
-
-#beta-info {
-    position: absolute;
-    z-index: 99999;
-    left: 25%;
-    top: 55px;
-    width: 50%;
-}
-.drop-target {
-    margin: 10px 0;
-    border-color: black;
-    border-width: 2px
-}
-
-#route-information {
-    margin: 8px 10px;
-    text-align: center;
-    font-weight: bold;
-}
-
-#route-information #length {
-    border-right: 1px solid lightgrey;
-}
-
-.hide {
-    transform: translateX(-9999px);
-}
-
-#calc-route {
-    width: 100%;
-    display: block;
-    text-align: center;
-    line-height: 1.5em;
-    padding: 7px 0px;
-    border-right: 1px solid lightgrey;
-}
-
-#add-waypoint {
-    width: 100%;
-    border: 0;
-    background-color: inherit;
-    line-height: 1.5em;
-    padding: 7px 0;
-    color: #337ab7;
-}
-
-#find-route-options {
-    padding: 7px 0;
-}
-
-#waypoint-container .row {
-    overflow: hidden;
-    height: 4.5em;
-    margin-right: 0;
-    margin-left: 0;
-}
-
-#waypoint-container.container-fluid {
-    padding-left: 0;
-    padding-right: 0;
-}
-
-.waypoint-list-item {
-    line-height: 1.5em;
-    padding: 0 15px;
-    border-bottom: 1px solid lightgrey;
-    border-radius: 6px;
-    cursor: crosshair;
-    padding-top: 0.75em;
-    padding-bottom: 0.75em;
-}
-
-.waypoint-list-item:hover {
-    background-color: #eee;
-}
-
-.waypoint-list-item .adress-name {
-    max-height: 3em;
-    overflow: hidden;
-}
-
-#search-results {
-    background-color: white;
-    position: absolute;
-    width: 100%;
-    padding: 7px;
-    border: 1px solid grey;
-    z-index: 2001;
-}
-
-#search-results h5 {
-    font-weight: bold;
-}
-
-#search-results .loader {
-    text-align: center;
-}
-
-#search-results > ul li {
-    margin: 5px 3px;
-    cursor: pointer;
-    padding: 0 10px;
-    border-radius: 5px
-}
-
-#search-results > ul li:hover {
-    background-color: #eee;
-}
-
-.search-btn {
-    position: absolute;
-    right: .2em;
-    margin-top: -2.7em;
-    height: 2.5em;
-    line-height: 2.5em;
-    border: 0;
-}
-
-.search-btn > span {
-    position: relative;
-    top: -.3em;
-}
-
-#routing-steps {
-    margin-top: 10px;
-}
-
-#routing-steps .step {
-    margin-left: 0;
-    margin-right: 0;
-}
-
-#routing-steps .step > td {
-    text-align: center;
-    vertical-align: middle;
-}
-
-#routing-steps .step {
-    cursor: pointer;
-}
-
-#routing-steps .step:hover {
-    background-color: #ececec;
-}
-
-#routing-steps .step > div {
-    margin-top: .5em;
-}
-
-#vehicle-chooser label.radio-inline {
-    padding: 0;
-    margin: 0;
-}
-
-#vehicle-chooser label.radio-inline > input[type=radio] {
+.ol-zoomslider.ol-unselectable.ol-control {
     display: none;
 }
 
-#vehicle-chooser label.radio-inline > input[type=radio] + div {
-    padding: 10px 15px;
-    border-bottom: 1px solid #ddd;
+#results .result > .col-xs-2 {
+    padding: 0;
 }
-
-#vehicle-chooser label.radio-inline > input[type=radio]:checked + div {
-    color: #555;
-    cursor: default;
-    background-color: #fff;
-    border: 1px solid #ddd;
-    border-bottom-color: transparent;
-}
-
-.ol-attribution ul {
-    font-size: .7em;
-}
-
-#route-assistent {
-    width: 100%;
-    display: block;
-    text-align: center;
-    padding: 9px 0;
-    cursor: pointer;
-}
-
-#user-pos {
-    background-image: url('/img/navigation-arrow.svg');
-    width: 50px;
-    height: 50px;
-    display: block;
-    text-align: center;
-    padding-top: 5px;
-    color: white;
-    font-weight: bold;
-}
-/*# sourceMappingURL=routing.css.map */
+/*# sourceMappingURL=iframeSearch.css.map */

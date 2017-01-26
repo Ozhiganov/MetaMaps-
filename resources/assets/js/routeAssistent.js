@@ -11,7 +11,7 @@ var distanceToNextPoint = null;
 
 function startAssistent() {
     if (gps && points.match(/^gps;/) !== null) {
-        alert("Dieses Feature ist noch hochgradig experimentell und kann jederzeit abstürzen. Bitte benutzen Sie es nicht bei der Autofahrt und achten Sie konstant auf Ihre Umgebung, beachten Sie die Straßenverkehrsordnung und bedienen Sie dieses Interface (und Ihr Handy) nicht während der Fahrt.");
+        //alert("Dieses Feature ist noch hochgradig experimentell und kann jederzeit abstürzen. Bitte benutzen Sie es nicht bei der Autofahrt und achten Sie konstant auf Ihre Umgebung, beachten Sie die Straßenverkehrsordnung und bedienen Sie dieses Interface (und Ihr Handy) nicht während der Fahrt.");
         positions = [];
         initWaypoints();
         prepareInterface();
@@ -71,6 +71,16 @@ function prepareInterface() {
         </div>\
   ');
     $("nav").html(nextStep);
+    var dialog = $('\
+        <div id="continue-dialog" class="container-fluid hidden">\
+            <div class="row heading">Sie haben ihr Zwischenziel erreicht.</div>\
+            <div class="row options">\
+                <div id="next-waypoint" class="col-xs-6 first"><a href="#">Weiter zum nächsten Wegpunkt</a></div>\
+                <div id="abort-routing" class="col-xs-6"><a href="#">Navigation abbrechen</a></div>\
+            </div>\
+        </div>\
+    ');
+    $("main").append(dialog);
     //Hide Results
     deinitResults();
     // Remove Zoom Bar
@@ -165,10 +175,28 @@ function startLocationFollowing() {
                 // If Leg Index or stepIndex is not 0 Then we need to change the Route Object
                 var i = pointOnRoute.legIndex;
                 while (i > 0) {
+                    console.log("Entferne leg");
                     // Update Route Distance
                     route.routes[0].distance -= route.routes[0].legs[0].distance;
                     route.routes[0].duration -= route.routes[0].legs[0].duration;
                     route.routes[0].legs.shift();
+                    cancleFollowing();
+                    // If a leg get's removed it means that we have passed a waypoint
+                    if(route.waypoints.length >= 2){
+                        route.waypoints.splice(1, 1);
+                    }
+                    if(route.waypoints.length >= 2){
+                        // First Point is the GPS Location
+                        // At least 2 additional Waypoints are to go
+                        // So when we removed one now we aren't finished
+                        console.log("öffne Dialog");
+                        openNextWaypointDialog();
+                    }else{
+                        // We have a maximum of two waypoints left
+                        // One of these is the GPS Location so when we removed it we finished routing
+                        deinitAssistent();
+                    }
+                    // We will cancle the Route Assistent temporarily until the User wants to continue 
                     i--;
                 }
                 i = pointOnRoute.stepIndex;
@@ -255,6 +283,35 @@ function startLocationFollowing() {
     }
 }
 
+function openNextWaypointDialog(){
+    $("nav").addClass("hidden");
+    updateMapSize();
+
+    $("#continue-dialog #next-waypoint").off();
+    $("#continue-dialog #next-waypoint").click(function(){
+        $("nav").removeClass("hidden");
+        updateMapSize();
+        $("#continue-dialog").addClass("hidden");
+        startLocationFollowing();
+    });
+
+    $("#continue-dialog #abort-routing").off();
+    $("#continue-dialog #abort-routing").click(function(){
+        deinitAssistent();
+    });
+
+
+    $("#continue-dialog").removeClass("hidden");
+
+}
+
+function cancleFollowing(){
+    if(followingId !== null){
+        navigator.geolocation.clearWatch(followingId);
+        followingId = null;
+    }
+}
+
 function redrawRoute(gpsLocation) {
     // Clear the shown Route
     routeAssistentVectorSource.clear();
@@ -264,7 +321,7 @@ function redrawRoute(gpsLocation) {
                 coordinates: step.geometry.coordinates.slice(),
                 type: step.geometry.type
             };
-            if (stepIndex === 0 && gpsLocation !== null) {
+            if (legIndex === 0 && stepIndex === 0 && gpsLocation !== null) {
                 // Beim verfolgen der Route soll der Erste Punkt IMMER die GPS Position auf der Route sein
                 geom.coordinates[0] = ol.proj.transform(gpsLocation, 'EPSG:3857', 'EPSG:4326');
             }

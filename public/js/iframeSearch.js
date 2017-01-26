@@ -92751,6 +92751,12 @@ function updateCloserPosition() {
         } else {
             $("#closer").css("right", (resultsWidth - closerWidth) + "px");
         }
+
+        var top = 0;
+        if(!$("nav").hasClass("hidden")){
+            top = $("nav").height();
+        }
+        $("#closer").css("top", top);
     }
 }
 

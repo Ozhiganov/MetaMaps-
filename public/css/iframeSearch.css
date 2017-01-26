@@ -7012,9 +7012,9 @@ html, body, main, #map {
     padding: 0;
     z-index: 20001;
     overflow: visible;
-    -webkit-box-shadow: -5px 0px 1px 0px rgba(50, 50, 50, 0.16);
+    /*-webkit-box-shadow: -5px 0px 1px 0px rgba(50, 50, 50, 0.16);
     -moz-box-shadow: -5px 0px 1px 0px rgba(50, 50, 50, 0.16);
-    box-shadow: -5px 0px 1px 0px rgba(50, 50, 50, 0.16);
+    box-shadow: -5px 0px 1px 0px rgba(50, 50, 50, 0.16);*/
 }
 
 #closer {
@@ -7032,9 +7032,9 @@ html, body, main, #map {
     font-weight: bold;
     border-right: 0;
     cursor: pointer;
-    -webkit-box-shadow: -2px 0px 1px 0px rgba(50, 50, 50, 0.16);
+    /*-webkit-box-shadow: -2px 0px 1px 0px rgba(50, 50, 50, 0.16);
     -moz-box-shadow: -2px 0px 1px 0px rgba(50, 50, 50, 0.16);
-    box-shadow: -2px 0px 1px 0px rgba(50, 50, 50, 0.16);
+    box-shadow: -2px 0px 1px 0px rgba(50, 50, 50, 0.16);*/
     top: 0;
 }
 

@@ -7012,9 +7012,9 @@ html, body, main, #map {
     padding: 0;
     z-index: 20001;
     overflow: visible;
-    -webkit-box-shadow: -5px 0px 1px 0px rgba(50, 50, 50, 0.16);
+    /*-webkit-box-shadow: -5px 0px 1px 0px rgba(50, 50, 50, 0.16);
     -moz-box-shadow: -5px 0px 1px 0px rgba(50, 50, 50, 0.16);
-    box-shadow: -5px 0px 1px 0px rgba(50, 50, 50, 0.16);
+    box-shadow: -5px 0px 1px 0px rgba(50, 50, 50, 0.16);*/
 }
 
 #closer {
@@ -7032,9 +7032,9 @@ html, body, main, #map {
     font-weight: bold;
     border-right: 0;
     cursor: pointer;
-    -webkit-box-shadow: -2px 0px 1px 0px rgba(50, 50, 50, 0.16);
+    /*-webkit-box-shadow: -2px 0px 1px 0px rgba(50, 50, 50, 0.16);
     -moz-box-shadow: -2px 0px 1px 0px rgba(50, 50, 50, 0.16);
-    box-shadow: -2px 0px 1px 0px rgba(50, 50, 50, 0.16);
+    box-shadow: -2px 0px 1px 0px rgba(50, 50, 50, 0.16);*/
     top: 0;
 }
 
@@ -7297,5 +7297,36 @@ html, body, main, #map {
     padding-top: 5px;
     color: white;
     font-weight: bold;
+}
+
+#continue-dialog {
+    background-color: white;
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    padding: 10px;
+}
+
+#continue-dialog > .heading {
+    text-align: center;
+    font-weight: bold;
+}
+
+#continue-dialog > .options {
+    text-align: center;
+    padding: 5px 0;
+}
+
+#continue-dialog > .options > .first {
+    border-right: 1px solid lightgrey;
+}
+
+#back-to-edit {
+    padding-left: 3px;
+}
+
+#back-to-edit > div {
+    background-color: #ff8000;
+    color: white;
 }
 /*# sourceMappingURL=routing.css.map */

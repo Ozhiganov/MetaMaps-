@@ -183,3 +183,34 @@
     color: white;
     font-weight: bold;
 }
+
+#continue-dialog {
+    background-color: white;
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    padding: 10px;
+}
+
+#continue-dialog > .heading {
+    text-align: center;
+    font-weight: bold;
+}
+
+#continue-dialog > .options {
+    text-align: center;
+    padding: 5px 0;
+}
+
+#continue-dialog > .options > .first {
+    border-right: 1px solid lightgrey;
+}
+
+#back-to-edit {
+    padding-left: 3px;
+}
+
+#back-to-edit > div {
+    background-color: #ff8000;
+    color: white;
+}

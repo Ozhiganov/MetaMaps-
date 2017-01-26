@@ -38,6 +38,9 @@ function start(){
 function addResults() {
     $("#results").html("");
     var vehicleChooser = $("<div id=\"vehicle-chooser\">\
+            <label id=\"back-to-edit\" class=\"radio-inline\">\
+                <input type=\"radio\" name=\"vehicle\" value=\""+vehicle+"\"><div><span class=\"glyphicon glyphicon-arrow-left\"></span></div>\
+            </label>\
             <label class=\"radio-inline\">\
               <input type=\"radio\" name=\"vehicle\" value=\"foot\"> <div><img src=\"/img/silhouette-walk.png\" height=\"20px\" /></div>\
             </label>\
@@ -56,19 +59,23 @@ function addResults() {
     // Add the changed Listener to the vehicle Chooser:
     $(vehicleChooser).find("input[type=radio]").change(function() {
         vehicle = $(vehicleChooser).find("input[type=radio]:checked").val();
-        var url = '/route/start/' + vehicle + '/';
-        $.each(route["waypoints"], function(index, value) {
-            url += value["location"].toString() + ";";
-        });
+        var url = '/route/start/' + vehicle + '/' + points;
         url = url.replace(/;+$/, '');
         document.location.href = url;
     });
     // We should add a Place to display Informations About the Route
-    var routeInformation = $('<div id="route-information" class="row"><div id="length" class="col-md-6"></div><div id="duration" class="col-md-6"></div></div>')
+    var routeInformation = $('<div id="route-information" class="row"><div id="length" class="col-xs-6"></div><div id="duration" class="col-xs-6"></div></div>')
     $("#route-content").prepend(routeInformation);
     // Add Button for starting the route assistent
     if(points.match(/^gps/) !== null){
-        var routeAssistent = $('<div class="container-fluid"><div class="row"><div class="col-xs-12"><a id="route-assistent" href="javascript:updateCurrentLocation(startAssistent);">Routenführung starten</a></div></div></div>');
+        var routeAssistent = $('\
+            <div class="container-fluid">\
+                <div class="row">\
+                    <div class="col-xs-12">\
+                        <a id="route-assistent" href="javascript:updateCurrentLocation(startAssistent);">Routenführung starten</a>\
+                    </div>\
+                </div>\
+            </div>');
         $("#route-content").prepend(routeAssistent);
     }
     addRouteMetaData();
@@ -460,18 +467,4 @@ function addGraphics() { // We collect the minimal Position and the maximum Posi
         var pos = ol.proj.transform([parseFloat(value["location"][0]), parseFloat(value["location"][1])], 'EPSG:4326', 'EPSG:3857');
         routeMarkers.push(addMarker(el, pos));
     });
-}
-
-function startAssistent() {
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/js/routeAssistent.js', {
-            scope: '/'
-        }).then(function(reg) {
-            // registration worked
-            console.log('Registration succeeded. Scope is ' + reg.scope);
-        }).catch(function(error) {
-            // registration failed
-            console.error('Registration failed with ' + error);
-        });
-    };
 }
