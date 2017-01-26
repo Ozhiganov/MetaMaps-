@@ -93666,6 +93666,9 @@ function startAssistent() {
         prepareInterface();
         initAssistentGraphics();
         reloadRoute();
+        $(".ol-abort").click(function(){
+            deinitAssistent();
+        });
     }
 }
 
@@ -93721,6 +93724,15 @@ function prepareInterface() {
     deinitResults();
     // Remove Zoom Bar
     $(".ol-zoom, .ol-zoomslider, #location-tool").addClass("hidden");
+
+    var abort = $('\
+        <span class="glyphicon glyphicon-remove"></span>\
+        ');
+    $(".ol-attribution").html("");
+    $(".ol-attribution").addClass("ol-abort");
+    $(".ol-attribution").removeClass("ol-attribution");
+    $(".ol-abort").html(abort);
+
     //Update Map Size
     updateMapSize();
 }
@@ -93730,8 +93742,26 @@ function deinitAssistent() {
         navigator.geolocation.clearWatch(followingId);
         followingId = null;
     }
-    window.location.reload();
+    if(route.waypoints.length <= 1){
+        // If just one waypoint is left then we finished the route and we redirect to the startpage
+        window.location.href = "/";
+    }else{
+        // We redirect to the route Overview at the current state
+        var pointString = "";
+        $.each(route.waypoints, function(index, value){
+            if(index === 0){
+                // The first Index always is the GPS Location
+                pointString += "gps;";
+            }else{
+                pointString += value.location.toString() + ";";
+            }
+        });
+        pointString = pointString.replace(/;$/,'');
+        var url = "/route/" + vehicle + "/" + pointString;
+        window.location.href = url;
+    }
 }
+
 var currentPosition = null;
 var calculating = false;
 
