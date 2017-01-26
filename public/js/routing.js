@@ -93559,9 +93559,23 @@ function parseBearing(bearing) {
 
 function parseDistance(distance) {
     distance = parseFloat(distance);
-    distance /= 1000;
-    var km = Math.round(distance * 10) / 10;
-    return km + " km";
+    if(distance >= 1000){
+        distance /= 1000;
+        var km = Math.round(distance * 10) / 10;
+        return km + " km";
+    }else if(distance >= 50){
+        var mod = distance % 50;
+        var m = 0;
+        if(mod >= 25){
+            m = distance + (50-mod);
+        }else{
+            m = distance - mod;
+        }
+        return m + " m";
+    }else{
+        var m = Math.round(distance / 10) * 10;
+        return m + " m";
+    }
 }
 
 function parseDuration(duration) {
@@ -93582,6 +93596,9 @@ function parseDuration(duration) {
     }
     if (minute > 0) {
         result += " " + minute + " Min.";
+    }
+    if(hours === 0 && minute === 0){
+        result = "< 1 Min.";
     }
     return result;
 }
@@ -93665,7 +93682,7 @@ function startAssistent() {
         prepareInterface();
         initAssistentGraphics();
         reloadRoute();
-        $(".ol-abort").click(function(){
+        $(".ol-abort").click(function() {
             deinitAssistent();
         });
     }
@@ -93733,7 +93750,6 @@ function prepareInterface() {
     deinitResults();
     // Remove Zoom Bar
     $(".ol-zoom, .ol-zoomslider, #location-tool").addClass("hidden");
-
     var abort = $('\
         <span class="glyphicon glyphicon-remove"></span>\
         ');
@@ -93741,7 +93757,6 @@ function prepareInterface() {
     $(".ol-attribution").addClass("ol-abort");
     $(".ol-attribution").removeClass("ol-attribution");
     $(".ol-abort").html(abort);
-
     //Update Map Size
     updateMapSize();
 }
@@ -93751,26 +93766,27 @@ function deinitAssistent() {
         navigator.geolocation.clearWatch(followingId);
         followingId = null;
     }
-    if(route.waypoints.length <= 1){
+    console.log(route.waypoints);
+    if (route.waypoints.length <= 1) {
         // If just one waypoint is left then we finished the route and we redirect to the startpage
         window.location.href = "/";
-    }else{
+    } else {
         // We redirect to the route Overview at the current state
         var pointString = "";
-        $.each(route.waypoints, function(index, value){
-            if(index === 0){
+        $.each(route.waypoints, function(index, value) {
+            if (index === 0) {
                 // The first Index always is the GPS Location
                 pointString += "gps;";
-            }else{
+            } else {
                 pointString += value.location.toString() + ";";
             }
         });
-        pointString = pointString.replace(/;$/,'');
+        pointString = pointString.replace(/;$/, '');
         var url = "/route/" + vehicle + "/" + pointString;
-        window.location.href = url;
+        console.log(url);
+        //window.location.href = url;
     }
 }
-
 var currentPosition = null;
 var calculating = false;
 
@@ -93824,48 +93840,17 @@ function startLocationFollowing() {
                 var i = pointOnRoute.legIndex;
                 while (i > 0) {
                     console.log("Entferne leg");
-                    // Update Route Distance
-                    route.routes[0].distance -= route.routes[0].legs[0].distance;
-                    route.routes[0].duration -= route.routes[0].legs[0].duration;
-                    route.routes[0].legs.shift();
-                    cancleFollowing();
-                    // If a leg get's removed it means that we have passed a waypoint
-                    if(route.waypoints.length >= 2){
-                        route.waypoints.splice(1, 1);
-                    }
-                    if(route.waypoints.length >= 2){
-                        // First Point is the GPS Location
-                        // At least 2 additional Waypoints are to go
-                        // So when we removed one now we aren't finished
-                        console.log("öffne Dialog");
-                        openNextWaypointDialog();
-                    }else{
-                        // We have a maximum of two waypoints left
-                        // One of these is the GPS Location so when we removed it we finished routing
-                        deinitAssistent();
-                    }
-                    // We will cancle the Route Assistent temporarily until the User wants to continue 
+                    removeLeg();
                     i--;
                 }
                 i = pointOnRoute.stepIndex;
                 while (i > 0) {
-                    // Update Route Distance
-                    route.routes[0].distance -= route.routes[0].legs[0].steps[0].distance;
-                    route.routes[0].duration -= route.routes[0].legs[0].steps[0].duration;
-                    if (route.routes[0].legs[0].steps[0].distance > 0) {
-                        route.routes[0].legs[0].annotation.distance = route.routes[0].legs[0].annotation.distance.slice(route.routes[0].legs[0].steps[0].geometry.coordinates.length - 1);
+                    console.log("Entferne Step");
+                    if(removeStep()){
+                        i = 0;
+                    }else{
+                        i--;
                     }
-                    if (route.routes[0].legs[0].steps[0].duration > 0) {
-                        route.routes[0].legs[0].annotation.duration = route.routes[0].legs[0].annotation.duration.slice(route.routes[0].legs[0].steps[0].geometry.coordinates.length - 1);
-                    }
-                    route.routes[0].geometry.coordinates = route.routes[0].geometry.coordinates.slice(route.routes[0].legs[0].steps[0].geometry.length - 1);
-                    var step = route.routes[0].legs[0].steps.shift();
-                    while (step.geometry.coordinates.length > 0) {
-                        // The Last Coordinate of this step is gonna be the first coordinate of the next one
-                        // That's why we add until just one coordinate is left
-                        drivenRoute.coordinates.push(step.geometry.coordinates.shift());
-                    }
-                    i--;
                 }
                 // Now we for sure have the current step at position 0
                 // Every step has a geometry Object describing the line we need to take.
@@ -93894,15 +93879,14 @@ function startLocationFollowing() {
                     bearingGps = getBearing(ol.proj.transform(pointOnRoute.point, 'EPSG:3857', 'EPSG:4326'), route.routes[0].legs[0].steps[0].geometry.coordinates[1]);
                     bearingRoute = getBearing(route.routes[0].legs[0].steps[0].geometry.coordinates[0], route.routes[0].legs[0].steps[0].geometry.coordinates[1]);
                 }
-                if (route.routes[0].distance < 5) {
-                    deinitAssistent();
-                }
+
+                // We check for finish here too
                 updateNextStep(pointOnRoute.point, bearingGps);
                 redrawRoute(pointOnRoute.point);
             } else {
                 // We need to recalculate
                 // If we are still folling the location we stop that until we have our new route:
-                if(followingId !== null){
+                if (followingId !== null) {
                     navigator.geolocation.clearWatch(followingId);
                     followingId = null;
                 }
@@ -93931,30 +93915,80 @@ function startLocationFollowing() {
     }
 }
 
-function openNextWaypointDialog(){
+function removeStep() {
+    // Update Route Distance
+    route.routes[0].distance -= route.routes[0].legs[0].steps[0].distance;
+    route.routes[0].duration -= route.routes[0].legs[0].steps[0].duration;
+    route.routes[0].legs[0].distance -= route.routes[0].legs[0].steps[0].distance;
+    route.routes[0].legs[0].duration -= route.routes[0].legs[0].steps[0].duration;
+    if (route.routes[0].legs[0].steps[0].distance > 0) {
+        route.routes[0].legs[0].annotation.distance = route.routes[0].legs[0].annotation.distance.slice(route.routes[0].legs[0].steps[0].geometry.coordinates.length - 1);
+    }
+    if (route.routes[0].legs[0].steps[0].duration > 0) {
+        route.routes[0].legs[0].annotation.duration = route.routes[0].legs[0].annotation.duration.slice(route.routes[0].legs[0].steps[0].geometry.coordinates.length - 1);
+    }
+    route.routes[0].geometry.coordinates = route.routes[0].geometry.coordinates.slice(route.routes[0].legs[0].steps[0].geometry.length - 1);
+    var step = route.routes[0].legs[0].steps.shift();
+    while (step.geometry.coordinates.length > 0) {
+        // The Last Coordinate of this step is gonna be the first coordinate of the next one
+        // That's why we add until just one coordinate is left
+        drivenRoute.coordinates.push(step.geometry.coordinates.shift());
+    }
+    // If the distance of the Leg is < 10 we remove it too
+    if (route.routes[0].legs[0].distance < 10) {
+        removeLeg();
+        return true;
+    }else{
+        return false;
+    }
+}
+
+function removeLeg() {
+    // Update Route Distance
+    route.routes[0].distance -= route.routes[0].legs[0].distance;
+    route.routes[0].duration -= route.routes[0].legs[0].duration;
+    route.routes[0].legs.shift();
+    initFinish();
+}
+
+function initFinish() {
+    cancleFollowing();
+    // If a leg get's removed it means that we have passed a waypoint
+    if (route.waypoints.length >= 2) {
+        console.log(route.waypoints);
+        route.waypoints.splice(1, 1);
+    }
+    if (route.waypoints.length >= 2) {
+        // First Point is the GPS Location
+        // At least 2 additional Waypoints are to go
+        // So when we removed one now we aren't finished
+        openNextWaypointDialog();
+    } else {
+        // We have a maximum of two waypoints left
+        // One of these is the GPS Location so when we removed it we finished routing
+        deinitAssistent();
+    }
+}
+
+function openNextWaypointDialog() {
     $("nav").addClass("hidden");
     updateMapSize();
-
     $("#continue-dialog #next-waypoint").off();
-    $("#continue-dialog #next-waypoint").click(function(){
+    $("#continue-dialog #next-waypoint").click(function() {
         $("nav").removeClass("hidden");
         updateMapSize();
         $("#continue-dialog").addClass("hidden");
         startLocationFollowing();
     });
-
     $("#continue-dialog #abort-routing").off();
-    $("#continue-dialog #abort-routing").click(function(){
+    $("#continue-dialog #abort-routing").click(function() {
         deinitAssistent();
     });
-
-
     $("#continue-dialog").removeClass("hidden");
-
 }
 
-function cancleFollowing(){
-    if(followingId !== null){
+function cancleFollowing() {
+    if (followingId !== null) {
         navigator.geolocation.clearWatch(followingId);
         followingId = null;
     }
@@ -94101,7 +94135,7 @@ function updateNextStep(gpsPos, bearing) {
     // So now that everything is Drawn we adjust the Map View
     // The new Rotation is The bearing of the first step of the route:
     var rotation = parseInt(data.routes[0].legs[0].steps[0].maneuver.bearing_after);
-    if(bearing !== null){
+    if (bearing !== null) {
         rotation = bearing;
     }
     rotation = 360 - rotation;

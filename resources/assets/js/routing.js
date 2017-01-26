@@ -381,9 +381,23 @@ function parseBearing(bearing) {
 
 function parseDistance(distance) {
     distance = parseFloat(distance);
-    distance /= 1000;
-    var km = Math.round(distance * 10) / 10;
-    return km + " km";
+    if(distance >= 1000){
+        distance /= 1000;
+        var km = Math.round(distance * 10) / 10;
+        return km + " km";
+    }else if(distance >= 50){
+        var mod = distance % 50;
+        var m = 0;
+        if(mod >= 25){
+            m = distance + (50-mod);
+        }else{
+            m = distance - mod;
+        }
+        return m + " m";
+    }else{
+        var m = Math.round(distance / 10) * 10;
+        return m + " m";
+    }
 }
 
 function parseDuration(duration) {
@@ -404,6 +418,9 @@ function parseDuration(duration) {
     }
     if (minute > 0) {
         result += " " + minute + " Min.";
+    }
+    if(hours === 0 && minute === 0){
+        result = "< 1 Min.";
     }
     return result;
 }
