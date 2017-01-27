@@ -375,6 +375,7 @@ function checkGPS(callback) {
         }, function(error){
             gps = false;
             toggleGPSLocator(false);
+            toggleGpsWarning();
             if(typeof callback === "function"){
                 callback();
             }
