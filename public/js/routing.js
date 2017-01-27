@@ -93794,6 +93794,7 @@ function deinitAssistent() {
 }
 var currentPosition = null;
 var calculating = false;
+
 function startLocationFollowing() {
     if (followingId === null) {
         if (currentPosition === null) {
@@ -93806,11 +93807,10 @@ function startLocationFollowing() {
         }
         options = {
             enableHighAccuracy: true,
-            timeout: 3000,
-            maximumAge: 1000
+            timeout: 5000,
+            maximumAge: 3000
         };
         followingId = navigator.geolocation.watchPosition(function(position) {
-            
             var timestamp = Math.floor(position.timestamp / 1000);
             var lon = parseFloat(position.coords.longitude);
             var lat = parseFloat(position.coords.latitude);
