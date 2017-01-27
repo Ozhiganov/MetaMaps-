@@ -83,6 +83,9 @@
                 <li id="lock-location" class="hidden"><span class="button glyphicon glyphicon-lock"></span><span class="info">Ansicht zentriert</span></li>
                 <li id="follow-location"><span class="button glyphicon glyphicon-record"></span></li>
             </ul>
+            @if(isset($vars) && isset($vars["debug"]) && $vars["debug"])
+            <div id="debug-box"></div>
+            @endif
         </main>
         @if(isset($scripts))
             @foreach($scripts as $script)
@@ -103,7 +106,7 @@
             @foreach($vars as $key => $value)
             @if(gettype($value) === "string")
             var {!!$key!!} = '{!! $value !!}';
-            @elseif(gettype($value) === "array")
+            @elseif(gettype($value) === "array" || gettype($value) === "boolean")
             var {!!$key!!} = {!! json_encode($value) !!};
             @else
             var {!!$key!!} = {!! $value !!};

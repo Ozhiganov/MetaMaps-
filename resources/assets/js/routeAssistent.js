@@ -124,7 +124,6 @@ function deinitAssistent() {
 }
 var currentPosition = null;
 var calculating = false;
-
 function startLocationFollowing() {
     if (followingId === null) {
         if (currentPosition === null) {
@@ -137,10 +136,11 @@ function startLocationFollowing() {
         }
         options = {
             enableHighAccuracy: true,
-            timeout: 5000,
+            timeout: 3000,
             maximumAge: 1000
         };
         followingId = navigator.geolocation.watchPosition(function(position) {
+            
             var timestamp = Math.floor(position.timestamp / 1000);
             var lon = parseFloat(position.coords.longitude);
             var lat = parseFloat(position.coords.latitude);
@@ -152,6 +152,10 @@ function startLocationFollowing() {
                 lat: lat,
                 accuracy: accuracy
             };
+            if(debug){
+                var time = new Date();
+                $("#debug-box").html(time.getHours() + ":" + time.getMinutes() + ":" + time.getSeconds() + "<br />" + currentPosition.lon + "<br />" + currentPosition.lat + "<br />" + currentPosition.accuracy);
+            }
             // We have to decide whether we will retrieve two exact Routes (driven and upcoming)
             // or whether we want to derive a new User Position on the Route of the new GPS Location
             // The latter one would use some mobile Data to make a new HTTP Request

@@ -37,6 +37,13 @@ body {
     border-radius: 7px;
 }
 
+#debug-box {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    background-color: white;
+}
+
 
 /*
 #follow-location {

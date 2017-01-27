@@ -3,17 +3,22 @@
 namespace App\Http\Controllers;
 
 use Cache;
+use Illuminate\Http\Request;
 use Log;
 use Response;
 
 class RoutingController extends Controller
 {
-    public function calcRoute($vehicle, $points)
+    public function calcRoute(Request $request, $vehicle, $points)
     {
+        $debug = false;
+        if ($request->has("debug")) {
+            $debug = true;
+        }
         return view('map')
             ->with('boundings', 'false')
             ->with('getPosition', 'false')
-            ->with('vars', ['vehicle' => $vehicle, 'points' => $points])
+            ->with('vars', ['vehicle' => $vehicle, 'points' => $points, 'debug' => $debug])
             ->with('css', [elixir('/css/routing.css')])
             ->with('scripts', [elixir('js/routing.js')])
             ->with('getPosition', 'true');
