@@ -125,6 +125,8 @@ function deinitAssistent() {
 var currentPosition = null;
 var calculating = false;
 
+var lastUpdate = null;
+var frequency = 3000;   // Frequency in ms in which the Route-Assistent should Update itself
 function startLocationFollowing() {
     if (followingId === null) {
         if (currentPosition === null) {
@@ -137,10 +139,14 @@ function startLocationFollowing() {
         }
         options = {
             enableHighAccuracy: true,
-            timeout: 5000,
             maximumAge: 3000
         };
         followingId = navigator.geolocation.watchPosition(function(position) {
+            // We will define an update Interval manually since the maximumAge Paramter doesn't seem to work
+            if(lastUpdate !== null && (Date.now()-lastUpdate) < frequency){
+                return;
+            }
+            lastUpdate = Date.now();
             var timestamp = Math.floor(position.timestamp / 1000);
             var lon = parseFloat(position.coords.longitude);
             var lat = parseFloat(position.coords.latitude);
@@ -219,8 +225,23 @@ function startLocationFollowing() {
                     bearingRoute = getBearing(route.routes[0].legs[0].steps[0].geometry.coordinates[0], route.routes[0].legs[0].steps[0].geometry.coordinates[1]);
                 }
 
+                // Calculate the distance we traveled on this step to give more accurate Updates
+                var distTraveled = getDistance(ol.proj.transform(pointOnRoute.point, 'EPSG:3857', 'EPSG:4326'), route.routes[0].legs[0].steps[0].geometry.coordinates[0]);
+                // The distTraveled can only be as accurate as the accuracy of the gps Position so we gonna substract the accuracy from the distance just to be sure for the worst case
+                distTraveled = Math.max(0, (distTraveled-currentPosition.accuracy));
+
+                if((route.routes[0].legs[0].distance - distTraveled) <= 20){
+                    removeLeg();
+                }
+
+                var durTraveled = 0;
+                if(route.routes[0].legs[0].steps[0].distance !== 0){
+                    durTraveled = (route.routes[0].legs[0].steps[0].duration / route.routes[0].legs[0].steps[0].distance) * distTraveled;
+                }
+                // Update the Frequency when we are calculating the next Map Update
+                frequency = calcFrequency(durTraveled);
                 // We check for finish here too
-                updateNextStep(pointOnRoute.point, bearingGps);
+                updateNextStep(pointOnRoute.point, bearingGps, distTraveled, durTraveled);
                 redrawRoute(pointOnRoute.point);
             } else {
                 // We need to recalculate
@@ -251,6 +272,29 @@ function startLocationFollowing() {
             // Follow Location couldn't be started. Abort now
             deinitAssistent();
         }, options);
+    }
+}
+
+function calcFrequency(durTraveled){
+    // We decide in which Frequency we gonna update the Map.
+    // It depends of the duration the current step will take to Finish:
+    // 1s   =>  The Last 15 Seconds of a step will be updated the most frequent
+    // 2s   =>  Between 15-19 Seconds
+    // 3s   =>  Between 19 and 24 Seconds
+    // 4s   =>  Between 24 and 30 Seconds
+    // 5s   =>  > 30 Seconds
+    var duration = route.routes[0].legs[0].steps[0].duration;
+    duration -= durTraveled;
+    if(duration < 15){
+        return 1000;
+    }else if(duration < 19){
+        return 2000;
+    }else if(duration < 24){
+        return 3000;
+    }else if(duration < 30){
+        return 4000;
+    }else{
+        return 5000;
     }
 }
 
@@ -382,6 +426,12 @@ function toDegrees(radians) {
     return radians * 180 / Math.PI;
 }
 
+function getDistance(p1, p2){
+    var wgs84Sphere = new ol.Sphere(6378137);
+    var dist = wgs84Sphere.haversineDistance(p1,p2);
+    return dist;
+}
+
 function getNextPointOnRoute(gpsPoint, accuracy) {
     var r = route.routes[0];
     var wgs84Sphere = new ol.Sphere(6378137);
@@ -452,15 +502,15 @@ function arraysEqual(a1, a2) {
     return JSON.stringify(a1) == JSON.stringify(a2);
 }
 
-function updateNextStep(gpsPos, bearing) {
+function updateNextStep(gpsPos, bearing, distTraveled, durTraveled) {
     var data = route;
     // This Function goes through the current Route Object and evaluates the next step:
     // Add the information for the next steps and route meta data
     // Route Metadata
-    var duration = parseFloat(data.routes[0].duration);
+    var duration = parseFloat(data.routes[0].duration) - durTraveled;
     duration = parseDuration(duration);
     $("nav #route-information #duration").html(duration);
-    distance = parseFloat(data.routes[0].distance)
+    distance = parseFloat(data.routes[0].distance) - distTraveled;
     distance = parseDistance(distance);
     $("nav #route-information #length").html(distance);
     // Next Step
@@ -469,7 +519,7 @@ function updateNextStep(gpsPos, bearing) {
     $("nav #routing-steps .step-string").html(stepString);
     var img = parseImg(step);
     $("nav #routing-steps .step-image img").attr('src', img);
-    var stepDistance = parseDistance(parseFloat(data.routes[0].legs[0].steps[0].distance));
+    var stepDistance = parseDistance(parseFloat(data.routes[0].legs[0].steps[0].distance) - distTraveled);
     $("nav #routing-steps .step-length").html(stepDistance);
     // So now that everything is Drawn we adjust the Map View
     // The new Rotation is The bearing of the first step of the route:
@@ -488,18 +538,6 @@ function updateNextStep(gpsPos, bearing) {
         updateUserPosition(ol.proj.transform([data.waypoints[0].location[0], data.waypoints[0].location[1]], 'EPSG:4326', 'EPSG:3857'));
     }
 }
-var rad = function(x) {
-    return x * Math.PI / 180;
-};
-var getDistance = function(p1, p2) {
-    var R = 6378137; // Earth’s mean radius in meter
-    var dLat = rad(p2.lat - p1.lat);
-    var dLong = rad(p2.lon - p1.lon);
-    var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(rad(p1.lat)) * Math.cos(rad(p2.lat)) * Math.sin(dLong / 2) * Math.sin(dLong / 2);
-    var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    var d = R * c;
-    return d; // returns the distance in meter
-};
 
 function removeRoute() {
     if (routeLayer !== null) {
