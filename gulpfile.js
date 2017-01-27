@@ -12,6 +12,7 @@ require('laravel-elixir-vue-2');
  |
  */
 elixir((mix) => {
+	mix.styles(['bootstrap.min.css', 'style.css', 'staticPages.css'], 'public/css/staticPages.css');
     mix.styles(['bootstrap.min.css', 'ol.css', 'style.css', 'mapSearch.css'], 'public/css/mapSearch.css');
     mix.styles(['bootstrap.min.css', 'ol.css', 'style.css', 'iframeSearch.css'], 'public/css/iframeSearch.css');
     mix.styles(['bootstrap.min.css', 'ol.css', 'style.css', 'mapSearch.css', 'routing.css'], 'public/css/routing.css');
@@ -19,5 +20,5 @@ elixir((mix) => {
     mix.scripts(['jquery.min.js', 'bootstrap.min.js', 'ol.js', 'map.js', 'iframeSearch.js', 'iframeResizer.contentWindow.min.js'], 'public/js/iframeSearch.js');
     mix.scripts(['jquery.min.js', 'bootstrap.min.js', 'ol.js', 'map.js', 'mapSearch.js', 'routing.js', 'routeAssistent.js'], 'public/js/routing.js');
     mix.scripts(['jquery.min.js', 'bootstrap.min.js', 'ol.js', 'map.js', 'mapSearch.js', 'findRoute.js'], 'public/js/findRoute.js');
-    mix.version(['public/css/mapSearch.css', 'public/css/iframeSearch.css', 'public/css/routing.css', 'public/js/mapSearch.js', 'public/js/iframeSearch.js', 'public/js/routing.js', 'public/js/findRoute.js']);
+    mix.version(['public/css/staticPages.css','public/css/mapSearch.css', 'public/css/iframeSearch.css', 'public/css/routing.css', 'public/js/mapSearch.js', 'public/js/iframeSearch.js', 'public/js/routing.js', 'public/js/findRoute.js']);
 });

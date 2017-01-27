@@ -92909,6 +92909,15 @@ function addMarker(el, pos) {
     return overlay;
 }
 
+function toggleGpsWarning(){
+    $("#gps-error").addClass("visible-xs");
+    $("#gps-error").removeClass("hidden");
+    setTimeout(function(){
+        $("#gps-error").addClass("hidden");
+        $("#gps-error").removeClass("visible-xs");
+    }, 5000);
+}
+
 function checkGPS(callback) {
 
     if (navigator.geolocation) {
@@ -92919,6 +92928,7 @@ function checkGPS(callback) {
                 lon = parseFloat(position.coords.longitude);
                 lat = parseFloat(position.coords.latitude);
                 gpsLocation = [lon, lat];
+                toggleGpsWarning();
             }else{
                 gps = gps = true;
                 lon = parseFloat(position.coords.longitude);
@@ -92943,6 +92953,7 @@ function checkGPS(callback) {
     } else {
         gps = false;
         toggleGPSLocator(false);
+        toggleGpsWarning();
         if(typeof callback === "function"){
             callback();
         }
@@ -93681,7 +93692,9 @@ var distanceToNextPoint = null;
 
 function startAssistent() {
     if (gps && points.match(/^gps;/) !== null) {
-        //alert("Dieses Feature ist noch hochgradig experimentell und kann jederzeit abstürzen. Bitte benutzen Sie es nicht bei der Autofahrt und achten Sie konstant auf Ihre Umgebung, beachten Sie die Straßenverkehrsordnung und bedienen Sie dieses Interface (und Ihr Handy) nicht während der Fahrt.");
+        alert("\
+            Bitte beachten Sie auf Ihrem Weg stets die geltenden Verkehrsregeln und fahren nur so, wie es die aktuelle Verkehrssituation zulässt.\n\
+            Die Route kann veraltete Informationen enthalten, wodurch die Vorschläge für die Route im aktuellen Straßenverkehr nicht mehr möglich sind.");
         positions = [];
         initWaypoints();
         prepareInterface();

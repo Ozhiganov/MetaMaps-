@@ -219,6 +219,18 @@ html, body, main, #map {
     box-shadow: -5px 0px 1px 0px rgba(50, 50, 50, 0.16);*/
 }
 
+#gps-error {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    text-align: center;
+    padding: 17px 5px;
+    background-color: black;
+    color: white;
+    font-size: 0.8em;
+    z-index: 20002;
+}
+
 #closer {
     z-index: 20002;
     background-color: #f8f8f8!important;

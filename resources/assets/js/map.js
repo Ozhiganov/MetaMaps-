@@ -338,6 +338,15 @@ function addMarker(el, pos) {
     return overlay;
 }
 
+function toggleGpsWarning(){
+    $("#gps-error").addClass("visible-xs");
+    $("#gps-error").removeClass("hidden");
+    setTimeout(function(){
+        $("#gps-error").addClass("hidden");
+        $("#gps-error").removeClass("visible-xs");
+    }, 5000);
+}
+
 function checkGPS(callback) {
 
     if (navigator.geolocation) {
@@ -348,6 +357,7 @@ function checkGPS(callback) {
                 lon = parseFloat(position.coords.longitude);
                 lat = parseFloat(position.coords.latitude);
                 gpsLocation = [lon, lat];
+                toggleGpsWarning();
             }else{
                 gps = gps = true;
                 lon = parseFloat(position.coords.longitude);
@@ -372,6 +382,7 @@ function checkGPS(callback) {
     } else {
         gps = false;
         toggleGPSLocator(false);
+        toggleGpsWarning();
         if(typeof callback === "function"){
             callback();
         }

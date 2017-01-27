@@ -14,6 +14,15 @@ Route::get('/', function () {
     return view('map')->with('boundings', 'false')->with('getPosition', 'true')->with('scripts', [elixir('js/mapSearch.js')])->with('css', [elixir('css/mapSearch.css')]);
 });
 
+Route::group(['prefix' => 'hilfe'], function () {
+    Route::get('gps', function () {
+        return view('gps')->with('css', [elixir('css/staticPages.css')]);
+    });
+    Route::get('routen-assistent', function () {
+        return view('routen-assistent')->with('css', [elixir('css/staticPages.css')]);
+    });
+});
+
 Route::group(['prefix' => 'route'], function () {
     Route::get('preview/{vehicle}/{points}', 'RoutingController@routingOverviewGeoJson');
     Route::get('find/{vehicle}/{points}/{hints?}', 'RoutingController@routingGeoJson');

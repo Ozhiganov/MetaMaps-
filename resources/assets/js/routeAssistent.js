@@ -11,7 +11,9 @@ var distanceToNextPoint = null;
 
 function startAssistent() {
     if (gps && points.match(/^gps;/) !== null) {
-        //alert("Dieses Feature ist noch hochgradig experimentell und kann jederzeit abstürzen. Bitte benutzen Sie es nicht bei der Autofahrt und achten Sie konstant auf Ihre Umgebung, beachten Sie die Straßenverkehrsordnung und bedienen Sie dieses Interface (und Ihr Handy) nicht während der Fahrt.");
+        alert("\
+            Bitte beachten Sie auf Ihrem Weg stets die geltenden Verkehrsregeln und fahren nur so, wie es die aktuelle Verkehrssituation zulässt.\n\
+            Die Route kann veraltete Informationen enthalten, wodurch die Vorschläge für die Route im aktuellen Straßenverkehr nicht mehr möglich sind.");
         positions = [];
         initWaypoints();
         prepareInterface();

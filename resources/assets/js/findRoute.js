@@ -146,6 +146,7 @@ function initRouteFinder() {
                     addSearchEvent(html);
                 }
                 $(waypointHtml).append(html);
+
             });
         }
         $("#route-content").append(waypointHtml);

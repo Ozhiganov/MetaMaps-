@@ -58,7 +58,7 @@
             <!-- /.container-fluid -->
         </nav>
         <main>
-            @if(env('APP_ENV') === 'production' && 0==1)
+            @if(env('APP_ENV') === 'production')
             <div id="beta-info" class="alert alert-info alert-dismissible" role="alert">
               <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">×</span></button>
               <strong>Maps.metager.de:</strong> Auch Ihre geografischen Nutzungsdaten bleiben geschützt.
@@ -83,8 +83,12 @@
                 <li id="lock-location" class="hidden"><span class="button glyphicon glyphicon-lock"></span><span class="info">Ansicht zentriert</span></li>
                 <li id="follow-location"><span class="button glyphicon glyphicon-record"></span></li>
             </ul>
+            <div id="gps-error" class="hidden">
+            <span>MetaGer konnte Ihren genauen Standort nicht ermitteln.</span> <a href="/hilfe/gps" target="_blank">Warum?</a>
+            </div>
             @if(isset($vars) && isset($vars["debug"]) && $vars["debug"])
-            <div id="debug-box"></div>
+            <div id="debug-box">
+            </div>
             @endif
         </main>
         @if(isset($scripts))
