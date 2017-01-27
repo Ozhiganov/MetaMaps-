@@ -190,7 +190,7 @@ function initRouteFinder() {
     }
     generatePreviewRoute();
     addDragAndDrop();
-    initResults();
+    toggleResults("out");
 }
 /*
  * Function to convert lat/lon into an adress String and Put it into the value attribute of the given input-object

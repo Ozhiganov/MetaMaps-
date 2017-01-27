@@ -84,18 +84,6 @@ function deinitSearchBox() {
     $("#search").addClass("hidden");
 }
 
-function initResults() {
-    if ($("#results").hasClass("hidden")) {
-        $('#results').removeClass("hidden");
-    }
-    if ($("#closer").hasClass("hidden")) {
-        $("#closer").removeClass("hidden");
-        updateCloserPosition();
-    }
-    updateMapSize();
-    toggleResults("out");
-}
-
 function initStartNavigation() {
     $("#clearInput").html('<a href="/route/start/foot" target="_self"><img src="/img/navigation-arrow.svg" height="20px"></a>');
     $("#clearInput").off();
@@ -169,6 +157,9 @@ function updateResultsPosition() {
 }
 
 function updateCloserPosition() {
+    if($("#closer").hasClass("hidden")){
+        $("#closer").removeClass("hidden");
+    }
     if ($("#results").attr("data-status") === "out") {
         $("#closer").css("right", "0px");
     } else {

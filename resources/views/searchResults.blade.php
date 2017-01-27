@@ -82,7 +82,7 @@ $.each(searchResults, function(index, value) {
     };
     res.hover(resultHoverIn, resultHoverOut);
     el.hover(resultHoverIn, resultHoverOut);
-    initResults();
+
     // Add Features
     var geom = (new ol.format.GeoJSON()).readGeometry(value["geojson"], {
         'dataProjection': 'EPSG:4326',
@@ -105,6 +105,7 @@ initClearInput();
 
 @if($adjustView === true)
 adjustView(searchResults);
+toggleResults("out");
 @endif
 // Hide Navbar if expanded
 $(".collapse").collapse("hide");

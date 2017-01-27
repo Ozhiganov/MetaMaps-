@@ -30,7 +30,7 @@ function start(){
             deinitSearchBox();
             addGraphics();
             addResults();
-            initResults();
+            toggleResults("out");
         }
     });
 };
