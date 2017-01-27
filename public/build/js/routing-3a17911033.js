@@ -94129,13 +94129,20 @@ function getNextPointOnRoute(gpsPoint, accuracy) {
                 return;
             } else {
                 // The Point is on this Route Step
-                result = {
-                    legIndex: legIndex,
-                    stepIndex: stepIndex,
-                    point: pointOnStep
-                };
+                if(result === null || (result !== null && result.distance > distance)){
+                    result = {
+                        legIndex: legIndex,
+                        stepIndex: stepIndex,
+                        point: pointOnStep,
+                        distance: distance
+                    };
+                }
+
+                // We need to know the distance to the end of the step to decide whether we check the next step, too
+                var d = getDistance(c1, route.routes[0].legs[legIndex].steps[stepIndex].geometry.coordinates[route.routes[0].legs[legIndex].steps[stepIndex].geometry.coordinates.length-1]);
+
                 // It could possibly be at the end of this step in that case we will see if we can go on to the next step
-                if ((arraysEqual(stepGeom.getFirstCoordinate(), pointOnStep) || arraysEqual(stepGeom.getLastCoordinate(), pointOnStep)) && distance < Math.max(accuracy, 18)) {
+                if (d < Math.max(accuracy, 30)) {
                     stepCounter++;
                     return;
                 } else {
