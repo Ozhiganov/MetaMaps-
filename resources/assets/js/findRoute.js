@@ -119,8 +119,8 @@ function initRouteFinder() {
                         <li id="' + index + '" class="waypoint-list-item container-fluid" title="' + value[0] + '">\
                             <div class="row">\
                                 <div class="waypoint-marker col-xs-2"></div>\
-                                <div class="adress-name col-xs-9">' + value[0] + '</div>\
-                                <div class="delete-waypoint col-xs-1" data-id="' + index + '" title="Wegpunkt löschen"><a href="javascript:deleteWaypoint('+index+');"><span class="glyphicon glyphicon-trash"></span></a></div>\
+                                <div class="adress-name col-xs-8">' + value[0] + '</div>\
+                                <div class="delete-waypoint col-xs-2" data-id="' + index + '" title="Wegpunkt löschen"><a href="javascript:deleteWaypoint('+index+');"><span class="glyphicon glyphicon-trash"></span></a></div>\
                             </div>\
                         </li>\
                         ');
