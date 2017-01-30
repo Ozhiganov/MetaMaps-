@@ -38,37 +38,7 @@
 
 #find-route-options {
     padding: 7px 0;
-}
-
-#waypoint-container .row {
-    overflow: hidden;
-    height: 4.5em;
-    margin-right: 0;
-    margin-left: 0;
-}
-
-#waypoint-container.container-fluid {
-    padding-left: 0;
-    padding-right: 0;
-}
-
-.waypoint-list-item {
-    line-height: 1.5em;
-    padding: 0 15px;
-    border-bottom: 1px solid lightgrey;
-    border-radius: 6px;
-    cursor: crosshair;
-    padding-top: 0.75em;
-    padding-bottom: 0.75em;
-}
-
-.waypoint-list-item:hover {
-    background-color: #eee;
-}
-
-.waypoint-list-item .adress-name {
-    max-height: 3em;
-    overflow: hidden;
+    padding-top: 0;
 }
 
 #search-results {
@@ -213,6 +183,28 @@
 #back-to-edit > div {
     background-color: #ff8000;
     color: white;
+}
+
+#waypoint-container {
+    list-style-type: none;
+    padding: 5px 20px;
+    margin-bottom: 0;
+}
+
+#waypoint-container .adress-name {
+    font-size: 0.75em;
+    line-height: 1.5em;
+}
+
+#waypoint-container > li > .row {
+    padding: 8px 0;
+}
+
+#route-content #rearange-info {
+    padding-top: 5px;
+    text-align: center;
+    font-size: 0.8em;
+    font-weight: bold;
 }
 
 #waypoint-container .delete-waypoint > span {

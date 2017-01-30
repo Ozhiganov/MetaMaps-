@@ -107,7 +107,7 @@ function initRouteFinder() {
             waypoints.unshift('');
         }
         var firstEmpty = false;
-        var waypointHtml = $('<div id="waypoint-container" class="container-fluid"></div>');
+        var waypointHtml = $('<ul id="waypoint-container"></ul>')
         if (waypoints.length >= 1) {
             $.each(waypoints, function(index, value) {
                 var html;
@@ -115,12 +115,15 @@ function initRouteFinder() {
                     var chr = String.fromCharCode(65 + index);
                     // So now the Pin
                     var el = $('<span id="' + chr + '" class="marker">' + chr + '</span>');
-                    html = $('\
-                        <div id="' + index + '" class="waypoint-list-item row" draggable="true" title="' + value[0] + '">\
-                            <div class="waypoint-marker col-xs-2"></div>\
-                            <div class="adress-name col-xs-9">' + value[0] + '</div>\
-                            <div class="delete-waypoint col-xs-1" data-id="'+index+'"><span class="glyphicon glyphicon-trash"></span></div>\
-                        </div>');
+                    html= $('\
+                        <li id="' + index + '" class="waypoint-list-item container-fluid" title="' + value[0] + '">\
+                            <div class="row">\
+                                <div class="waypoint-marker col-xs-2"></div>\
+                                <div class="adress-name col-xs-9">' + value[0] + '</div>\
+                                <div class="delete-waypoint col-xs-1" data-id="' + index + '"><span class="glyphicon glyphicon-trash"></span></div>\
+                            </div>\
+                        </li>\
+                        ');
                     $(html).find(".waypoint-marker").append(el);
                     $(html).find(".delete-waypoint").click(function(){
                         var id = parseInt($(this).attr("data-id"));
@@ -191,7 +194,7 @@ function initRouteFinder() {
             refreshUrl();
         });
         // We should add a Place to display Informations About the Route
-        var routeInformation = $('<div id="route-information" class="row"><div id="length" class="col-md-6"></div><div id="duration" class="col-md-6"></div></div>')
+        var routeInformation = $('<div id="route-information" class="row"><div id="length" class="col-xs-6"></div><div id="duration" class="col-xs-6"></div></div>')
         $("#route-content").prepend(routeInformation);
     }
     generatePreviewRoute();
@@ -349,69 +352,26 @@ function parseDuration(duration) {
  * This functions appends the drag and drop event for all waypoints
  * This allows us to switch the Position of the waypoints
  */
-var draggedId = -5;
-
 function addDragAndDrop() {
-    $(".waypoint-list-item").on("dragstart", function(evt) {
-        evt.originalEvent.dataTransfer.setData('text', evt.target.id);
-        //Hide Original Element
-        setTimeout(function() {
-            $("#" + evt.target.id).addClass("hide");
-        });
-        draggedId = parseInt(evt.target.id);
-    });
-    $(".waypoint-list-item").on("dragend", function(evt) {
-        $("#waypoint-container .hide").removeClass("hide");
-    });
-    $("#waypoint-container div").each(function(index, element) {
-        $(element).on('dragover', function(evt) {
-            var targetId = parseInt(evt.target.id);
-            if (draggedId !== targetId) {
-                evt.originalEvent.preventDefault();
-                $("#waypoint-container .drop-target").remove();
-                $(this).after('<hr class="drop-target" />');
-            }
-        });
-        $(element).on('dragleave', function(evt) {
-            $("#waypoint-container .drop-target").remove();
-        });
-        $(element).on('drop', function(evt) {
-            evt.originalEvent.preventDefault();
-            var data = parseInt(evt.originalEvent.dataTransfer.getData('text'));
-            var target = parseInt($(this).attr("id"));
-            if (data !== target) {
-                if (data > target) target += 1;
-                waypoints.move(data, target);
+    $("#waypoint-container").before('<div id="rearange-info">Sortiere die Wegpunkte mit Drag \'n Drop</div>');
+    $( "#waypoint-container" ).sortable({
+        update: function(event, ui){
+            var draggedId = parseInt(ui.item.attr("id"));
+            var newPos = null;
+            $("#waypoint-container > li").each(function(index, value){
+                var id = parseInt($(value).attr("id"));
+                if(draggedId === id){
+                    newPos = index;
+                    return false;
+                }
+            });
+            if(newPos !== null){
+                waypoints.move(draggedId, newPos);
                 refreshUrl();
             }
-            draggedId = -5;
-        });
-    });
-    // We need a special treatment to allow placing a waypoint at the start
-    // For being able so we need to assign a special dragover,dragleave and drop event handler to the Nav-Tabs of the result
-    var element = $("#results ul.nav-tabs, #route-information");
-    $(element).on('dragover', function(evt) {
-        var targetId = -1;
-        if (draggedId !== targetId) {
-            evt.originalEvent.preventDefault();
-            $("#waypoint-container .drop-target").remove();
-            $("#waypoint-container").prepend('<hr class="drop-target" />');
         }
     });
-    $(element).on('dragleave', function(evt) {
-        $("#waypoint-container .drop-target").remove();
-    });
-    $(element).on('drop', function(evt) {
-        evt.originalEvent.preventDefault();
-        var data = parseInt(evt.originalEvent.dataTransfer.getData('text'));
-        var target = -1;
-        if (data !== target) {
-            if (data > target) target += 1;
-            waypoints.move(data, target);
-            initRouteFinder();
-        }
-        draggedId = -5;
-    });
+    $( "#waypoint-container" ).disableSelection();
 }
 Array.prototype.move = function(from, to) {
     this.splice(to, 0, this.splice(from, 1)[0]);
