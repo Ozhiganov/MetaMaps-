@@ -7205,7 +7205,7 @@ html, body, main, #map {
 
 .search-btn {
     position: absolute;
-    right: .2em;
+    right: 25px;
     margin-top: -2.7em;
     height: 2.5em;
     line-height: 2.5em;
