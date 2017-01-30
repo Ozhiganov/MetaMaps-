@@ -107,7 +107,7 @@ function initRouteFinder() {
             waypoints.unshift('');
         }
         var firstEmpty = false;
-        var waypointHtml = $('<ul id="waypoint-container"></ul>')
+        var waypointHtml = $('<ul id="waypoint-container"></ul>');
         if (waypoints.length >= 1) {
             $.each(waypoints, function(index, value) {
                 var html;
@@ -120,16 +120,11 @@ function initRouteFinder() {
                             <div class="row">\
                                 <div class="waypoint-marker col-xs-2"></div>\
                                 <div class="adress-name col-xs-9">' + value[0] + '</div>\
-                                <div class="delete-waypoint col-xs-1" data-id="' + index + '" title="Wegpunkt löschen"><span class="glyphicon glyphicon-trash"></span></div>\
+                                <div class="delete-waypoint col-xs-1" data-id="' + index + '" title="Wegpunkt löschen"><a href="javascript:deleteWaypoint('+index+');"><span class="glyphicon glyphicon-trash"></span></a></div>\
                             </div>\
                         </li>\
                         ');
                     $(html).find(".waypoint-marker").append(el);
-                    $(html).find(".delete-waypoint").click(function(){
-                        var id = parseInt($(this).attr("data-id"));
-                        waypoints[id] = "";
-                        refreshUrl();
-                    });
                     // Add the correct value:
                     var lon = "";
                     var lat = "";
@@ -201,6 +196,12 @@ function initRouteFinder() {
     addDragAndDrop();
     toggleResults("out");
 }
+
+function deleteWaypoint(index){
+    waypoints[index] = "";
+    refreshUrl();
+}
+
 /*
  * Function to convert lat/lon into an adress String and Put it into the value attribute of the given input-object
  * @param{float} lon
@@ -355,6 +356,8 @@ function parseDuration(duration) {
 function addDragAndDrop() {
     $("#waypoint-container").before('<div id="rearange-info">Sortiere die Wegpunkte mit Drag \'n Drop</div>');
     $( "#waypoint-container" ).sortable({
+        cancel: ".delete-waypoint",
+        items: ">li",
         update: function(event, ui){
             var draggedId = parseInt(ui.item.attr("id"));
             var newPos = null;

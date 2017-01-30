@@ -207,9 +207,14 @@
     font-weight: bold;
 }
 
-#waypoint-container .delete-waypoint > span {
+#waypoint-container .delete-waypoint {
     font-size: 19px;
-    padding-top: 0.5em;
-    padding-left: 0.3em;
+}
+
+#waypoint-container .delete-waypoint a {
     color: lightgrey;
+    display: block;
+    padding-top: 11px;
+    padding-bottom: 11px;
+    width: 100%;
 }
