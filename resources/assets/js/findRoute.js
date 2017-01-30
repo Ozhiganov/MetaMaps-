@@ -120,7 +120,7 @@ function initRouteFinder() {
                             <div class="row">\
                                 <div class="waypoint-marker col-xs-2"></div>\
                                 <div class="adress-name col-xs-9">' + value[0] + '</div>\
-                                <div class="delete-waypoint col-xs-1" data-id="' + index + '"><span class="glyphicon glyphicon-trash"></span></div>\
+                                <div class="delete-waypoint col-xs-1" data-id="' + index + '" title="Wegpunkt löschen"><span class="glyphicon glyphicon-trash"></span></div>\
                             </div>\
                         </li>\
                         ');
