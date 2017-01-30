@@ -93304,9 +93304,15 @@ function initRouteFinder() {
                     html = $('\
                         <div id="' + index + '" class="waypoint-list-item row" draggable="true" title="' + value[0] + '">\
                             <div class="waypoint-marker col-xs-2"></div>\
-                            <div class="adress-name col-xs-10">' + value[0] + '</div>\
+                            <div class="adress-name col-xs-9">' + value[0] + '</div>\
+                            <div class="delete-waypoint col-xs-1" data-id="'+index+'"><span class="glyphicon glyphicon-trash"></span></div>\
                         </div>');
                     $(html).find(".waypoint-marker").append(el);
+                    $(html).find(".delete-waypoint").click(function(){
+                        var id = parseInt($(this).attr("data-id"));
+                        waypoints[id] = "";
+                        refreshUrl();
+                    });
                     // Add the correct value:
                     var lon = "";
                     var lat = "";
