@@ -109,6 +109,12 @@ function initRouteFinder() {
         var firstEmpty = false;
         var waypointHtml = $('<ul id="waypoint-container"></ul>');
         if (waypoints.length >= 1) {
+            if(waypoints[0] === ""){
+                html = $("<input id=\"0\" class=\"form-control\" placeholder=\"Klicke auf die Karte um diesen Wegpunkt einzufügen.\" value=\"\"></input>");
+                addSearchEvent(html);
+                $("#route-content").append(html);
+                firstEmpty = true;
+            }
             $.each(waypoints, function(index, value) {
                 var html;
                 if (typeof value[0] !== "undefined" || value === 'gps') {
@@ -140,20 +146,29 @@ function initRouteFinder() {
                     }
                     
                     addPositionMarker(lon, lat, index);
+                    $(waypointHtml).append(html);
                 } else {
-                    if (!firstEmpty) {
-                        html = $("<input id=\"" + index + "\" class=\"form-control\" placeholder=\"Klicke auf die Karte um diesen Wegpunkt einzufügen.\" value=\"\"></input>");
-                        firstEmpty = true;
-                    } else {
-                        html = $("<input id=\"" + index + "\" class=\"form-control\" placeholder=\"\" value=\"\"></input>");
-                    }
+                    /*
+                    
                     addSearchEvent(html);
+                    */
                 }
-                $(waypointHtml).append(html);
+                
 
             });
+            $("#route-content").append(waypointHtml);
+            if(waypoints[waypoints.length-1] === ""){
+                if (!firstEmpty) {
+                    html = $("<input id=\"" + (waypoints.length-1) + "\" class=\"form-control\" placeholder=\"Klicke auf die Karte um diesen Wegpunkt einzufügen.\" value=\"\"></input>");
+                    firstEmpty = true;
+                } else {
+                    html = $("<input id=\"" + (waypoints.length-1) + "\" class=\"form-control\" placeholder=\"\" value=\"\"></input>");
+                }
+                addSearchEvent(html);
+                $("#route-content").append(html);
+            }
         }
-        $("#route-content").append(waypointHtml);
+        
     }
     // Describes the number of unfilled waypoints
     var unfilled = 0;
@@ -185,7 +200,16 @@ function initRouteFinder() {
         // Add the Listener for adding Waypoints
         $("#add-waypoint").click(function() {
             clearMarkers();
-            waypoints.splice(waypoints.length, 0, '');
+            var newWaypoints = [];
+            $.each(waypoints, function(index, value){
+                if(index === 0){
+                    newWaypoints.push(value);
+                }else if(index > 0 && value !== ""){
+                    newWaypoints.push(value);
+                }
+            });
+            newWaypoints.push('');
+            waypoints = newWaypoints;
             refreshUrl();
         });
         // We should add a Place to display Informations About the Route

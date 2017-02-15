@@ -93350,29 +93350,22 @@ function initRouteFinder() {
                     }
                     
                     addPositionMarker(lon, lat, index);
-                    $(waypointHtml).append(html);
                 } else {
                     /*
-                    
+                    if (!firstEmpty) {
+                        html = $("<input id=\"" + index + "\" class=\"form-control\" placeholder=\"Klicke auf die Karte um diesen Wegpunkt einzufügen.\" value=\"\"></input>");
+                        firstEmpty = true;
+                    } else {
+                        html = $("<input id=\"" + index + "\" class=\"form-control\" placeholder=\"\" value=\"\"></input>");
+                    }
                     addSearchEvent(html);
                     */
                 }
-                
+                $(waypointHtml).append(html);
 
             });
-            $("#route-content").append(waypointHtml);
-            if(waypoints[waypoints.length-1] === ""){
-                if (!firstEmpty) {
-                    html = $("<input id=\"" + (waypoints.length-1) + "\" class=\"form-control\" placeholder=\"Klicke auf die Karte um diesen Wegpunkt einzufügen.\" value=\"\"></input>");
-                    firstEmpty = true;
-                } else {
-                    html = $("<input id=\"" + (waypoints.length-1) + "\" class=\"form-control\" placeholder=\"\" value=\"\"></input>");
-                }
-                addSearchEvent(html);
-                $("#route-content").append(html);
-            }
         }
-        
+        $("#route-content").append(waypointHtml);
     }
     // Describes the number of unfilled waypoints
     var unfilled = 0;
@@ -93404,16 +93397,7 @@ function initRouteFinder() {
         // Add the Listener for adding Waypoints
         $("#add-waypoint").click(function() {
             clearMarkers();
-            var newWaypoints = [];
-            $.each(waypoints, function(index, value){
-                if(index === 0){
-                    newWaypoints.push(value);
-                }else if(index > 0 && value !== ""){
-                    newWaypoints.push(value);
-                }
-            });
-            newWaypoints.push('');
-            waypoints = newWaypoints;
+            waypoints.splice(waypoints.length, 0, '');
             refreshUrl();
         });
         // We should add a Place to display Informations About the Route
