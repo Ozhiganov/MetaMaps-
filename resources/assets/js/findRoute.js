@@ -4,11 +4,13 @@
  */
 var vectorLayerRoutePreview;
 var markers = [];
+var autoChooseVehicle = true;
 function start(){
     // Put the Popstate Event:
     $(window).unbind('popstate');
     $(window).bind('popstate', function(event) {
         var state = event.originalEvent.state;
+        autoChooseVehicle = false;
         if (state !== null && state.url !== undefined) {
             document.location.href = state["url"];
         } else if (state !== null && state["vehicle"] !== undefined && state["waypoints"] !== undefined) {
@@ -97,6 +99,7 @@ function initRouteFinder() {
     // Add the changed Listener to the Radio Buttons
     $(vehicleChooser).find("input[type=radio]").off();
     $(vehicleChooser).find("input[type=radio]").change(function() {
+        autoChooseVehicle = false;
         changeVehicle($("input[type=radio]:checked").val());
     });
     // Let's check for existing waypoints
@@ -358,6 +361,7 @@ function generatePreviewRoute() {
             var geojson = data["geojson"];
             var duration = data["duration"];
             var distance = data["distance"];
+
             $("#route-information #length").html(parseDistance(distance));
             $("#route-information #duration").html(parseDuration(duration));
 
@@ -374,6 +378,21 @@ function generatePreviewRoute() {
                 source: vectorS
             });
             map.addLayer(vectorLayerRoutePreview);
+
+            if(autoChooseVehicle){
+                // We change the vehicle to the probably best fitting
+                var prevVehicle = vehicle;
+                if(distance < 2000){
+                    vehicle = "foot";
+                }else if(distance < 10000){
+                    vehicle = "bicycle";
+                }else{
+                    vehicle = "car";
+                }
+                if(prevVehicle !== vehicle){
+                    refreshUrl();
+                }
+            }
         });
     }
 }
