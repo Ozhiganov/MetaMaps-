@@ -7353,4 +7353,14 @@ html, body, main, #map {
     width: 100%;
     text-align: right;
 }
+
+#route-content .new-waypoint-box > p {
+    font-weight: bold;
+    margin-bottom: 3px;
+}
+
+#route-content .new-waypoint-box > p > button {
+    border: 0;
+    background-color: inherit;
+}
 /*# sourceMappingURL=routing.css.map */

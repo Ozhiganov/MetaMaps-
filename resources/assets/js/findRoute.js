@@ -110,9 +110,19 @@ function initRouteFinder() {
         var waypointHtml = $('<ul id="waypoint-container"></ul>');
         if (waypoints.length >= 1) {
             if(waypoints[0] === ""){
-                html = $("<input id=\"0\" class=\"form-control\" placeholder=\"Klicke auf die Karte um diesen Wegpunkt einzufügen.\" value=\"\"></input>");
-                addSearchEvent(html);
+                html = $("<div class=\"container-fluid new-waypoint-box\"><p>Startpunkt angeben:\
+                    <button type=\"button\" class=\"\" \
+                        data-html=\"true\"\
+                        data-trigger=\"hover\"\
+                        data-toggle=\"popover\"\
+                        data-placement=\"bottom\"\
+                        title=\"Wegpunkt definieren\" \
+                        data-content=\"Sie können neue Wegpunkte auf 2 Arten definieren:<ol><li>Klicken Sie einfach auf der Karte auf den Punkt, den Sie einfügen möchten.</li><li>Sie können nach Orten Suchen indem Sie ihre Suchworte in das Eingabefeld eintragen und entweder Enter drücken, oder auf das kleine Lupensymbol klicken. Wählen Sie dann einfach das passende Ergebnis durch Klick aus.</li></ol>\">\
+                        <span class=\"glyphicon glyphicon-question-sign\"></span>\
+                    </button></p><input id=\"0\" class=\"form-control\" placeholder=\"Klicke auf die Karte um diesen Wegpunkt einzufügen.\" value=\"\"></input></div>");
+                addSearchEvent($(html).find("input"));
                 $("#route-content").append(html);
+                
                 firstEmpty = true;
             }
             $.each(waypoints, function(index, value) {
@@ -159,14 +169,34 @@ function initRouteFinder() {
             $("#route-content").append(waypointHtml);
             if(waypoints[waypoints.length-1] === ""){
                 if (!firstEmpty) {
-                    html = $("<input id=\"" + (waypoints.length-1) + "\" class=\"form-control\" placeholder=\"Klicke auf die Karte um diesen Wegpunkt einzufügen.\" value=\"\"></input>");
+                    html = $("<div class=\"container-fluid new-waypoint-box\"><p>Ziel angeben:\
+                    <button type=\"button\" class=\"\" \
+                        data-html=\"true\"\
+                        data-trigger=\"hover\"\
+                        data-toggle=\"popover\"\
+                        data-placement=\"bottom\"\
+                        title=\"Wegpunkt definieren\" \
+                        data-content=\"Sie können neue Wegpunkte auf 2 Arten definieren:<ol><li>Klicken Sie einfach auf der Karte auf den Punkt, den Sie einfügen möchten.</li><li>Sie können nach Orten Suchen indem Sie ihre Suchworte in das Eingabefeld eintragen und entweder Enter drücken, oder auf das kleine Lupensymbol klicken. Wählen Sie dann einfach das passende Ergebnis durch Klick aus.</li></ol>\">\
+                        <span class=\"glyphicon glyphicon-question-sign\"></span>\
+                    </button></p><input id=\"" + (waypoints.length-1) + "\" class=\"form-control\" placeholder=\"Klicke auf die Karte um diesen Wegpunkt einzufügen.\" value=\"\"></input></div>");
                     firstEmpty = true;
                 } else {
-                    html = $("<input id=\"" + (waypoints.length-1) + "\" class=\"form-control\" placeholder=\"\" value=\"\"></input>");
+                    html = $("<div class=\"container-fluid new-waypoint-box\"><p>Wegpunkt hinzufügen:\
+                    <button type=\"button\" class=\"\" \
+                        data-html=\"true\"\
+                        data-trigger=\"hover\"\
+                        data-toggle=\"popover\"\
+                        data-placement=\"bottom\"\
+                        title=\"Wegpunkt definieren\" \
+                        data-content=\"Sie können neue Wegpunkte auf 2 Arten definieren:<ol><li>Klicken Sie einfach auf der Karte auf den Punkt, den Sie einfügen möchten.</li><li>Sie können nach Orten Suchen indem Sie ihre Suchworte in das Eingabefeld eintragen und entweder Enter drücken, oder auf das kleine Lupensymbol klicken. Wählen Sie dann einfach das passende Ergebnis durch Klick aus.</li></ol>\">\
+                        <span class=\"glyphicon glyphicon-question-sign\"></span>\
+                    </button></p><input id=\"" + (waypoints.length-1) + "\" class=\"form-control\" value=\"\"></input></div>");
                 }
-                addSearchEvent(html);
+                addSearchEvent($(html).find("input"));
                 $("#route-content").append(html);
             }
+            // Enable the Popoversfor this element:
+            $("#route-content button[data-toggle=popover]").popover();
         }
         
     }
@@ -378,6 +408,11 @@ function parseDuration(duration) {
  * This allows us to switch the Position of the waypoints
  */
 function addDragAndDrop() {
+    // We will add Drag and Drop only if there are enough Waypoints to reorder:
+    var count = $("#waypoint-container > li").length;
+    if(count < 2){
+        return;
+    }
     $("#waypoint-container").before('<div id="rearange-info">Sortiere die Wegpunkte mit Drag \'n Drop</div>');
     $( "#waypoint-container" ).sortable({
         cancel: ".delete-waypoint",

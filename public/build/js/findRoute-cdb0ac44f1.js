@@ -93314,7 +93314,7 @@ function initRouteFinder() {
         var waypointHtml = $('<ul id="waypoint-container"></ul>');
         if (waypoints.length >= 1) {
             if(waypoints[0] === ""){
-                html = $("<input id=\"0\" class=\"form-control\" placeholder=\"Klicke auf die Karte um diesen Wegpunkt einzufügen.\" value=\"\"></input>");
+                html = $("<div class=\"container-fluid new-waypoint-box\"><p></p><input id=\"0\" class=\"form-control\" placeholder=\"Klicke auf die Karte um diesen Wegpunkt einzufügen.\" value=\"\"></input></div>");
                 addSearchEvent(html);
                 $("#route-content").append(html);
                 firstEmpty = true;
@@ -93582,6 +93582,11 @@ function parseDuration(duration) {
  * This allows us to switch the Position of the waypoints
  */
 function addDragAndDrop() {
+    // We will add Drag and Drop only if there are enough Waypoints to reorder:
+    var count = $("#waypoint-container > li").length;
+    if(count < 2){
+        return;
+    }
     $("#waypoint-container").before('<div id="rearange-info">Sortiere die Wegpunkte mit Drag \'n Drop</div>');
     $( "#waypoint-container" ).sortable({
         cancel: ".delete-waypoint",
