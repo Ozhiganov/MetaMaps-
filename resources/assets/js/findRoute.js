@@ -78,13 +78,13 @@ function initRouteFinder() {
     // Remove Existing Markers
     clearMarkers();
     var vehicleChooser = $("<div id=\"vehicle-chooser\">\
-            <label class=\"radio-inline\">\
+            <label class=\"radio-inline\" title=\"Fußgänger\">\
               <input type=\"radio\" name=\"vehicle\" value=\"foot\"> <div><img src=\"/img/silhouette-walk.png\" height=\"20px\" /></div>\
             </label>\
-            <label class=\"radio-inline\" >\
+            <label class=\"radio-inline\" title=\"Fahrrad\">\
               <input type=\"radio\" name=\"vehicle\" value=\"bicycle\"> <div><img src=\"/img/bike.png\" height=\"20px\" /></div>\
             </label>\
-            <label class=\"radio-inline\">\
+            <label class=\"radio-inline\" title=\"Auto\">\
               <input type=\"radio\" name=\"vehicle\" value=\"car\"> <div><img src=\"/img/car.png\" height=\"20px\" /></div>\
             </label>\
         </div>\
@@ -545,7 +545,8 @@ function addSearchEvent(element) {
                 $(element).css("border", "3px solid #c9302c");
                 $(element).tooltip({
                     "title": "Sie haben noch keine Suche durchgeführt. Klicken Sie auf die Lupe und wählen eins der Ergebnisse aus um diesen Wegpunkt hinzuzufügen.",
-                    "trigger": "manual"
+                    "trigger": "manual",
+                    "placement": "auto"
                 }).tooltip("show");
             }else{
                 $(".search-btn").remove();
