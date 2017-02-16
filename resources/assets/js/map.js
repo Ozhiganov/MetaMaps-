@@ -46,6 +46,10 @@ var clearInputFunction = function() {
     deinitResults();
     $("#clearInput").off();
 };
+var options = {
+            enableHighAccuracy: true,
+            maximumAge: 3000
+        };
 $(document).ready(function() {
     // Initialize the Map
     initMap();

@@ -58,14 +58,6 @@
             <!-- /.container-fluid -->
         </nav>
         <main>
-            @if(env('APP_ENV') === 'production')
-            <div id="beta-info" class="alert alert-info alert-dismissible" role="alert">
-              <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">×</span></button>
-              <strong>Maps.metager.de:</strong> Auch Ihre geografischen Nutzungsdaten bleiben geschützt.
-            Beta-Version, bisher nur Deutschland-Karten - wir
-            arbeiten daran.
-            </div>
-            @endif
             <div class="ol-popup" id="popup">
                 <a class="ol-popup-closer" href="#" id="popup-closer">
                 </a>

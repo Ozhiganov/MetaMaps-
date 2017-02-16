@@ -103,7 +103,6 @@ function deinitAssistent() {
         navigator.geolocation.clearWatch(followingId);
         followingId = null;
     }
-    console.log(route.waypoints);
     if (route.waypoints.length <= 1) {
         // If just one waypoint is left then we finished the route and we redirect to the startpage
         window.location.href = "/";
@@ -120,8 +119,7 @@ function deinitAssistent() {
         });
         pointString = pointString.replace(/;$/, '');
         var url = "/route/" + vehicle + "/" + pointString;
-        console.log(url);
-        //window.location.href = url;
+        window.location.href = url;
     }
 }
 var currentPosition = null;
