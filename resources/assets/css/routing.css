@@ -44,7 +44,7 @@
 #search-results {
     background-color: white;
     position: absolute;
-    width: 100%;
+    width: calc(100% - 30px);
     padding: 7px;
     border: 1px solid grey;
     z-index: 2001;
@@ -71,9 +71,9 @@
 
 .search-btn {
     position: absolute;
-    right: 25px;
-    margin-top: -2.7em;
-    height: 2.5em;
+    right: 18px;
+    margin-top: -2.6em;
+    height: 2.3em;
     line-height: 2.5em;
     border: 0;
 }

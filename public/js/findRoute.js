@@ -93648,6 +93648,8 @@ Array.prototype.move = function(from, to) {
  */
 function addSearchEvent(element) {
     $(element).focusin(function() {
+        $(element).css("border", "");
+        $(element).tooltip("destroy");
         var history = getHistory();
         if (gps || history.length > 0) {
             var sr = $("<div id=\"search-results\"></div>");
@@ -93694,7 +93696,9 @@ function addSearchEvent(element) {
                 });
             });
         }
-        var searchButton = $("<a tab-index=\"-1\" href=\"#\" class=\"search-btn btn btn-default btn-sm\"><span class=\"glyphicon glyphicon-search\"></span></a>");
+        var searchButton = $("<a tab-index=\"-1\" class=\"search-btn btn btn-default btn-sm\"><span class=\"glyphicon glyphicon-search\"></span></a>");
+        // Remove possibly existing search Buttons:
+        $(element).parent().find(".search-btn").remove();
         $(element).after(searchButton);
         var placeholder = $(element).attr("placeholder");
         $(element).attr("placeholder", "Suchworte eingeben");
@@ -93738,10 +93742,19 @@ function addSearchEvent(element) {
         $(element).focusout(function(evt) {
             $("#search-results").remove();
             $(element).off();
-            $(element).val("");
+            if($(element).val() !== ""){
+                $(element).css("border", "3px solid #c9302c");
+                $(element).tooltip({
+                    "title": "Sie haben noch keine Suche durchgeführt. Klicken Sie auf die Lupe und wählen eins der Ergebnisse aus um diesen Wegpunkt hinzuzufügen.",
+                    "trigger": "manual"
+                }).tooltip("show");
+            }else{
+                $(".search-btn").remove();
+            }
+            //$(element).val("");
             addSearchEvent(element);
             $(element).attr("placeholder", placeholder);
-            $(".search-btn").remove();
+            
         });
     });
 }
