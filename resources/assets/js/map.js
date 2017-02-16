@@ -53,15 +53,16 @@ var options = {
 $(document).ready(function() {
     // Initialize the Map
     initMap();
+    
+    $("#closer").click(function() {
+        toggleResults();
+    });
+    map.on('singleclick', mapClickFunction);
     if(getPosition){
         checkGPS(startApplication);
     }else{
         startApplication();
     }
-    $("#closer").click(function() {
-        toggleResults();
-    });
-    map.on('singleclick', mapClickFunction);
     $(window).resize(function() {
         updateResultsPosition();
         updateCloserPosition();
