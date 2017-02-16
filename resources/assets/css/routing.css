@@ -229,3 +229,7 @@
     border: 0;
     background-color: inherit;
 }
+
+.popover {
+    z-index: 20002;
+}

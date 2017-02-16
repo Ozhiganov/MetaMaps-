@@ -93320,6 +93320,7 @@ function initRouteFinder() {
                         data-trigger=\"hover\"\
                         data-toggle=\"popover\"\
                         data-placement=\"bottom\"\
+                        data-container=\"body\"\
                         title=\"Wegpunkt definieren\" \
                         data-content=\"Sie können neue Wegpunkte auf 2 Arten definieren:<ol><li>Klicken Sie einfach auf der Karte auf den Punkt, den Sie einfügen möchten.</li><li>Sie können nach Orten Suchen indem Sie ihre Suchworte in das Eingabefeld eintragen und entweder Enter drücken, oder auf das kleine Lupensymbol klicken. Wählen Sie dann einfach das passende Ergebnis durch Klick aus.</li></ol>\">\
                         <span class=\"glyphicon glyphicon-question-sign\"></span>\
@@ -93379,6 +93380,7 @@ function initRouteFinder() {
                         data-trigger=\"hover\"\
                         data-toggle=\"popover\"\
                         data-placement=\"bottom\"\
+                        data-container=\"body\"\
                         title=\"Wegpunkt definieren\" \
                         data-content=\"Sie können neue Wegpunkte auf 2 Arten definieren:<ol><li>Klicken Sie einfach auf der Karte auf den Punkt, den Sie einfügen möchten.</li><li>Sie können nach Orten Suchen indem Sie ihre Suchworte in das Eingabefeld eintragen und entweder Enter drücken, oder auf das kleine Lupensymbol klicken. Wählen Sie dann einfach das passende Ergebnis durch Klick aus.</li></ol>\">\
                         <span class=\"glyphicon glyphicon-question-sign\"></span>\
@@ -93391,6 +93393,7 @@ function initRouteFinder() {
                         data-trigger=\"hover\"\
                         data-toggle=\"popover\"\
                         data-placement=\"bottom\"\
+                        data-container=\"body\"\
                         title=\"Wegpunkt definieren\" \
                         data-content=\"Sie können neue Wegpunkte auf 2 Arten definieren:<ol><li>Klicken Sie einfach auf der Karte auf den Punkt, den Sie einfügen möchten.</li><li>Sie können nach Orten Suchen indem Sie ihre Suchworte in das Eingabefeld eintragen und entweder Enter drücken, oder auf das kleine Lupensymbol klicken. Wählen Sie dann einfach das passende Ergebnis durch Klick aus.</li></ol>\">\
                         <span class=\"glyphicon glyphicon-question-sign\"></span>\
