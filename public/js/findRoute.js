@@ -92953,7 +92953,9 @@ function checkGPS(callback) {
                 map.getView().setCenter(ol.proj.transform(gpsLocation, 'EPSG:4326', 'EPSG:3857'));
                 map.getView().setZoom(12);
             }
-            
+            if(typeof callback === "function"){
+                callback();
+            }
         }, function(error){
             gps = false;
             toggleGPSLocator(false);
@@ -93215,6 +93217,27 @@ var vectorLayerRoutePreview;
 var markers = [];
 var autoChooseVehicle = true;
 function start(){
+    console.log(waypoints, gpsLocation);
+    // The GPS Location is tricky
+    // It takes time on the one hand and waits for approval of sharing the Location on the other hand
+    // Under some circumstances the following scenario can occure:
+    // The User wants to derive a route from his own Position
+    // We have to wait for the geolocation API to finish but in case of a failure of retrieving Location data we need to do something
+    // So check here wheter a GPS Location is needed (one waypoint is "gps") AND the GPS Position isn't ready
+    var needGPS = false;
+    $.each(waypoints, function(index, value){
+        if(value === "gps"){
+            needGPS = true;
+            return;
+        }
+    });
+    if(needGPS && gpsLocation === null){
+        // If this is the case we will simply return here.
+        // If the geolocation API got triggered, then another call to this function will
+        // happen, when the gpsLocation is available
+        return;
+    }
+
     // Put the Popstate Event:
     $(window).unbind('popstate');
     $(window).bind('popstate', function(event) {
@@ -93239,6 +93262,7 @@ function start(){
         var pos = evt["coordinate"];
         addWaypoint(pos);
     });
+
     if (getWayPointLength() >= 1) {
         var points = [];
         $.each(waypoints, function(index, value){

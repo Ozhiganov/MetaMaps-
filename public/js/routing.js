@@ -92935,7 +92935,9 @@ function checkGPS(callback) {
                 map.getView().setCenter(ol.proj.transform(gpsLocation, 'EPSG:4326', 'EPSG:3857'));
                 map.getView().setZoom(12);
             }
-            
+            if(typeof callback === "function"){
+                callback();
+            }
         }, function(error){
             gps = false;
             toggleGPSLocator(false);
@@ -93202,8 +93204,15 @@ var route = {};
 var routeLayer = null;
 var routeMarkers = [];
 function start(){
+    console.log(waypoints, gpsLocation);
     var pointString = points;
     if(points.match(/gps/) !== null){
+        if(gpsLocation === null){
+            // If this is the case we will simply return here.
+            // If the geolocation API got triggered, then another call to this function will
+            // happen, when the gpsLocation is available
+            return;
+        }
         var pos = gpsLocation;
         pointString = points;
         if(pos !== null){

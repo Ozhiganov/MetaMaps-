@@ -92935,7 +92935,9 @@ function checkGPS(callback) {
                 map.getView().setCenter(ol.proj.transform(gpsLocation, 'EPSG:4326', 'EPSG:3857'));
                 map.getView().setZoom(12);
             }
-            
+            if(typeof callback === "function"){
+                callback();
+            }
         }, function(error){
             gps = false;
             toggleGPSLocator(false);

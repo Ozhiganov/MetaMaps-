@@ -11,8 +11,15 @@ var route = {};
 var routeLayer = null;
 var routeMarkers = [];
 function start(){
+    console.log(waypoints, gpsLocation);
     var pointString = points;
     if(points.match(/gps/) !== null){
+        if(gpsLocation === null){
+            // If this is the case we will simply return here.
+            // If the geolocation API got triggered, then another call to this function will
+            // happen, when the gpsLocation is available
+            return;
+        }
         var pos = gpsLocation;
         pointString = points;
         if(pos !== null){
