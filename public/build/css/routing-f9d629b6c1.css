@@ -7260,7 +7260,7 @@ html, body, main, #map {
 #vehicle-chooser label.radio-inline > input[type=radio]:checked + div {
     color: #555;
     cursor: default;
-    background-color: #fff;
+    background-color: #ff8000;
     border: 1px solid #ddd;
     border-bottom-color: transparent;
 }
