@@ -487,7 +487,7 @@ function getNextPointOnRoute(gpsPoint, accuracy) {
     return result;
 }
 
-function updateUserPosition(pos) {
+function updateUserPosition(pos, rot) {
     if (userPosOverlay !== null) {
         map.removeOverlay(userPosOverlay);
         userPosOverlay = null;
@@ -499,7 +499,9 @@ function updateUserPosition(pos) {
         offset: [-15, -15],
         stopEvent: false,
     });
-    map.getView().setCenter(pos);
+
+    map.getView().centerOn(pos, map.getSize(), [$("#map").width()/2,$("#map").height() - 150]);
+    map.getView().setRotation(rot);
     map.getView().setZoom(18);
     map.addOverlay(userPosOverlay);
 }
@@ -538,11 +540,10 @@ function updateNextStep(gpsPos, bearing, distTraveled, durTraveled) {
     // The Value needs to be in Radians
     rotation *= Math.PI;
     rotation /= 180;
-    map.getView().setRotation(rotation);
     if (gpsPos !== null) {
-        updateUserPosition(gpsPos);
+        updateUserPosition(gpsPos, rotation);
     } else {
-        updateUserPosition(ol.proj.transform([data.waypoints[0].location[0], data.waypoints[0].location[1]], 'EPSG:4326', 'EPSG:3857'));
+        updateUserPosition(ol.proj.transform([data.waypoints[0].location[0], data.waypoints[0].location[1]], 'EPSG:4326', 'EPSG:3857'), rotation);
     }
 }
 

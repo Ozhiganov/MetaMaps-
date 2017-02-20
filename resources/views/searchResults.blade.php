@@ -104,6 +104,7 @@ map.addLayer(vectorLayer)
 initClearInput();
 
 @if($adjustView === true)
+console.log("test");
 adjustView(searchResults);
 toggleResults("out");
 @endif

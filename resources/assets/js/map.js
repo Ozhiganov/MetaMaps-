@@ -153,6 +153,25 @@ function updateMapSize() {
     }, 1500);
 }
 
+function doBounce(location) {
+    // Bouncing means we zoom out one level
+    map.getView().setZoom(map.getView().getZoom() - 1);
+    // Then Panning to the desired location
+    doPan(location);
+    // And Then zoom back in one level
+    map.getView().setZoom(map.getView().getZoom() + 1);
+}
+function doPan(location, zoom) {
+    if(zoom === null){
+        zoom = map.getView().getZoom();
+    }
+    map.getView().animate({
+        zoom: zoom,
+        center: location,
+        duration: 1500
+    });
+}
+
 function updateResultsPosition() {
     if ($("#results").attr("data-status") === "out") {
         $("#results").addClass("hidden");
@@ -220,7 +239,7 @@ function adjustView(results) {
     }
     minPosition = ol.proj.transform(minPosition, 'EPSG:4326', 'EPSG:3857');
     maxPosition = ol.proj.transform(maxPosition, 'EPSG:4326', 'EPSG:3857');
-    map.getView().fit([minPosition[0], minPosition[1], maxPosition[0], maxPosition[1]], map.getSize());
+    map.getView().fit([minPosition[0], minPosition[1], maxPosition[0], maxPosition[1]], {padding: [5,5,5,5], duration: 1500});
     updateMapExtent();
 }
 /**
@@ -270,7 +289,7 @@ function getCity(address) {
 function adjustViewBoundingBox(minpos, maxpos) {
     minPosition = ol.proj.transform(minpos, 'EPSG:4326', 'EPSG:3857');
     maxPosition = ol.proj.transform(maxpos, 'EPSG:4326', 'EPSG:3857');
-    map.getView().fit([minPosition[0], minPosition[1], maxPosition[0], maxPosition[1]], map.getSize());
+    map.getView().fit([minPosition[0], minPosition[1], maxPosition[0], maxPosition[1]], {padding: [5,5,5,5], duration: 1500});
     updateMapExtent();
 }
 /*
@@ -434,7 +453,7 @@ function followLocation() {
             map.addLayer(userPositionMarker);
             if (lockViewToPosition) {
                 // Fit the Extent of the Map to Fit the new Features Exactly
-                map.getView().fit(userPositionMarker.getSource().getExtent(), map.getSize());
+                map.getView().fit(userPositionMarker.getSource().getExtent(), {padding: [5,5,5,5], duration: 1500});
             }
             // Change the color of the Icon so the user knows that the position is tracked:
             $("#follow-location").addClass("active");
