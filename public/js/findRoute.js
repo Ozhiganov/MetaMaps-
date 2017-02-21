@@ -1608,7 +1608,9 @@ function initMap() {
             attributionOptions: /** @type {olx.control.AttributionOptions} */ ({
                 collapsible: true
             })
-        }),
+        }).extend([
+            new ol.control.ScaleLine()
+        ]),
         overlays: [popupOverlay],
         view: new ol.View({
             maxZoom: 18,
