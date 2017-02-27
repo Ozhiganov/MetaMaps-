@@ -1044,18 +1044,7 @@ var mapClickFunction = function(evt) {
     lastClick = pos;
     getNearest(pos[0], pos[1]);
 };
-var moveFunction = function() {
-    /*
-    updateMapExtent();
-    var q = $("#search input[name=q]").val();
-    if (q !== "" && $("#search input[name=q]").attr("data-move-search") === "" && exactMatches !== null && exactMatches >= 10) {
-        q = encodeURI(q);
-        $("#clearInput").html("<img src=\"/img/ajax-loader.gif\" />");
-        var url = '/' + q + '/' + encodeURI(extent[0]) + '/' + encodeURI(extent[1]) + '/' + encodeURI(extent[2]) + '/' + encodeURI(extent[3] + '/' + false + '/10');
-        $.getScript(url);
-    }
-    */
-};
+
 var clearInputFunction = function() {
     $("#search input[name=q]").val('');
     $("#search input[name=q]").focus();
@@ -1220,13 +1209,12 @@ function updateCloserPosition() {
         } else {
             $("#closer").css("right", (resultsWidth - closerWidth) + "px");
         }
-
-        var top = 0;
-        if(!$("nav").hasClass("hidden")){
-            top = $("nav").height();
-        }
-        $("#closer").css("top", top);
     }
+    var top = 0;
+    if(!$("nav").hasClass("hidden")){
+        top = $("nav").height();
+    }
+    $("#closer").css("top", top);
 }
 
 function adjustView(results, limit) {

@@ -7068,6 +7068,7 @@ html, body, main, #map {
     bottom: 12px;
     left: -50px;
     min-width: 280px;
+    z-index: 20001;
 }
 
 .ol-popup:after, .ol-popup:before {

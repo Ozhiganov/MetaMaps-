@@ -76,34 +76,35 @@ $(document).ready(function() {
     });
 
     $("#doSearch").click(function() {
-        q = $("#search input[name=q]").val();
-        $("#clearInput").html("<img src=\"/img/ajax-loader.gif\" />");
 
-        // Calculate the current Extent of the map
-        var tmpExtent = map.getView().calculateExtent(map.getSize());
-        var extent = ol.proj.transform([tmpExtent[0], tmpExtent[1]], 'EPSG:3857', 'EPSG:4326').concat(ol.proj.transform([tmpExtent[2], tmpExtent[3]], 'EPSG:3857', 'EPSG:4326'));
+        var navbarCollapsed = $("#navbar-collapse").hasClass("in");
 
-        var url = '/' + encodeURI(q) + '/' + encodeURI(extent[0]) + '/' + encodeURI(extent[1]) + '/' + encodeURI(extent[2]) + '/' + encodeURI(extent[3]);
-        $.getScript(url).fail(function(jqxhr, settings, exception) {
-            console.log(exception);
-        });
-        $("#search input[name=q]").blur();
+        // If the Navbar is collapsed we need to pull it in before we search because it takes too much space
+        if(navbarCollapsed){
+            // Start Search when the navbar is hidden
+            $("#navbar-collapse").on("hidden.bs.collapse", executeSearch);
+            // Hide Navbar
+            $(".collapse").collapse("hide");
+        }else{
+            executeSearch();
+        }
     });
 });
 
-function research(){
-    var q = $("#search input[name=q]").val();
-    if(typeof q !== "undefined" && q !== ""){
-        var features = vectorSource.getFeatures();
-        var extent = map.getView().calculateExtent(map.getSize());
-        $.each(features, function(index, value){
-            var geom = value.getGeometry();
-            if(!geom.intersectsExtent(extent)){
-                $("#doSearch").click();
-                return false;
-            }
-        });
-    }
+function executeSearch(){
+    q = $("#search input[name=q]").val();
+    $("#clearInput").html("<img src=\"/img/ajax-loader.gif\" />");
+
+    // Calculate the current Extent of the map
+    var tmpExtent = map.getView().calculateExtent(map.getSize());
+    var extent = ol.proj.transform([tmpExtent[0], tmpExtent[1]], 'EPSG:3857', 'EPSG:4326').concat(ol.proj.transform([tmpExtent[2], tmpExtent[3]], 'EPSG:3857', 'EPSG:4326'));
+
+    var url = '/' + encodeURI(q) + '/' + encodeURI(extent[0]) + '/' + encodeURI(extent[1]) + '/' + encodeURI(extent[2]) + '/' + encodeURI(extent[3]);
+    $.getScript(url).fail(function(jqxhr, settings, exception) {
+        console.log(exception);
+    });
+    $("#navbar-collapse").off("hidden.bs.collapse");
+    $("#search input[name=q]").blur();
 }
 
 function updateUrl(){

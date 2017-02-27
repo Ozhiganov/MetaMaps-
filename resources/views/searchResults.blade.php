@@ -1,14 +1,7 @@
 var searchResults = {!!$results!!};
 var exactMatches = {{$exactMatches}};
-map.un("moveend", moveFunction, map);
 clearPOIS();
 var markers = [];
-@if($boundingSuccess === false)
-$("#results").append('<div class="result col-xs-12"><div class="col-xs-2"></div><div class="col-xs-10"><p class="title">Keine Ergebnisse gefunden</p></div></div><div class="clearfix result"></div><h4>Ergebnisse außerhalb des angezeigten Bereichs:<small><a id="showResults" href="#">(anzeigen)</a></small></h4>');
-$("#showResults").click(function() {
-    adjustView(searchResults);
-});
-@endif
 
 $.each(searchResults, function(index, value) {
     var el = $('<span id="index" class="marker" style="filter: hue-rotate(' + value["huerotate"] + 'deg);">' + index + '</span>');
@@ -103,8 +96,6 @@ vectorLayer = new ol.layer.Vector({
 map.addLayer(vectorLayer)
 
 initClearInput();
-// Hide Navbar if expanded
-$(".collapse").collapse("hide");
 
 $("#research-button").addClass("hidden");
 map.un("moveend", showResearchButton);
@@ -112,8 +103,17 @@ map.on("moveend", toggleResearchButtonMoveEvent);
 
 @if($adjustView === true)
 adjustView(searchResults, exactMatches);
-toggleResults("out");
+// Extra Small devices start with hidden results list
+// all others with visible
+if($("#map").width() < 576){
+    toggleResults("in");
+}else{
+    toggleResults("out");
+}
 @endif
+
+// Deinit the Click Funktion for the map
+map.un('singleclick', mapClickFunction);
 
 
 
