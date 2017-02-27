@@ -1,4 +1,5 @@
 var searchResults = {!!$results!!};
+var exactMatches = {{$exactMatches}};
 map.un("moveend", moveFunction, map);
 clearPOIS();
 var markers = [];
@@ -102,21 +103,17 @@ vectorLayer = new ol.layer.Vector({
 map.addLayer(vectorLayer)
 
 initClearInput();
-
-@if($adjustView === true)
-console.log("test");
-adjustView(searchResults);
-toggleResults("out");
-@endif
 // Hide Navbar if expanded
 $(".collapse").collapse("hide");
 
-@if($adjustLink)
-var stateObj = {
-    url: '/{{$search . "/" . $bounds[0] . "/" . $bounds[1] . "/" . $bounds[2] . "/" . $bounds[3]}}'
-};
-// Change URL
-window.history.pushState(stateObj, '', '/map/{{$search . "/" . $bounds[0] . "/" . $bounds[1] . "/" . $bounds[2] . "/" . $bounds[3]}}');
-// Add the research function after the map moved
-map.on("moveend", moveFunction, map);
+$("#research-button").addClass("hidden");
+map.un("moveend", showResearchButton);
+map.on("moveend", toggleResearchButtonMoveEvent);
+
+@if($adjustView === true)
+adjustView(searchResults, exactMatches);
+toggleResults("out");
 @endif
+
+
+

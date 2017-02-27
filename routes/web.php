@@ -11,7 +11,34 @@
 |
  */
 Route::get('/', function () {
-    return view('map')->with('boundings', 'false')->with('getPosition', 'true')->with('scripts', [elixir('js/mapSearch.js')])->with('css', [elixir('css/mapSearch.css')]);
+    return redirect('map');
+
+});
+
+Route::group(['prefix' => 'map'], function () {
+    Route::get('/', function () {
+        return view('map')->with('boundings', 'false')->with('getPosition', 'true')->with('scripts', [elixir('js/mapSearch.js')])->with('css', [elixir('css/mapSearch.css')]);
+    });
+    Route::get('{position}', function ($position) {
+        $positionData = explode(",", $position);
+        if (sizeof($positionData) === 3) {
+            $center = [$positionData[0], $positionData[1]];
+            $zoom   = $positionData[2];
+            return view('map')->with('boundings', 'false')->with('getPosition', 'false')->with('scripts', [elixir('js/mapSearch.js')])->with('css', [elixir('css/mapSearch.css')])->with("vars", ["center" => $center, "zoom" => $zoom]);
+        } else {
+            return redirect('/');
+        }
+    });
+    Route::get('{search}/{position}', function ($search, $position) {
+        $positionData = explode(",", $position);
+        if (sizeof($positionData) === 3) {
+            $center = [$positionData[0], $positionData[1]];
+            $zoom   = $positionData[2];
+            return view('map')->with('boundings', 'false')->with('getPosition', 'false')->with('scripts', [elixir('js/mapSearch.js')])->with('css', [elixir('css/mapSearch.css')])->with("vars", ["center" => $center, "zoom" => $zoom, "query" => $search]);
+        } else {
+            return redirect('/');
+        }
+    });
 });
 
 Route::group(['prefix' => 'hilfe'], function () {

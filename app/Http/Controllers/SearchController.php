@@ -17,30 +17,51 @@ class SearchController extends Controller
         return $searchResults;
     }
 
-    public function boundingBoxSearch(Request $request, $search, $latMin, $lonMin, $latMax, $lonMax, $adjustView = true, $limit = 50)
+    public function boundingBoxSearch(Request $request, $search, $latMin, $lonMin, $latMax, $lonMax, $adjustView = true, $limit = 10)
     {
-        $exactSearch = filter_var($request->input('exactSearch', 'false'), FILTER_VALIDATE_BOOLEAN);
-        $adjustLink  = filter_var($request->input('adjustLink', 'true'), FILTER_VALIDATE_BOOLEAN);
-        $search      = urldecode($search);
-        $adjustView  = filter_var($adjustView, FILTER_VALIDATE_BOOLEAN);
-        $search      = urldecode($search);
+        $exactSearch  = filter_var($request->input('exactSearch', 'false'), FILTER_VALIDATE_BOOLEAN);
+        $adjustLink   = filter_var($request->input('adjustLink', 'true'), FILTER_VALIDATE_BOOLEAN);
+        $search       = urldecode($search);
+        $adjustView   = filter_var($adjustView, FILTER_VALIDATE_BOOLEAN);
+        $search       = urldecode($search);
+        $exactMatches = 0;
+        $results      = [];
+        # Eine Suche in den gesamten Kartendaten führen wir nur durch, wenn keine View-Spezifische Suche durchgeführt werden soll
+        if ($adjustView) {
+            # Wir werden zunächst eine Suche ohne das übergebene Gebiet als Begrenzung durchführen.
+            $link         = "https://maps.metager.de/nominatim/search.php?q=" . urlencode($search) . "&limit=$limit&polygon_geojson=1&format=json&dedupe=1&extratags=1&addressdetails=1";
+            $results      = $this->makeSearch($link, $search, false);
+            $exactMatches = $this->getExactMatchesCount($search, $results);
+        }
+
+        # Wir wollen nun wissen, wie viele von den Ergebnissen genau auf die Suchanfrage passen
+
+        if ($exactMatches >= 10) {
+            # Okay, das sind ganz schön viele Ergebnisse
+            # Es würde sich wohl lohnen die Suche doch auf das angegebene Gebiet zu begrenzen
+            $link       = "https://maps.metager.de/nominatim/search.php?q=" . urlencode($search) . "&limit=$limit&dedupe=1&bounded=1&polygon_geojson=1&viewbox=$latMin,$lonMin,$latMax,$lonMax&format=json&extratags=1&addressdetails=1";
+            $tmpResults = $this->makeSearch($link, $search, false);
+            # Wenn In diesem Bereich Ergebnisse gefunden wurden, nehmen wir diese an Stelle der anderen:
+            if (sizeof($tmpResults) > 0) {
+                $results      = $tmpResults;
+                $exactMatches = $this->getExactMatchesCount($search, $results);
+            }
+        }
 
         // Gibt an, ob die Suche im angezeigten Bereich erfolgreich war:
         $boundingSuccess = true;
-        # Get The Search Results
-        $link    = "https://maps.metager.de/nominatim/search.php?q=" . urlencode($search) . "&limit=$limit&bounded=1&polygon_geojson=1&viewbox=$latMin,$lonMin,$latMax,$lonMax&format=json&extratags=1&addressdetails=1";
-        $results = $this->makeSearch($link, $search, $exactSearch);
 
-        if (!$results && $latMin && $lonMin && $latMax && $lonMax) {
-            $boundingSuccess = false;
-            $link            = "https://maps.metager.de/nominatim/search.php?q=" . urlencode($search) . "&limit=$limit&polygon_geojson=1&format=json&extratags=1&addressdetails=1";
-            $results         = $this->makeSearch($link, $search, $exactSearch);
+        # Wenn wir keine Ergebnisse haben, müssen wir auch nichts anzeigen:
+        if (sizeof($results) === 0) {
+            $response = Response::make('', 200);
+            $response->header("Content-Type", "application/javascript");
+            return $response;
+        } else {
+            # Wir erstellen die Ergebnisseite (JavaScipt)
+            $response = Response::make(view('searchResults')->with("results", json_encode($results))->with('adjustView', $adjustView)->with('boundingSuccess', $boundingSuccess)->with('bounds', [$latMin, $lonMin, $latMax, $lonMax])->with('search', $search)->with('adjustLink', $adjustLink)->with("exactMatches", $exactMatches), 200);
+            $response->header('Content-Type', 'application/javascript');
+            return $response;
         }
-
-        # Wir erstellen die Ergebnisseite (JavaScipt)
-        $response = Response::make(view('searchResults')->with("results", json_encode($results))->with('adjustView', $adjustView)->with('boundingSuccess', $boundingSuccess)->with('bounds', [$latMin, $lonMin, $latMax, $lonMax])->with('search', $search)->with('adjustLink', $adjustLink), 200);
-        $response->header('Content-Type', 'application/javascript');
-        return $response;
     }
 
     private function makeSearch($link, $search, $exactSearch = false)
@@ -59,7 +80,6 @@ class SearchController extends Controller
             # If the Cache is not there we can just execute a search
             $results = json_decode(file_get_contents($link), true);
         }
-
         $searchResults = [];
         if ($results) {
             foreach ($results as $result) {
@@ -80,22 +100,64 @@ class SearchController extends Controller
                 }
                 $tmp = [];
                 # Marker
-                $tmp["lon"] = $result["lon"];
-                $tmp["lat"] = $result["lat"];
-
-                $tmp["title"]       = substr($result["display_name"], 0, strpos($result["display_name"], ","));
-                $tmp["type"]        = $result["type"];
-                $tmp["address"]     = $result["address"];
-                $tmp["extratags"]   = $result["extratags"];
-                $tmp["boundingbox"] = $result["boundingbox"];
-                $tmp["geojson"]     = $result["geojson"];
-                $tmp["huerotate"]   = hexdec(substr(md5(serialize($result)), 0, 5)) % 360;
-                $tmp["place_id"]    = $result["place_id"];
+                $tmp["lon"]          = $result["lon"];
+                $tmp["lat"]          = $result["lat"];
+                $tmp["display_name"] = $result["display_name"];
+                $tmp["title"]        = substr($result["display_name"], 0, strpos($result["display_name"], ","));
+                $tmp["type"]         = $result["type"];
+                $tmp["address"]      = $result["address"];
+                $tmp["extratags"]    = $result["extratags"];
+                $tmp["boundingbox"]  = $result["boundingbox"];
+                $tmp["geojson"]      = $result["geojson"];
+                $tmp["huerotate"]    = hexdec(substr(md5(serialize($result)), 0, 5)) % 360;
+                $tmp["place_id"]     = $result["place_id"];
 
                 $searchResults[] = $tmp;
             }
         }
         return $searchResults;
+    }
+
+    private function getExactMatchesCount($search, $results)
+    {
+        $exactMatches  = 0;
+        $wordsInSearch = [];
+        if (preg_match_all('/([a-zA-Z]|\xC3[\x80-\x96\x98-\xB6\xB8-\xBF]|\xC5[\x92\x93\xA0\xA1\xB8\xBD\xBE]){4,}/', $search, $match_arr)) {
+            $wordsInSearch = $match_arr[0];
+            $result        = [];
+            foreach ($wordsInSearch as $word) {
+                $result[] = preg_quote($word, "/");
+            }
+            $wordsInSearch = $result;
+        }
+
+        foreach ($results as $result) {
+            $n_words = preg_match_all('/([a-zA-Z]|\xC3[\x80-\x96\x98-\xB6\xB8-\xBF]|\xC5[\x92\x93\xA0\xA1\xB8\xBD\xBE]){4,}/', $result["display_name"], $match_arr);
+            if ($n_words) {
+                $hasEveryWord = true;
+                foreach ($wordsInSearch as $word) {
+                    $hasThisWord = false;
+                    foreach ($match_arr[0] as $wordInResult) {
+                        if (preg_match("/\b$word\b/si", $wordInResult)) {
+                            $hasThisWord = true;
+                            break;
+                        }
+                    }
+                    if (!$hasThisWord) {
+                        $hasEveryWord = false;
+                        break;
+                    }
+                }
+                if ($hasEveryWord) {
+                    $exactMatches++;
+                } else {
+                    break;
+                }
+            } else {
+                break;
+            }
+        }
+        return $exactMatches;
     }
 
     private function canCache()

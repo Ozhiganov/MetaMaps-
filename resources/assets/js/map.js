@@ -25,15 +25,16 @@ var mapClickFunction = function(evt) {
     getNearest(pos[0], pos[1]);
 };
 var moveFunction = function() {
+    /*
+    updateMapExtent();
     var q = $("#search input[name=q]").val();
-    if (q !== "" && $("#search input[name=q]").attr("data-move-search") === "") {
-        updateMapExtent();
-        var q = $("#search input[name=q]").val();
+    if (q !== "" && $("#search input[name=q]").attr("data-move-search") === "" && exactMatches !== null && exactMatches >= 10) {
         q = encodeURI(q);
         $("#clearInput").html("<img src=\"/img/ajax-loader.gif\" />");
-        var url = '/' + q + '/' + encodeURI(extent[0]) + '/' + encodeURI(extent[1]) + '/' + encodeURI(extent[2]) + '/' + encodeURI(extent[3] + '/' + false + '/50');
+        var url = '/' + q + '/' + encodeURI(extent[0]) + '/' + encodeURI(extent[1]) + '/' + encodeURI(extent[2]) + '/' + encodeURI(extent[3] + '/' + false + '/10');
         $.getScript(url);
     }
+    */
 };
 var clearInputFunction = function() {
     $("#search input[name=q]").val('');
@@ -45,6 +46,10 @@ var clearInputFunction = function() {
     });
     deinitResults();
     $("#clearInput").off();
+    searchResults = null;
+    if(typeof updateUrl === "function"){
+        updateUrl();
+    }
 };
 var options = {
             enableHighAccuracy: true,
@@ -77,7 +82,7 @@ $(document).ready(function() {
 });
 
 function updateMapExtent() {
-    var tmpExtent = map.getView().calculateExtent([$("#map").width(), $("#map").height()]);
+    var tmpExtent = map.getView().calculateExtent(map.getSize());
     extent = ol.proj.transform([tmpExtent[0], tmpExtent[1]], 'EPSG:3857', 'EPSG:4326').concat(ol.proj.transform([tmpExtent[2], tmpExtent[3]], 'EPSG:3857', 'EPSG:4326'));
 }
 
@@ -204,11 +209,14 @@ function updateCloserPosition() {
     }
 }
 
-function adjustView(results) {
+function adjustView(results, limit) {
+    if(limit === null){
+        limit = results.length;
+    }
     if (results.length <= 0) return;
     var minPosition = [];
     var maxPosition = [];
-    for (var i = 0; i < results.length; i++) {
+    for (var i = 0; i < limit; i++) {
         if (typeof minPosition[0] === 'undefined' || minPosition[0] > parseFloat(results[i]["lon"])) {
             minPosition[0] = parseFloat(results[i]["lon"]);
         }
@@ -233,14 +241,16 @@ function adjustView(results) {
         if (typeof maxPosition[1] === 'undefined' || (typeof results[i]["boundingbox"] !== 'undefined' && maxPosition[1] < parseFloat(results[i]["boundingbox"][1]))) {
             maxPosition[1] = parseFloat(results[i]["boundingbox"][1]);
         }
-        if (typeof results[i]["type"] !== 'undefined' && (results[i]["type"] === 'city' || results[i]["type"] === 'administrative' || results[i]["type"] === 'river')) {
+        /*if (typeof results[i]["type"] !== 'undefined' && (results[i]["type"] === 'city' || results[i]["type"] === 'administrative' || results[i]["type"] === 'river')) {
             break;
-        }
+        }*/
     }
     minPosition = ol.proj.transform(minPosition, 'EPSG:4326', 'EPSG:3857');
     maxPosition = ol.proj.transform(maxPosition, 'EPSG:4326', 'EPSG:3857');
-    map.getView().fit([minPosition[0], minPosition[1], maxPosition[0], maxPosition[1]], {padding: [5,5,5,5], duration: 1500});
-    updateMapExtent();
+
+    map.getView().fit([minPosition[0], minPosition[1], maxPosition[0], maxPosition[1]], { duration: 1500}, function(){
+        console.log("fertig");
+    });
 }
 /**
  * Parsesan OSM-Address-Object for the Road-Name

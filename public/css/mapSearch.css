@@ -7132,4 +7132,11 @@ html, body, main, #map {
     top: 55px;
     width: 50%;
 }
+
+#research-button {
+    position: relative;
+    bottom: 50px;
+    width: 100%;
+    text-align: center;
+}
 /*# sourceMappingURL=mapSearch.css.map */

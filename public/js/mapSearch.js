@@ -1045,15 +1045,16 @@ var mapClickFunction = function(evt) {
     getNearest(pos[0], pos[1]);
 };
 var moveFunction = function() {
+    /*
+    updateMapExtent();
     var q = $("#search input[name=q]").val();
-    if (q !== "" && $("#search input[name=q]").attr("data-move-search") === "") {
-        updateMapExtent();
-        var q = $("#search input[name=q]").val();
+    if (q !== "" && $("#search input[name=q]").attr("data-move-search") === "" && exactMatches !== null && exactMatches >= 10) {
         q = encodeURI(q);
         $("#clearInput").html("<img src=\"/img/ajax-loader.gif\" />");
-        var url = '/' + q + '/' + encodeURI(extent[0]) + '/' + encodeURI(extent[1]) + '/' + encodeURI(extent[2]) + '/' + encodeURI(extent[3] + '/' + false + '/50');
+        var url = '/' + q + '/' + encodeURI(extent[0]) + '/' + encodeURI(extent[1]) + '/' + encodeURI(extent[2]) + '/' + encodeURI(extent[3] + '/' + false + '/10');
         $.getScript(url);
     }
+    */
 };
 var clearInputFunction = function() {
     $("#search input[name=q]").val('');
@@ -1065,6 +1066,10 @@ var clearInputFunction = function() {
     });
     deinitResults();
     $("#clearInput").off();
+    searchResults = null;
+    if(typeof updateUrl === "function"){
+        updateUrl();
+    }
 };
 var options = {
             enableHighAccuracy: true,
@@ -1097,7 +1102,7 @@ $(document).ready(function() {
 });
 
 function updateMapExtent() {
-    var tmpExtent = map.getView().calculateExtent([$("#map").width(), $("#map").height()]);
+    var tmpExtent = map.getView().calculateExtent(map.getSize());
     extent = ol.proj.transform([tmpExtent[0], tmpExtent[1]], 'EPSG:3857', 'EPSG:4326').concat(ol.proj.transform([tmpExtent[2], tmpExtent[3]], 'EPSG:3857', 'EPSG:4326'));
 }
 
@@ -1224,11 +1229,14 @@ function updateCloserPosition() {
     }
 }
 
-function adjustView(results) {
+function adjustView(results, limit) {
+    if(limit === null){
+        limit = results.length;
+    }
     if (results.length <= 0) return;
     var minPosition = [];
     var maxPosition = [];
-    for (var i = 0; i < results.length; i++) {
+    for (var i = 0; i < limit; i++) {
         if (typeof minPosition[0] === 'undefined' || minPosition[0] > parseFloat(results[i]["lon"])) {
             minPosition[0] = parseFloat(results[i]["lon"]);
         }
@@ -1253,14 +1261,16 @@ function adjustView(results) {
         if (typeof maxPosition[1] === 'undefined' || (typeof results[i]["boundingbox"] !== 'undefined' && maxPosition[1] < parseFloat(results[i]["boundingbox"][1]))) {
             maxPosition[1] = parseFloat(results[i]["boundingbox"][1]);
         }
-        if (typeof results[i]["type"] !== 'undefined' && (results[i]["type"] === 'city' || results[i]["type"] === 'administrative' || results[i]["type"] === 'river')) {
+        /*if (typeof results[i]["type"] !== 'undefined' && (results[i]["type"] === 'city' || results[i]["type"] === 'administrative' || results[i]["type"] === 'river')) {
             break;
-        }
+        }*/
     }
     minPosition = ol.proj.transform(minPosition, 'EPSG:4326', 'EPSG:3857');
     maxPosition = ol.proj.transform(maxPosition, 'EPSG:4326', 'EPSG:3857');
-    map.getView().fit([minPosition[0], minPosition[1], maxPosition[0], maxPosition[1]], {padding: [5,5,5,5], duration: 1500});
-    updateMapExtent();
+
+    map.getView().fit([minPosition[0], minPosition[1], maxPosition[0], maxPosition[1]], { duration: 1500}, function(){
+        console.log("fertig");
+    });
 }
 /**
  * Parsesan OSM-Address-Object for the Road-Name
@@ -1536,28 +1546,163 @@ function createPopup(lon, lat, html) {
     $("#popup-content").html(html);
     popupOverlay.setPosition(pos);
 }
-
-
+var shouldUpdate = true;
 $(document).ready(function() {
     initStartNavigation();
-    if (boundings) {
-        adjustViewBoundingBox(minPos, maxPos);
+
+    map.on("moveend", updateUrl);
+
+    // Initialize research Button
+    var research = $("<div id=\"research-button\" class=\"hidden\"><button type=\"button\" class=\"btn btn-default\">In diesem Bereich erneut Suchen</button></div>")
+    $("#map").append(research);
+    $(research).find("button").click(function(){
+        $("#doSearch").click();
+    });
+
+    if(typeof center !== "undefined" && typeof zoom !== "undefined"){
+        if(typeof query !== "undefined"){
+            $("#search input[name=q]").val(query);
+        }
+        
+        map.un("moveend", updateUrl);
+        map.getView().animate({
+            zoom: parseInt(zoom),
+            center: center,
+            duration: 1500
+        }, function(){
+            setTimeout(function(){
+                map.on("moveend", updateUrl);
+                if($("#search input[name=q]").val() !== ""){
+                    $("#doSearch").click();
+                }
+            }, 500); 
+        });
     }
+
     $("#search input[name=q]").on("keydown", function(event) {
         if (event.which == 13) $("#doSearch").click();
     });
+
+    
+
+    // Put the Popstate Event:
+    $(window).unbind('popstate');
+    $(window).bind('popstate', function(event) {
+        var state = event.originalEvent.state;
+        if (state !== null && state["center"] !== undefined && state["zoom"] !== undefined) {
+            center = state["center"].split(",");
+            zoom = state["zoom"];
+            q = state["q"];
+            var shouldSearch = false;
+            var shouldClear = false;
+            if($("#search input[name=q]").val() !== state["q"] && state["q"] !== ""){
+                shouldSearch = true;
+            }
+            $("#search input[name=q]").val(state["q"]);
+            if(typeof searchResults !== "undefined" && $("#search input[name=q]").val() === ""){
+                shouldClear = true;
+            }
+            
+            map.un("moveend", updateUrl);
+            map.getView().animate({
+                zoom: parseInt(zoom),
+                center: center,
+                duration: 1500
+            }, function(){
+                setTimeout(function(){
+                    map.on("moveend", updateUrl);
+                    if(shouldSearch){
+                        $("#doSearch").click();
+                    }else if(shouldClear){
+                        $("#clearInput").click();
+                    }
+                }, 500); 
+            });
+        }else{
+            document.location.href = document.location.href;
+        }
+    });
+
     $("#doSearch").click(function() {
-        updateMapExtent();
-        var q = $("#search input[name=q]").val();
-        q = encodeURI(q);
+        q = $("#search input[name=q]").val();
         $("#clearInput").html("<img src=\"/img/ajax-loader.gif\" />");
-        var url = '/' + q + '/' + encodeURI(extent[0]) + '/' + encodeURI(extent[1]) + '/' + encodeURI(extent[2]) + '/' + encodeURI(extent[3]);
+
+        // Calculate the current Extent of the map
+        var tmpExtent = map.getView().calculateExtent(map.getSize());
+        var extent = ol.proj.transform([tmpExtent[0], tmpExtent[1]], 'EPSG:3857', 'EPSG:4326').concat(ol.proj.transform([tmpExtent[2], tmpExtent[3]], 'EPSG:3857', 'EPSG:4326'));
+
+        var url = '/' + encodeURI(q) + '/' + encodeURI(extent[0]) + '/' + encodeURI(extent[1]) + '/' + encodeURI(extent[2]) + '/' + encodeURI(extent[3]);
         $.getScript(url).fail(function(jqxhr, settings, exception) {
             console.log(exception);
         });
         $("#search input[name=q]").blur();
     });
 });
+
+function research(){
+    var q = $("#search input[name=q]").val();
+    if(typeof q !== "undefined" && q !== ""){
+        var features = vectorSource.getFeatures();
+        var extent = map.getView().calculateExtent(map.getSize());
+        $.each(features, function(index, value){
+            var geom = value.getGeometry();
+            if(!geom.intersectsExtent(extent)){
+                $("#doSearch").click();
+                return false;
+            }
+        });
+    }
+}
+
+function updateUrl(){
+
+    if(typeof center === "undefined"){
+        center = map.getView().getCenter();
+    }
+    if(typeof zoom === "undefined"){
+        zoom = map.getView().getZoom();
+    }
+    if(typeof q === "undefined"){
+        q = $("#search input[name=q]").val();
+    }
+
+    if(map.getView().getCenter() === center && zoom === parseInt(map.getView().getZoom()) && $("#search input[name=q]").val() === q){
+        return;
+    }
+
+    center = map.getView().getCenter();
+    zoom = parseInt(map.getView().getZoom());
+    q = $("#search input[name=q]").val();
+
+    var uri = '/map/';
+
+    var query = "";
+    if(typeof q !== "undefined" && q !== ""){
+        query = q;
+        uri += query + "/";
+    }
+
+    uri += center.toString() + "," + zoom;
+
+    var stateObj = {
+        center: center.toString(),
+        zoom: zoom,
+        q: query
+    };
+    // Change URL
+    window.history.pushState(stateObj, '', uri);
+}
+
+function toggleResearchButtonMoveEvent(){
+    map.un("moveend", toggleResearchButtonMoveEvent);
+    map.on("moveend", showResearchButton);
+}
+
+function showResearchButton(){
+    if($("#research-button").hasClass("hidden")){
+        $("#research-button").removeClass("hidden");
+    }
+}
 
 function initMap() {
     popupOverlay = new ol.Overlay( /** @type {olx.OverlayOptions} */ ({

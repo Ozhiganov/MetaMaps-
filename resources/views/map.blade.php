@@ -34,7 +34,7 @@
                 </div>
                 <!-- Collect the nav links, forms, and other content for toggling -->
                 <div class="collapse navbar-collapse" id="navbar-collapse">
-                    <form accept-charset="UTF-8" class="navbar-form navbar-right" id="search" method="GET">
+                    <form accept-charset="UTF-8" class="navbar-form navbar-right" id="search" onsubmit="return false;">
                         <div class="form-group">
                             <div class="input-group">
                                 <input class="form-control" name="q" placeholder="Karten durchsuchen..." type="text" value="@if(isset($search)){{$search}}@endif"/>
