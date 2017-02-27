@@ -12,7 +12,7 @@ body {
 
 #location-tool {
     position: absolute;
-    bottom: 0;
+    bottom: 30px;
     left: 10px;
     font-size: 20px;
 }
@@ -301,10 +301,6 @@ html, body, main, #map {
     content: "✖";
 }
 
-.ol-control button, .ol-control button:hover {
+.ol-control button, .ol-control button:hover, .ol-zoomslider-thumb, .ol-scale-line {
     background-color: #ff8000;
-}
-
-.ol-zoomslider-thumb {
-    background: #ff8000;
 }
