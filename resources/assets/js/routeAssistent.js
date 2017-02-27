@@ -488,7 +488,17 @@ function getNextPointOnRoute(gpsPoint, accuracy) {
 }
 
 function updateUserPosition(pos, rot) {
-    if (userPosOverlay !== null) {
+    if(typeof userPosOverlay === "undefined" || userPosOverlay === null){
+        var el = $('<img src="/img/navigation-arrow.svg" width="30px" />');
+        userPosOverlay = new ol.Overlay({
+            position: pos,
+            element: el.get(0),
+            offset: [-15, -15],
+            stopEvent: false,
+        });
+        map.addOverlay(userPosOverlay);
+    }
+    /*if (userPosOverlay !== null) {
         map.removeOverlay(userPosOverlay);
         userPosOverlay = null;
     }
@@ -499,11 +509,28 @@ function updateUserPosition(pos, rot) {
         offset: [-15, -15],
         stopEvent: false,
     });
+*/
 
+    map.getView().on("change:center", eventUserPositionUpdate);
+    map.getView().animate({
+        center: pos,
+        rotation: rot,
+        zoom: 18,
+        duration: 500
+    }, function(){
+        map.getView().un("change:center", eventUserPositionUpdate);
+        //map.addOverlay(userPosOverlay);
+    });
+/*
     map.getView().centerOn(pos, map.getSize(), [$("#map").width()/2,$("#map").height() - 150]);
     map.getView().setRotation(rot);
-    map.getView().setZoom(18);
-    map.addOverlay(userPosOverlay);
+    map.getView().setZoom(18);*/
+    
+}
+
+function eventUserPositionUpdate(){
+    var center = map.getView().getCenter();
+    userPosOverlay.setPosition(center);
 }
 
 function arraysEqual(a1, a2) {
