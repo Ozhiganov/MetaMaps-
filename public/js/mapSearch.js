@@ -1672,7 +1672,9 @@ function updateUrl(){
     }
 
     center = map.getView().getCenter();
-    zoom = parseInt(map.getView().getZoom());
+    if(parseInt(map.getView().getZoom()) !== "NaN"){
+        zoom = parseInt(map.getView().getZoom());
+    }
     q = $("#search input[name=q]").val();
 
     var uri = '/map/';
@@ -1764,9 +1766,10 @@ function initMap() {
  * @return {Array} adress
  */
 function getNearest(lon, lat) {
-    var url = "https://maps.metager.de/nominatim/reverse.php?format=json&lat=" + lat + "&lon=" + lon + "&zoom=18";
+    var url = "https://maps.metager.de/nominatim/reverse.php?format=json&lat=" + lat + "&lon=" + lon + "&zoom=18&extratags=1&addressdetails=1&namedetails=1";
     // Send the Request
     $.get(url, function(data) {
+        console.log(data);
         if (typeof data !== "undefined" && typeof data["address"] !== "undefined") {
             // Success we have an address
             var address = data["address"];
@@ -1783,8 +1786,74 @@ function getNearest(lon, lat) {
                 url = "/route/start/foot/"+lon+","+lat;
             }
 
+            var html = "<div class=\"result col-xs-12\">\n";
+
+            // Wir extrahieren noch einen Namen
+            if(typeof data["namedetails"]["name"] !== "undefined"){
+                html += "<p class=\"title\">" + data["namedetails"]["name"] + "</p>\n";
+            }
+
+            var road = getRoad(address);
+            var house_number = getHouseNumber(address);
+            if(road !== ""){
+                html += "<p class=\"address\">" + road;
+                if(house_number !== ""){
+                    html += " " + house_number;
+                }
+                html += "</p>\n";
+            }
+
+            var city = getCity(address);
+            if(city !== ""){
+                html += "<p class=\"city\">" + city + "</p>\n";
+            }
+
+            var phone = "";
+            if(typeof data["extratags"]["contact:phone"] !== "undefined"){
+                phone = data["extratags"]["contact:phone"];
+            }else if(typeof data["extratags"]["phone"] !== "undefined"){
+                phone = data["extratags"]["phone"];
+            }
+            if(phone !== ""){
+                html += "<p class=\"opening-hours\"><a href=\"tel:" + phone + "\" target=_blank><span class=\"glyphicon glyphicon-earphone\"></span> " + phone + "</a></p>\n";
+            }
+
+            if(typeof data["extratags"]["website"] !== "undefined"){
+                var url = data["extratags"]["website"];
+                if(url.lastIndexOf("http", 0) !== 0){
+                    url = "http://" + url;
+                }
+                html += "<p class=\"opening-hours\"><a href=\"" + url + "\" target=_blank><span class=\"glyphicon glyphicon-globe\"></span> " + url + "</a></p>\n";
+            }
+
+            if(typeof data["extratags"]["wikipedia"] !== "undefined"){
+                var url = "https://de.wikipedia.org/wiki/" + data["extratags"]["wikipedia"];
+                html += "<p class=\"opening-hours\"><a href=\"" + url + "\" target=_blank>Wikipedia</a></p>\n";
+            }
+
+            // Add possible Opening Hours:
+            if(typeof data["extratags"]["opening_hours"] !== "undefined"){
+                html += "<p class=\"opening-hours\">" + data["extratags"]["opening_hours"] + "</p>\n";
+            }
+
+            if(typeof data["extratags"]["description"] !== "undefined"){
+                html += "<p class=\"opening-hours\">" + data["extratags"]["description"] + "</p>\n";
+            }
+
+            // Update Address details
+            lon = parseFloat(data["lon"]);
+            lat = parseFloat(data["lat"]);
+            html += "<div class=\"geo-position container-fluid\"><div class=\"row\">\n";
+            html += "<div class=\"col-xs-6\">Lon: " + lon + "</div>\n";
+            html += "<div class=\"col-xs-6\">Lat: " + lat + "</div>\n"; 
+            html += "</div></div>";
+
+            var popup = $(html);
+
+/*
             var popup = $("\
                 <div class=\"result col-xs-12\">\
+                    <p class=\"title\">" + name + "</p>\
                     <p class=\"address\">" + road + " " + house_number + "</p>\
                     <p class=\"city\">" + city + "</p>\
                     <p class=\"address\">Longitude: " + lon + "</p>\
@@ -1792,7 +1861,7 @@ function getNearest(lon, lat) {
                     <a href=\"https://maps.metager.de/nominatim/details.php?place_id=" + id + "\" target=\"_blank\" class=\"btn btn-default btn-xs\">Details</a>\
                     <a href=\""+url+"\" class=\"btn btn-default btn-xs\">Route berechnen</a>\
                     </div>");
-
+*/
             // And now we can show the Popup where the user clicked
             createPopup(lon, lat, popup);
         }

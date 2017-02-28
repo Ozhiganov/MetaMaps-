@@ -76,7 +76,7 @@ body {
     margin-bottom: 0;
 }
 
-.result p.address, .result p.opening-hours, .result p.population, .result p.city {
+.result p.address, .result p.opening-hours, .result p.population, .result p.city, .result div.geo-position {
     font-size: 11px;
     margin-bottom: 0;
 }
