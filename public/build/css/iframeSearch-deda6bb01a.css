@@ -6866,11 +6866,13 @@ body {
 }
 */
 
+#results .result-container {
+    padding: 10px;
+}
+
 #results .result {
-    border: 1px solid lightgrey;
     border-top: 0;
     border-radius: 2px;
-    padding: 10px;
     /*background-color: #D9E7F7;*/
     cursor: pointer;
 }
@@ -7109,31 +7111,33 @@ html, body, main, #map {
 .ol-control button, .ol-control button:hover, .ol-zoomslider-thumb, .ol-scale-line {
     background-color: #ff8000;
 }
+body {
+    max-height: 310px;
+    margin-bottom: 10px;
+}
+
+main {
+    max-height: 300px;
+}
+
+#map-container {
+    padding: 0;
+}
+
 #map {
-    height: 100vh;
+    height: 300px;
+    cursor: pointer;
 }
 
 #results {
-    height: 100vh;
-    padding-top: 51px;
+    height: 300px;
 }
 
-#closer {
-    top: 50px;
+.ol-zoomslider.ol-unselectable.ol-control {
+    display: none;
 }
 
-#beta-info {
-    position: absolute;
-    z-index: 99999;
-    left: 25%;
-    top: 55px;
-    width: 50%;
+#results .result > .col-xs-2 {
+    padding: 0;
 }
-
-#research-button {
-    position: relative;
-    bottom: 70px;
-    width: 100%;
-    text-align: center;
-}
-/*# sourceMappingURL=mapSearch.css.map */
+/*# sourceMappingURL=iframeSearch.css.map */

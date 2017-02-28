@@ -29,7 +29,7 @@ class SearchController extends Controller
         # Eine Suche in den gesamten Kartendaten führen wir nur durch, wenn keine View-Spezifische Suche durchgeführt werden soll
         if ($adjustView) {
             # Wir werden zunächst eine Suche ohne das übergebene Gebiet als Begrenzung durchführen.
-            $link         = "https://maps.metager.de/nominatim/search.php?q=" . urlencode($search) . "&limit=$limit&polygon_geojson=1&format=json&dedupe=1&extratags=1&addressdetails=1";
+            $link         = "https://maps.metager.de/nominatim/search.php?q=" . urlencode($search) . "&limit=$limit&polygon_geojson=1&format=json&dedupe=1&extratags=1&addressdetails=1&namedetails=1";
             $results      = $this->makeSearch($link, $search, false);
             $exactMatches = $this->getExactMatchesCount($search, $results);
         }
@@ -39,7 +39,7 @@ class SearchController extends Controller
         if ($exactMatches >= 10) {
             # Okay, das sind ganz schön viele Ergebnisse
             # Es würde sich wohl lohnen die Suche doch auf das angegebene Gebiet zu begrenzen
-            $link       = "https://maps.metager.de/nominatim/search.php?q=" . urlencode($search) . "&limit=$limit&dedupe=1&bounded=1&polygon_geojson=1&viewbox=$latMin,$lonMin,$latMax,$lonMax&format=json&extratags=1&addressdetails=1";
+            $link       = "https://maps.metager.de/nominatim/search.php?q=" . urlencode($search) . "&limit=$limit&dedupe=1&bounded=1&polygon_geojson=1&viewbox=$latMin,$lonMin,$latMax,$lonMax&format=json&extratags=1&addressdetails=1&namedetails=1";
             $tmpResults = $this->makeSearch($link, $search, false);
             # Wenn In diesem Bereich Ergebnisse gefunden wurden, nehmen wir diese an Stelle der anderen:
             if (sizeof($tmpResults) > 0) {
@@ -111,6 +111,7 @@ class SearchController extends Controller
                 $tmp["geojson"]      = $result["geojson"];
                 $tmp["huerotate"]    = hexdec(substr(md5(serialize($result)), 0, 5)) % 360;
                 $tmp["place_id"]     = $result["place_id"];
+                $tmp["namedetails"]  = $result["namedetails"];
 
                 $searchResults[] = $tmp;
             }

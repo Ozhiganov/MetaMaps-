@@ -5,8 +5,9 @@
 var vectorLayerRoutePreview;
 var markers = [];
 var autoChooseVehicle = true;
+
 function start(){
-    console.log(waypoints, gpsLocation);
+
     // The GPS Location is tricky
     // It takes time on the one hand and waits for approval of sharing the Location on the other hand
     // Under some circumstances the following scenario can occure:
@@ -46,6 +47,7 @@ function start(){
     deinitSearchBox();
 
     refreshUrl();
+
     map.un("singleclick", mapClickFunction);
     map.on('singleclick', function(evt) {
         var pos = evt["coordinate"];
@@ -99,6 +101,7 @@ function changeVehicle(newVehicle) {
 
 function initRouteFinder() {
     $("#results").html("");
+    map.removeLayer(vectorLayerRoutePreview);
     // Remove Existing Markers
     clearMarkers();
     var vehicleChooser = $("<div id=\"vehicle-chooser\">\
@@ -348,8 +351,8 @@ function generateBase64Parameter() {
  * and prints it on the map
  */
 function generatePreviewRoute() {
-    // First thing is to remove the eventually already existing Layer
-    map.removeLayer(vectorLayerRoutePreview);
+
+    
     var vectorS = new ol.source.Vector();
     var routeLineStyle = new ol.style.Style({
         stroke: new ol.style.Stroke({
@@ -396,9 +399,12 @@ function generatePreviewRoute() {
             });
             feature.setStyle(routeLineStyle);
             vectorS.addFeature(feature);
+            map.removeLayer(vectorLayerRoutePreview);
+            vectorLayerRoutePreview = null;
             vectorLayerRoutePreview = new ol.layer.Vector({
                 source: vectorS
             });
+    
             map.addLayer(vectorLayerRoutePreview);
 
             if(autoChooseVehicle){

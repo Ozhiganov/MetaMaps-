@@ -41,10 +41,18 @@ $.each(searchResults, function(index, value) {
         targetForRouting = "_blank";
     }
 
+    var resultHtml = buildResultFromData(value);
+
     var res = $("\
-        <div class=\"result col-xs-12\" id=\"result-" + index + "\">\
-            <div class=\"col-xs-2\"><span class=\"marker\" style=\"filter: hue-rotate(" + value["huerotate"] + "deg);\">" + index + "</span></div>" + "<div class=\"col-xs-10\"><p class=\"title\">" + value["title"] + "</p>" + "<p class=\"type\">" + type + population + "</p>" + "<p class=\"address\">" + road + " " + house_number + "</p><p class=\"city\">" + city + "</p>" + "<p class=\"opening-hours\">" + opening_hours + "</p>" + "<p class=\"tags\">" + "</p><a href=\"https://maps.metager.de/nominatim/details.php?place_id=" + value["place_id"] + "\" target=\"_blank\" class=\"btn btn-default btn-xs\">Details</a><a href=\""+routingUrl+"\" class=\"btn btn-default btn-xs\" target=\""+targetForRouting+"\">Route berechnen</a></div></div>");
-    var resPopup = $("<div class=\"result col-xs-12\"> " + "<p class=\"title\">" + value["title"] + "</p>" + "<p class=\"type\">" + type + population + "</p>" + "<p class=\"address\">" + road + " " + house_number + "</p><p class=\"city\">" + city + "</p>" + "<p class=\"opening-hours\">" + opening_hours + "</p>" + "<p class=\"tags\">" + "</p>" + "<a href=\"https://maps.metager.de/nominatim/details.php?place_id=" + value["place_id"] + "\" target=\"_blank\" class=\"btn btn-default btn-xs\">Details</a><a href=\""+routingUrl+"\" class=\"btn btn-default btn-xs\" target=\""+targetForRouting+"\">Route berechnen</a></div>");
+        <div class=\"result-container col-xs-12\" id=\"result-" + index + "\">\
+            <div class=\"col-xs-2\">\
+                <span class=\"marker\" style=\"filter: hue-rotate(" + value["huerotate"] + "deg);\">" + index + "</span>\
+            </div>\
+            <div class=\"col-xs-10 result-html\">\
+            </div>\
+        </div>");
+    $(res).find(".result-html").append(resultHtml);
+    var resPopup = buildResultFromData(value);
     $("#results").append(res);
     el.click(function(evt) {
         createPopup(value["lon"], value["lat"], resPopup);

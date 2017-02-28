@@ -1347,8 +1347,7 @@ function clearPOIS() {
     map.removeLayer(vectorLayer);
     vectorSource = new ol.source.Vector();
     // Remove Existing Results
-    $("#results > .result").remove();
-    $("#results > h4").remove();
+    $("#results > .result-container").remove();
     overlays = [];
 }
 
@@ -1547,7 +1546,7 @@ function createPopup(lon, lat, html) {
     popupOverlay.setPosition(pos);
 }
 var shouldUpdate = true;
-$(document).ready(function(){
+function start(){
     initStartNavigation();
 
     map.on("moveend", updateUrl);
@@ -1637,7 +1636,7 @@ $(document).ready(function(){
             executeSearch();
         }
     });
-});
+}
 
 function executeSearch(){
     q = $("#search input[name=q]").val();
@@ -1770,7 +1769,14 @@ function getNearest(lon, lat) {
     // Send the Request
     $.get(url, function(data) {
         console.log(data);
-        if (typeof data !== "undefined" && typeof data["address"] !== "undefined") {
+        var popup = buildResultFromData(data);
+        // And now we can show the Popup where the user clicked
+        createPopup(lon, lat, popup);
+    });
+}
+
+function buildResultFromData(data){
+    if (typeof data !== "undefined" && typeof data["address"] !== "undefined") {
             // Success we have an address
             var address = data["address"];
 
@@ -1779,12 +1785,7 @@ function getNearest(lon, lat) {
             var city = getCity(address);
             var id = data["place_id"];
 
-            var url = "";
-            if(gps){
-                url = "/route/start/foot/gps;"+lon+","+lat;
-            }else{
-                url = "/route/start/foot/"+lon+","+lat;
-            }
+            
 
             var html = "<div class=\"result col-xs-12\">\n";
 
@@ -1843,29 +1844,32 @@ function getNearest(lon, lat) {
             // Update Address details
             lon = parseFloat(data["lon"]);
             lat = parseFloat(data["lat"]);
-            html += "<div class=\"geo-position container-fluid\"><div class=\"row\">\n";
-            html += "<div class=\"col-xs-6\">Lon: " + lon + "</div>\n";
-            html += "<div class=\"col-xs-6\">Lat: " + lat + "</div>\n"; 
-            html += "</div></div>";
+            //html += "<div class=\"geo-position container-fluid\"><div class=\"row\">\n";
+            //html += "<div class=\"col-xs-6\">Lon: " + lon + "</div>\n";
+            //html += "<div class=\"col-xs-6\">Lat: " + lat + "</div>\n"; 
+            //html += "</div></div>";
+
+            // Now the two Links
+            var url = "";
+            if(gps){
+                url = "/route/start/foot/gps;"+lon+","+lat;
+            }else{
+                url = "/route/start/foot/"+lon+","+lat;
+            }
+            html += '<a href=\"'+url+'\" class=\"btn btn-default btn-xs\">Route berechnen</a>';
+
+            // And the Link to the MetaGer Search
+            if(typeof data["namedetails"]["name"] !== "undefined"){
+                var url = 'https://metager.de/meta/meta.ger3?focus=web&eingabe=' + encodeURIComponent(data["namedetails"]["name"]) + '&encoding=utf8&lang=all';
+                html += '<a href=\"'+url+'\" class=\"btn btn-default btn-xs\" target=_blank>MetaGer Suche</a>';
+            }
 
             var popup = $(html);
-
-/*
-            var popup = $("\
-                <div class=\"result col-xs-12\">\
-                    <p class=\"title\">" + name + "</p>\
-                    <p class=\"address\">" + road + " " + house_number + "</p>\
-                    <p class=\"city\">" + city + "</p>\
-                    <p class=\"address\">Longitude: " + lon + "</p>\
-                    <p class=\"address\">Latitude: " + lat + "</p>\
-                    <a href=\"https://maps.metager.de/nominatim/details.php?place_id=" + id + "\" target=\"_blank\" class=\"btn btn-default btn-xs\">Details</a>\
-                    <a href=\""+url+"\" class=\"btn btn-default btn-xs\">Route berechnen</a>\
-                    </div>");
-*/
-            // And now we can show the Popup where the user clicked
-            createPopup(lon, lat, popup);
+            return popup;
+            
+        }else{
+            return null;
         }
-    });
 }
 
 function deinitResults() {

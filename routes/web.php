@@ -34,7 +34,7 @@ Route::group(['prefix' => 'map'], function () {
         if (sizeof($positionData) === 3) {
             $center = [$positionData[0], $positionData[1]];
             $zoom   = $positionData[2];
-            return view('map')->with('boundings', 'false')->with('getPosition', 'false')->with('scripts', [elixir('js/mapSearch.js')])->with('css', [elixir('css/mapSearch.css')])->with("vars", ["center" => $center, "zoom" => $zoom, "query" => $search]);
+            return view('map')->with('boundings', 'false')->with('getPosition', 'true')->with('scripts', [elixir('js/mapSearch.js')])->with('css', [elixir('css/mapSearch.css')])->with("vars", ["center" => $center, "zoom" => $zoom, "query" => $search]);
         } else {
             return redirect('/');
         }

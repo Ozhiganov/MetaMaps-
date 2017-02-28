@@ -6865,11 +6865,13 @@ body {
 }
 */
 
+#results .result-container {
+    padding: 10px;
+}
+
 #results .result {
-    border: 1px solid lightgrey;
     border-top: 0;
     border-radius: 2px;
-    padding: 10px;
     /*background-color: #D9E7F7;*/
     cursor: pointer;
 }

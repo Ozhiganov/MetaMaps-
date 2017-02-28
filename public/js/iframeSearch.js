@@ -1347,8 +1347,7 @@ function clearPOIS() {
     map.removeLayer(vectorLayer);
     vectorSource = new ol.source.Vector();
     // Remove Existing Results
-    $("#results > .result").remove();
-    $("#results > h4").remove();
+    $("#results > .result-container").remove();
     overlays = [];
 }
 
