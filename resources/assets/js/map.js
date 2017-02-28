@@ -390,7 +390,7 @@ function checkGPS(callback) {
             if(typeof callback === "function"){
                 callback();
             }
-        },{enableHighAccuracy: true, timeout: 1500});
+        },{enableHighAccuracy: true });
         if(typeof callback === "function"){
             callback();
         }

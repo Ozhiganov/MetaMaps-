@@ -1410,7 +1410,7 @@ function checkGPS(callback) {
             if(typeof callback === "function"){
                 callback();
             }
-        },{enableHighAccuracy: true, timeout: 1500});
+        },{enableHighAccuracy: true });
         if(typeof callback === "function"){
             callback();
         }
@@ -1545,7 +1545,7 @@ function createPopup(lon, lat, html) {
     popupOverlay.setPosition(pos);
 }
 var shouldUpdate = true;
-$(document).ready(function() {
+function start(){
     initStartNavigation();
 
     map.on("moveend", updateUrl);
@@ -1635,7 +1635,7 @@ $(document).ready(function() {
             executeSearch();
         }
     });
-});
+}
 
 function executeSearch(){
     q = $("#search input[name=q]").val();

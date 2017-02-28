@@ -1,5 +1,5 @@
 var shouldUpdate = true;
-$(document).ready(function() {
+function start(){
     initStartNavigation();
 
     map.on("moveend", updateUrl);
@@ -89,7 +89,7 @@ $(document).ready(function() {
             executeSearch();
         }
     });
-});
+}
 
 function executeSearch(){
     q = $("#search input[name=q]").val();
