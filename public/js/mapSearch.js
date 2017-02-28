@@ -1062,16 +1062,16 @@ var clearInputFunction = function() {
 };
 var options = {
             enableHighAccuracy: true,
-            maximumAge: 3000
+            maximumAge: 0
         };
 $(document).ready(function() {
     // Initialize the Map
     initMap();
-    
+
     $("#closer").click(function() {
         toggleResults();
     });
-    map.on('singleclick', mapClickFunction);
+
     if(getPosition){
         checkGPS(startApplication);
     }else{
@@ -1082,6 +1082,8 @@ $(document).ready(function() {
         updateCloserPosition();
         updateMapSize();
     });
+
+    map.on('singleclick', mapClickFunction);
     $("#follow-location > span.button").click(function() {
         followLocation();
     });
@@ -1117,7 +1119,7 @@ function initClearInput() {
 }
 
 function toggleResults(status) {
-    if (status === undefined) {
+    if (typeof status === "undefined") {
         status = $("#results").attr("data-status");
     } else if (status !== "in" && status !== "out") {
         status = "in";
@@ -1410,7 +1412,7 @@ function checkGPS(callback) {
             if(typeof callback === "function"){
                 callback();
             }
-        },{enableHighAccuracy: true });
+        },{enableHighAccuracy: true, maximumAge: 0 });
         if(typeof callback === "function"){
             callback();
         }
@@ -1545,7 +1547,7 @@ function createPopup(lon, lat, html) {
     popupOverlay.setPosition(pos);
 }
 var shouldUpdate = true;
-function start(){
+$(document).ready(function(){
     initStartNavigation();
 
     map.on("moveend", updateUrl);
@@ -1635,7 +1637,7 @@ function start(){
             executeSearch();
         }
     });
-}
+});
 
 function executeSearch(){
     q = $("#search input[name=q]").val();
