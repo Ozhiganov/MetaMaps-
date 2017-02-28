@@ -363,13 +363,12 @@ function toggleGpsWarning(){
 function checkGPS(callback) {
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(function(position){
-            if(position.coords.accuracy > 500){
+            if(position.coords.accuracy > 1500){
                 gps = false;
-                toggleGPSLocator(false);
+                toggleGPSLocator(true);
                 lon = parseFloat(position.coords.longitude);
                 lat = parseFloat(position.coords.latitude);
                 gpsLocation = [lon, lat];
-                toggleGpsWarning();
             }else{
                 gps = gps = true;
                 lon = parseFloat(position.coords.longitude);
@@ -419,6 +418,10 @@ function toggleGPSLocator(visible){
     }
 }
 
+var point_geom = null;  // Point displaying the center where the user possibly is
+var point_feature = null;
+var circle = null;      // Circle displaying the accuracy
+var accuracy_feature = null;
 function followLocation() {
     // Element to be displayed at the user-location
     var el = $('<span id="user-position" class="glyphicon glyphicon-record" style="color: #2881cc;"></span>');
@@ -426,29 +429,32 @@ function followLocation() {
     else $("#lock-location").removeClass("active");
     if (id === null) {
         id = navigator.geolocation.watchPosition(function(position) {
-            // Remove possibly existing User-Location Marker:
-            if (userPositionMarker !== null) {
-                map.removeLayer(userPositionMarker);
-                userPositionMarker = null;
+            var center = ol.proj.transform([parseFloat(position.coords.longitude), parseFloat(position.coords.latitude)], 'EPSG:4326', 'EPSG:3857');
+            var accuracy = parseFloat(position.coords.accuracy);
+            if(userPositionMarker === null){
+                // Create User Position
+                point_geom = new ol.geom.Point(center);
+                point_feature = new ol.Feature({
+                    name: "Position",
+                    geometry: point_geom
+                });
+                // Create the accuracy Circle:
+                circle = new ol.geom.Circle(center, accuracy);
+                accuracy_feature = new ol.Feature({
+                    name: "Accuracy",
+                    geometry: circle
+                });
+                userPositionMarker = new ol.layer.Vector({
+                    source: new ol.source.Vector({
+                        features: [point_feature, accuracy_feature]
+                    })
+                });
+                map.addLayer(userPositionMarker);
+            }else{
+                point_geom.setCoordinates(center);
+                circle.setCenter(center);
+                circle.setRadius(accuracy);
             }
-            // Create User Position
-            var point_geom = new ol.geom.Point(ol.proj.transform([position.coords.longitude, position.coords.latitude], 'EPSG:4326', 'EPSG:3857'));
-            var point_feature = new ol.Feature({
-                name: "Position",
-                geometry: point_geom
-            });
-            // Create the accuracy Circle:
-            var circle = new ol.geom.Circle(ol.proj.transform([position.coords.longitude, position.coords.latitude], 'EPSG:4326', 'EPSG:3857'), position.coords.accuracy);
-            var accuracy_feature = new ol.Feature({
-                name: "Accuracy",
-                geometry: circle
-            });
-            userPositionMarker = new ol.layer.Vector({
-                source: new ol.source.Vector({
-                    features: [point_feature, accuracy_feature]
-                })
-            });
-            map.addLayer(userPositionMarker);
             if (lockViewToPosition) {
                 // Fit the Extent of the Map to Fit the new Features Exactly
                 map.getView().fit(userPositionMarker.getSource().getExtent(), {padding: [5,5,5,5], duration: 1500});
@@ -462,6 +468,10 @@ function followLocation() {
     } else {
         map.removeLayer(userPositionMarker);
         userPositionMarker = null;
+        point_geom = null;
+        point_feature = null;
+        circle = null;
+        accuracy_feature = null;
         navigator.geolocation.clearWatch(id);
         id = null;
         // Clear the color of the Icon so the user knows that the position is no longer tracked
