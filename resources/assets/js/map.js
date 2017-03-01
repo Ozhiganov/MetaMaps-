@@ -238,9 +238,9 @@ function adjustView(results, limit) {
     minPosition = ol.proj.transform(minPosition, 'EPSG:4326', 'EPSG:3857');
     maxPosition = ol.proj.transform(maxPosition, 'EPSG:4326', 'EPSG:3857');
 
-    map.getView().fit([minPosition[0], minPosition[1], maxPosition[0], maxPosition[1]], { duration: 1500}, function(){
-        console.log("fertig");
-    });
+    if(minPosition.length === 2 && maxPosition.length === 2){
+        map.getView().fit([minPosition[0], minPosition[1], maxPosition[0], maxPosition[1]], { duration: 1500, nearest: true, maxZoom: 18});
+    }
 }
 /**
  * Parsesan OSM-Address-Object for the Road-Name

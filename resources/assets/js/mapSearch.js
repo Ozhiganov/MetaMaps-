@@ -109,12 +109,26 @@ function executeSearch(){
 
 function updateUrl(){
 
-    if(typeof center === "undefined"){
-        center = map.getView().getCenter();
+    if(typeof map.getView().getZoom() === "undefined"){
+        // If the Zoom is undefined for this resolution, we will round it so it is valid again.
+        var resolution = map.getView().getResolution() * 10;    // We'll round to one digit
+        resolution = Math.round(resolution) / 10;
+
+        map.getView().setResolution(resolution);
+
+        if(typeof map.getView().getZoom() === "undefined"){
+            // If the zoom is undefined again I can't help
+            return;
+        }     
     }
     if(typeof zoom === "undefined"){
         zoom = map.getView().getZoom();
     }
+
+    if(typeof center === "undefined"){
+        center = map.getView().getCenter();
+    }
+
     if(typeof q === "undefined"){
         q = $("#search input[name=q]").val();
     }

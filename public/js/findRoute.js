@@ -1276,9 +1276,9 @@ function adjustView(results, limit) {
     minPosition = ol.proj.transform(minPosition, 'EPSG:4326', 'EPSG:3857');
     maxPosition = ol.proj.transform(maxPosition, 'EPSG:4326', 'EPSG:3857');
 
-    map.getView().fit([minPosition[0], minPosition[1], maxPosition[0], maxPosition[1]], { duration: 1500}, function(){
-        console.log("fertig");
-    });
+    if(minPosition.length === 2 && maxPosition.length === 2){
+        map.getView().fit([minPosition[0], minPosition[1], maxPosition[0], maxPosition[1]], { duration: 1500, nearest: true, maxZoom: 18});
+    }
 }
 /**
  * Parsesan OSM-Address-Object for the Road-Name
@@ -1674,12 +1674,26 @@ function executeSearch(){
 
 function updateUrl(){
 
-    if(typeof center === "undefined"){
-        center = map.getView().getCenter();
+    if(typeof map.getView().getZoom() === "undefined"){
+        // If the Zoom is undefined for this resolution, we will round it so it is valid again.
+        var resolution = map.getView().getResolution() * 10;    // We'll round to one digit
+        resolution = Math.round(resolution) / 10;
+
+        map.getView().setResolution(resolution);
+
+        if(typeof map.getView().getZoom() === "undefined"){
+            // If the zoom is undefined again I can't help
+            return;
+        }     
     }
     if(typeof zoom === "undefined"){
         zoom = map.getView().getZoom();
     }
+
+    if(typeof center === "undefined"){
+        center = map.getView().getCenter();
+    }
+
     if(typeof q === "undefined"){
         q = $("#search input[name=q]").val();
     }

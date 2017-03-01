@@ -139,7 +139,7 @@ class SearchController extends Controller
                 foreach ($wordsInSearch as $word) {
                     $hasThisWord = false;
                     foreach ($match_arr[0] as $wordInResult) {
-                        if (preg_match("/\b$word\b/si", $wordInResult)) {
+                        if (strpos($wordInResult, $word) !== false) {
                             $hasThisWord = true;
                             break;
                         }
