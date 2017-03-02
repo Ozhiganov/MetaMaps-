@@ -1545,6 +1545,114 @@ function createPopup(lon, lat, html) {
     $("#popup-content").html(html);
     popupOverlay.setPosition(pos);
 }
+
+function buildResultFromData(data){
+    if (typeof data !== "undefined" && typeof data["address"] !== "undefined") {
+            // Success we have an address
+            var address = data["address"];
+
+            var road = getRoad(address);
+            var house_number = getHouseNumber(address);
+            var city = getCity(address);
+            var id = data["place_id"];
+
+            
+
+            var html = "<div class=\"result col-xs-12\">\n";
+
+            // Wir extrahieren noch einen Namen
+            if(typeof data["namedetails"]["name"] !== "undefined"){
+                html += "<p class=\"title\">" + data["namedetails"]["name"] + "</p>\n";
+            }
+
+            var road = getRoad(address);
+            var house_number = getHouseNumber(address);
+            if(road !== ""){
+                html += "<p class=\"address\">" + road;
+                if(house_number !== ""){
+                    html += " " + house_number;
+                }
+                html += "</p>\n";
+            }
+
+            var city = getCity(address);
+            if(city !== ""){
+                html += "<p class=\"city\">" + city + "</p>\n";
+            }
+
+            var phone = "";
+            if(typeof data["extratags"]["contact:phone"] !== "undefined"){
+                phone = data["extratags"]["contact:phone"];
+            }else if(typeof data["extratags"]["phone"] !== "undefined"){
+                phone = data["extratags"]["phone"];
+            }
+            if(phone !== ""){
+                html += "<p class=\"opening-hours\"><a href=\"tel:" + phone + "\" target=_blank><span class=\"glyphicon glyphicon-earphone\"></span> " + phone + "</a></p>\n";
+            }
+
+            if(typeof data["extratags"]["website"] !== "undefined"){
+                var url = data["extratags"]["website"];
+                if(url.lastIndexOf("http", 0) !== 0){
+                    url = "http://" + url;
+                }
+                html += "<p class=\"opening-hours\"><a href=\"" + url + "\" target=_blank><span class=\"glyphicon glyphicon-globe\"></span> " + url + "</a></p>\n";
+            }
+
+            if(typeof data["extratags"]["wikipedia"] !== "undefined"){
+                var url = "https://de.wikipedia.org/wiki/" + data["extratags"]["wikipedia"];
+                html += "<p class=\"opening-hours\"><a href=\"" + url + "\" target=_blank>Wikipedia</a></p>\n";
+            }
+
+            // Add possible Opening Hours:
+            if(typeof data["extratags"]["opening_hours"] !== "undefined"){
+                html += "<p class=\"opening-hours\">" + data["extratags"]["opening_hours"] + "</p>\n";
+            }
+
+            if(typeof data["extratags"]["description"] !== "undefined"){
+                html += "<p class=\"opening-hours\">" + data["extratags"]["description"] + "</p>\n";
+            }
+
+            // Update Address details
+            lon = parseFloat(data["lon"]);
+            lat = parseFloat(data["lat"]);
+            //html += "<div class=\"geo-position container-fluid\"><div class=\"row\">\n";
+            //html += "<div class=\"col-xs-6\">Lon: " + lon + "</div>\n";
+            //html += "<div class=\"col-xs-6\">Lat: " + lat + "</div>\n"; 
+            //html += "</div></div>";
+
+            // Now the two Links
+            var url = "";
+            if(gps){
+                url = "/route/start/foot/gps;"+lon+","+lat;
+            }else{
+                url = "/route/start/foot/"+lon+","+lat;
+            }
+            html += '<a href=\"'+url+'\" class=\"btn btn-default btn-xs\">Route berechnen</a>';
+
+            // And the Link to the MetaGer Search
+            if(typeof data["namedetails"]["name"] !== "undefined"){
+                var url = 'https://metager.de/meta/meta.ger3?focus=web&eingabe=' + encodeURIComponent(data["namedetails"]["name"]) + '&encoding=utf8&lang=all';
+                html += '<a href=\"'+url+'\" class=\"btn btn-default btn-xs\" target=_blank>MetaGer Suche</a>';
+            }
+
+            var popup = $(html);
+            return popup;
+            
+        }else{
+            return null;
+        }
+}
+
+function showResearchButton(){
+    if($("#research-button").hasClass("hidden")){
+        $("#research-button").removeClass("hidden");
+    }
+}
+
+function toggleResearchButtonMoveEvent(){
+    map.un("moveend", toggleResearchButtonMoveEvent);
+    map.on("moveend", showResearchButton);
+}
 var shouldUpdate = true;
 function start(){
     initStartNavigation();
@@ -1709,17 +1817,6 @@ function updateUrl(){
     window.history.pushState(stateObj, '', uri);
 }
 
-function toggleResearchButtonMoveEvent(){
-    map.un("moveend", toggleResearchButtonMoveEvent);
-    map.on("moveend", showResearchButton);
-}
-
-function showResearchButton(){
-    if($("#research-button").hasClass("hidden")){
-        $("#research-button").removeClass("hidden");
-    }
-}
-
 function initMap() {
     popupOverlay = new ol.Overlay( /** @type {olx.OverlayOptions} */ ({
         element: document.getElementById("popup"),
@@ -1787,103 +1884,6 @@ function getNearest(lon, lat) {
         // And now we can show the Popup where the user clicked
         createPopup(lon, lat, popup);
     });
-}
-
-function buildResultFromData(data){
-    if (typeof data !== "undefined" && typeof data["address"] !== "undefined") {
-            // Success we have an address
-            var address = data["address"];
-
-            var road = getRoad(address);
-            var house_number = getHouseNumber(address);
-            var city = getCity(address);
-            var id = data["place_id"];
-
-            
-
-            var html = "<div class=\"result col-xs-12\">\n";
-
-            // Wir extrahieren noch einen Namen
-            if(typeof data["namedetails"]["name"] !== "undefined"){
-                html += "<p class=\"title\">" + data["namedetails"]["name"] + "</p>\n";
-            }
-
-            var road = getRoad(address);
-            var house_number = getHouseNumber(address);
-            if(road !== ""){
-                html += "<p class=\"address\">" + road;
-                if(house_number !== ""){
-                    html += " " + house_number;
-                }
-                html += "</p>\n";
-            }
-
-            var city = getCity(address);
-            if(city !== ""){
-                html += "<p class=\"city\">" + city + "</p>\n";
-            }
-
-            var phone = "";
-            if(typeof data["extratags"]["contact:phone"] !== "undefined"){
-                phone = data["extratags"]["contact:phone"];
-            }else if(typeof data["extratags"]["phone"] !== "undefined"){
-                phone = data["extratags"]["phone"];
-            }
-            if(phone !== ""){
-                html += "<p class=\"opening-hours\"><a href=\"tel:" + phone + "\" target=_blank><span class=\"glyphicon glyphicon-earphone\"></span> " + phone + "</a></p>\n";
-            }
-
-            if(typeof data["extratags"]["website"] !== "undefined"){
-                var url = data["extratags"]["website"];
-                if(url.lastIndexOf("http", 0) !== 0){
-                    url = "http://" + url;
-                }
-                html += "<p class=\"opening-hours\"><a href=\"" + url + "\" target=_blank><span class=\"glyphicon glyphicon-globe\"></span> " + url + "</a></p>\n";
-            }
-
-            if(typeof data["extratags"]["wikipedia"] !== "undefined"){
-                var url = "https://de.wikipedia.org/wiki/" + data["extratags"]["wikipedia"];
-                html += "<p class=\"opening-hours\"><a href=\"" + url + "\" target=_blank>Wikipedia</a></p>\n";
-            }
-
-            // Add possible Opening Hours:
-            if(typeof data["extratags"]["opening_hours"] !== "undefined"){
-                html += "<p class=\"opening-hours\">" + data["extratags"]["opening_hours"] + "</p>\n";
-            }
-
-            if(typeof data["extratags"]["description"] !== "undefined"){
-                html += "<p class=\"opening-hours\">" + data["extratags"]["description"] + "</p>\n";
-            }
-
-            // Update Address details
-            lon = parseFloat(data["lon"]);
-            lat = parseFloat(data["lat"]);
-            //html += "<div class=\"geo-position container-fluid\"><div class=\"row\">\n";
-            //html += "<div class=\"col-xs-6\">Lon: " + lon + "</div>\n";
-            //html += "<div class=\"col-xs-6\">Lat: " + lat + "</div>\n"; 
-            //html += "</div></div>";
-
-            // Now the two Links
-            var url = "";
-            if(gps){
-                url = "/route/start/foot/gps;"+lon+","+lat;
-            }else{
-                url = "/route/start/foot/"+lon+","+lat;
-            }
-            html += '<a href=\"'+url+'\" class=\"btn btn-default btn-xs\">Route berechnen</a>';
-
-            // And the Link to the MetaGer Search
-            if(typeof data["namedetails"]["name"] !== "undefined"){
-                var url = 'https://metager.de/meta/meta.ger3?focus=web&eingabe=' + encodeURIComponent(data["namedetails"]["name"]) + '&encoding=utf8&lang=all';
-                html += '<a href=\"'+url+'\" class=\"btn btn-default btn-xs\" target=_blank>MetaGer Suche</a>';
-            }
-
-            var popup = $(html);
-            return popup;
-            
-        }else{
-            return null;
-        }
 }
 
 function deinitResults() {
@@ -2431,6 +2431,14 @@ function initWaypoints() {
 }
 
 function initAssistentGraphics() {
+    // We need to disable the display timeout to prevent the telephone screen from locking
+    // While Navigating
+    // We only can do this, if we are within the Android App
+    // We have defined an JavaScript Interface within the App to allow this kind of Communication
+    if(typeof android !== "undefined"){
+        android.disableDisplayTimeout();
+        android.showToast("Bildschirm Timeout abgeschaltet.");
+    }
     // Set The Route Layer to the new one:
     routeLayer.setSource(routeAssistentVectorSource);
     // Remove old Markers
@@ -2489,6 +2497,12 @@ function prepareInterface() {
 }
 
 function deinitAssistent() {
+
+    if(typeof android !== "undefined"){
+        android.enableDisplayTimeout();
+        android.showToast("Bildschirm Timeout eingeschaltet.");
+    }
+
     if (followingId !== null) {
         navigator.geolocation.clearWatch(followingId);
         followingId = null;

@@ -12,7 +12,7 @@ class SearchController extends Controller
 
     public function search($search)
     {
-        $link          = "https://maps.metager.de/nominatim/search.php?q=" . urlencode($search) . "&limit=10&polygon_geojson=1&format=json&extratags=1&addressdetails=1";
+        $link          = "https://maps.metager.de/nominatim/search.php?q=" . urlencode($search) . "&limit=10&polygon_geojson=1&format=json&extratags=1&addressdetails=1&namedetails=1";
         $searchResults = $this->makeSearch($link, $search, true);
         return $searchResults;
     }
@@ -139,7 +139,7 @@ class SearchController extends Controller
                 foreach ($wordsInSearch as $word) {
                     $hasThisWord = false;
                     foreach ($match_arr[0] as $wordInResult) {
-                        if (strpos($wordInResult, $word) !== false) {
+                        if (stripos($wordInResult, $word) !== false) {
                             $hasThisWord = true;
                             break;
                         }
@@ -174,29 +174,16 @@ class SearchController extends Controller
 
     public function iframeSearch($search)
     {
-        # Bei der Iframe Suche begrenzen wir die Ergebniszahl auf 3
-        $link          = "https://maps.metager.de/nominatim/search.php?q=" . urlencode($search) . "&limit=3&polygon_geojson=1&format=json&extratags=1&addressdetails=1";
-        $results       = json_decode(file_get_contents($link), true);
-        $searchResults = [];
-        if ($results) {
-            foreach ($results as $result) {
-                $tmp = [];
-                # Marker
-                $tmp["lon"] = $result["lon"];
-                $tmp["lat"] = $result["lat"];
+        # Let's get some Searchresults if existent
+        $searchResults = app('\App\Http\Controllers\SearchController')->search($search);
+        if (sizeof($searchResults) > 0) {
+            $exactMatches = $this->getExactMatchesCount($search, $searchResults);
+            $javaScript   = view('searchResults')->with("results", json_encode($searchResults))->with('adjustView', true)->with('boundingSuccess', true)->with('search', $search)->with('adjustLink', false)->with("exactMatches", $exactMatches);
 
-                $tmp["title"]       = substr($result["display_name"], 0, strpos($result["display_name"], ","));
-                $tmp["type"]        = $result["type"];
-                $tmp["address"]     = $result["address"];
-                $tmp["extratags"]   = $result["extratags"];
-                $tmp["boundingbox"] = $result["boundingbox"];
-                $tmp["geojson"]     = $result["geojson"];
-                $tmp["huerotate"]   = hexdec(substr(md5(serialize($result)), 0, 5)) % 360;
-                $tmp["place_id"]    = $result["place_id"];
-
-                $searchResults[] = $tmp;
-            }
+            # Wir erstellen die Ergebnisseite (JavaScipt)
+            return view('mapIframe')->with('search', $search)->with('script', $javaScript);
+        } else {
+            return view('empty');
         }
-        # Wir erstellen die Ergebnisseite (JavaScipt)
     }
 }

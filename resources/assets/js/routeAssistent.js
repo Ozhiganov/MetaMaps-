@@ -41,6 +41,14 @@ function initWaypoints() {
 }
 
 function initAssistentGraphics() {
+    // We need to disable the display timeout to prevent the telephone screen from locking
+    // While Navigating
+    // We only can do this, if we are within the Android App
+    // We have defined an JavaScript Interface within the App to allow this kind of Communication
+    if(typeof android !== "undefined"){
+        android.disableDisplayTimeout();
+        android.showToast("Bildschirm Timeout abgeschaltet.");
+    }
     // Set The Route Layer to the new one:
     routeLayer.setSource(routeAssistentVectorSource);
     // Remove old Markers
@@ -99,6 +107,12 @@ function prepareInterface() {
 }
 
 function deinitAssistent() {
+
+    if(typeof android !== "undefined"){
+        android.enableDisplayTimeout();
+        android.showToast("Bildschirm Timeout eingeschaltet.");
+    }
+
     if (followingId !== null) {
         navigator.geolocation.clearWatch(followingId);
         followingId = null;
