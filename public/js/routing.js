@@ -1656,7 +1656,6 @@ function toggleResearchButtonMoveEvent(){
 var shouldUpdate = true;
 function start(){
     initStartNavigation();
-
     map.on("moveend", updateUrl);
 
     // Initialize research Button
@@ -2435,9 +2434,9 @@ function initAssistentGraphics() {
     // While Navigating
     // We only can do this, if we are within the Android App
     // We have defined an JavaScript Interface within the App to allow this kind of Communication
-    if(typeof Android !== "undefined"){
-        Android.disableDisplayTimeout();
-        Android.showToast("Bildschirm Timeout abgeschaltet.");
+    if(typeof android !== "undefined"){
+        android.disableDisplayTimeout();
+        android.showToast("Bildschirm Timeout abgeschaltet.");
     }
     // Set The Route Layer to the new one:
     routeLayer.setSource(routeAssistentVectorSource);
@@ -2498,9 +2497,9 @@ function prepareInterface() {
 
 function deinitAssistent() {
 
-    if(typeof Android !== "undefined"){
-        Android.enableDisplayTimeout();
-        Android.showToast("Bildschirm Timeout eingeschaltet.");
+    if(typeof android !== "undefined"){
+        android.enableDisplayTimeout();
+        android.showToast("Bildschirm Timeout eingeschaltet.");
     }
 
     if (followingId !== null) {

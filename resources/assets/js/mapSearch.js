@@ -1,7 +1,6 @@
 var shouldUpdate = true;
 function start(){
     initStartNavigation();
-
     map.on("moveend", updateUrl);
 
     // Initialize research Button
