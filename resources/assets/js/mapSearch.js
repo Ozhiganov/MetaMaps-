@@ -17,7 +17,6 @@ $(document).ready(function(){
         if(typeof query !== "undefined"){
             $("#search input[name=q]").val(query);
         }
-        console.log("here");
         map.un("moveend", updateUrl);
         map.getView().animate({
             zoom: parseInt(zoom),
@@ -235,7 +234,6 @@ function getNearest(lon, lat) {
     var url = "https://maps.metager.de/nominatim/reverse.php?format=json&lat=" + lat + "&lon=" + lon + "&zoom=18&extratags=1&addressdetails=1&namedetails=1";
     // Send the Request
     $.get(url, function(data) {
-        console.log(data);
         var popup = buildResultFromData(data);
         // And now we can show the Popup where the user clicked
         createPopup(lon, lat, popup);

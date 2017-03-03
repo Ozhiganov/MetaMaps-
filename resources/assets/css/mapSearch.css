@@ -15,6 +15,10 @@
     background-color: white;
 }
 
+#clear-search:hover {
+    cursor: pointer;
+}
+
 #beta-info {
     position: absolute;
     z-index: 99999;

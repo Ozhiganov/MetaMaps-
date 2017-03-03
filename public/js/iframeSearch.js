@@ -1571,14 +1571,16 @@ function buildResultFromData(data){
 }
 
 function showResearchButton(){
-    if($("#research-button").hasClass("hidden")){
+    if($("#research-button").hasClass("hidden") && $("#search input[name=q]").val() !== ""){
         $("#research-button").removeClass("hidden");
     }
 }
 
 function toggleResearchButtonMoveEvent(){
-    map.un("moveend", toggleResearchButtonMoveEvent);
-    map.on("moveend", showResearchButton);
+    if($("#search input[name=q]").val() !== ""){
+        map.un("moveend", toggleResearchButtonMoveEvent);
+        map.on("moveend", showResearchButton);
+    }
 }
 function initMap() {
 
