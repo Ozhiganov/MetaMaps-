@@ -17,11 +17,11 @@
                 <div id="popup-content">
                 </div>
             </div>
-            <div class="col-xs-8 col-md-9" id="map-container">
+            <div class="col-xs-6 col-sm-8 col-md-9" id="map-container">
             <div class="map" id="map" >
             </div>
             </div>
-            <div class="col-xs-4 col-md-3 hidden" data-status="in" id="results">
+            <div class="col-xs-6 col-sm-4 col-md-3 hidden" data-status="in" id="results">
             </div>
             <div class="clearfix"></div>
         </main>

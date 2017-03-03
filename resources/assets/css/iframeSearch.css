@@ -28,3 +28,16 @@ main {
 #results .result > .col-xs-2 {
     padding: 0;
 }
+
+.result-container {
+    padding-left: 0;
+    padding-right: 0;
+}
+
+.result-container > div {
+    padding: 0;
+}
+
+.result-container .result {
+    padding-right: 0;
+}
