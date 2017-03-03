@@ -1311,7 +1311,6 @@ function toggleGpsWarning(){
 }
 
 function checkGPS(callback) {
-    console.log("checkingGps");
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(function(position){
             if(position.coords.accuracy > 1500){

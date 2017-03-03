@@ -30,7 +30,6 @@ function start(){
     }else{
         findRouteInitialized = true;
     }
-    console.log("init", findRouteInitialized);
     // Put the Popstate Event:
     $(window).unbind('popstate');
     $(window).bind('popstate', function(event) {
@@ -74,13 +73,11 @@ function start(){
         if(parseInt( $(document).outerWidth()) > 768 && $("#results").attr("data-status") === "out" ){
             paddingRight = $("#search-addon").outerWidth();
         }
-        console.log(paddingRight);
         adjustViewPosList(points, [5, paddingRight, 5, 5]);
     }
 };
 
 function addWaypoint(pos) {
-    console.log("adding");
     pos = ol.proj.transform(pos, 'EPSG:3857', 'EPSG:4326');
     $.each(waypoints, function(index, value) {
         if (value === '') {
@@ -131,7 +128,7 @@ function initRouteFinder() {
             <label class=\"radio-inline\" title=\"Auto\">\
               <input type=\"radio\" name=\"vehicle\" value=\"car\"> <div><img src=\"/img/car.png\" height=\"20px\" /></div>\
             </label>\
-            <button type=\"button\" class=\"close\" aria-label=\"Close\">\
+            <button type=\"button\" class=\"close\" aria-label=\"Close\" title=\"Routenplanung abbrechen\">\
               <span aria-hidden=\"true\">&times;</span>\
             </button>\
         </div>\

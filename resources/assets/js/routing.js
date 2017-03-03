@@ -10,10 +10,12 @@ var routeLineStyle = new ol.style.Style({
 var route = {};
 var routeLayer = null;
 var routeMarkers = [];
+var routeInit = false;
 function start(){
+    
     var pointString = points;
     if(points.match(/gps/) !== null){
-        if(gpsLocation === null){
+        if(!gps){
             // If this is the case we will simply return here.
             // If the geolocation API got triggered, then another call to this function will
             // happen, when the gpsLocation is available
@@ -27,6 +29,11 @@ function start(){
             pointString = pointString.replace(/;{0,1}gps;{0,1}/, ';');
         }
     }
+    if(routeInit){
+        return;
+    }
+    routeInit = true;
+    
     var url = '/route/find/' + vehicle + '/' + pointString;
     $.getJSON(url, function(response) {
         route = response;
