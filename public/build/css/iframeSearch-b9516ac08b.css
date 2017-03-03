@@ -7147,70 +7147,56 @@ html, body, main, #map {
 
 #start-navigation {
     position: absolute;
-    bottom: 50px;
-    right: 50px;
-    width: 50px;
-    height: 50px;
+    bottom: 30px;
+    right: 10px;
+    width: 40px;
+    height: 40px;
 }
 
 #start-navigation img {
-    width: 50px;
+    width: 40px;
 }
-#map {
-    height: 100vh;
-}
-
-#results {
-    background-color: white;
-    border: 1px solid #ccc;
-    border-top: 0;
-    border-radius: 0 0 15px 15px;
-    max-height: 0;
-    overflow: auto;
+body {
+    max-height: 310px;
+    margin-bottom: 10px;
 }
 
-#clear-search {
-    background-color: white;
+main {
+    max-height: 300px;
 }
 
-#clear-search:hover {
-    cursor: pointer;
-}
-
-#beta-info {
-    position: absolute;
-    z-index: 99999;
-    left: 25%;
-    top: 55px;
-    width: 50%;
-}
-
-#research-button {
-    position: relative;
-    bottom: 70px;
-    width: 100%;
-    text-align: center;
-}
-
-#search {
+#map-container {
     padding: 0;
 }
 
-#result-toggler {
-    position: relative;
-    width: 150px;
-    left: calc(50% - 75px);
-    top: 0px;
-    text-align: center;
-    color: white;
-    background-color: rgb(255, 128, 0);
-    border-radius: 0 0 8px 8px;
-    height: 20px;
-    font-size: 12px;
-    line-height: 20px;
-}
-
-#result-toggler:hover {
+#map {
+    height: 300px;
     cursor: pointer;
 }
-/*# sourceMappingURL=mapSearch.css.map */
+
+#results {
+    height: 300px;
+    overflow-y: auto;
+}
+
+.ol-zoomslider.ol-unselectable.ol-control {
+    display: none;
+}
+
+#results .result > .col-xs-2 {
+    padding: 0;
+}
+
+.result-container {
+    padding-left: 0;
+    padding-right: 0;
+}
+
+.result-container > div {
+    padding: 0;
+}
+
+.result-container .result {
+    padding-right: 0;
+}
+/*# sourceMappingURL=iframeSearch.css.map */

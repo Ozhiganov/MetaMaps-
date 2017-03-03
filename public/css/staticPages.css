@@ -7146,14 +7146,14 @@ html, body, main, #map {
 
 #start-navigation {
     position: absolute;
-    bottom: 50px;
-    right: 50px;
-    width: 50px;
-    height: 50px;
+    bottom: 30px;
+    right: 10px;
+    width: 40px;
+    height: 40px;
 }
 
 #start-navigation img {
-    width: 50px;
+    width: 40px;
 }
 html, body, main {
     max-height: initial;
