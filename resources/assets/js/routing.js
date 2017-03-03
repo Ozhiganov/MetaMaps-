@@ -11,7 +11,6 @@ var route = {};
 var routeLayer = null;
 var routeMarkers = [];
 function start(){
-    console.log(waypoints, gpsLocation);
     var pointString = points;
     if(points.match(/gps/) !== null){
         if(gpsLocation === null){
@@ -43,6 +42,9 @@ function start(){
 };
 
 function addResults() {
+    // To be consistent for multiple calls we need to remove eventually existing interfaces
+    $("#vehicle-chooser").remove();
+    $("#route-content").remove();
     $("#results").html("");
     var vehicleChooser = $("<div id=\"vehicle-chooser\">\
             <label id=\"back-to-edit\" class=\"radio-inline\">\
@@ -58,10 +60,10 @@ function addResults() {
               <input type=\"radio\" name=\"vehicle\" value=\"car\"> <div><img src=\"/img/car.png\" height=\"20px\" /></div>\
             </label>\
         </div>\
-        <div id=\"route-content\">\
-        </div>\
         ");
-    $("#results").append(vehicleChooser);
+    $("#search-addon").prepend(vehicleChooser);
+    var routeContent = $("<div id=\"route-content\" class=\"container-fluid\"></div>");
+    $("#results").append(routeContent);
     $(vehicleChooser).find("input[value=" + vehicle + "]").prop("checked", true);
     // Add the changed Listener to the vehicle Chooser:
     $(vehicleChooser).find("input[type=radio]").change(function() {
@@ -466,7 +468,12 @@ function addGraphics() { // We collect the minimal Position and the maximum Posi
             vectorS.addFeature(feature);
         });
     });
-    adjustViewBoundingBox(minPos, maxPos);
+    // We give adjust the view so the route is not under the result list
+    var paddingRight = 0;
+    if(parseInt( $(document).outerWidth()) > 768 && $("#results").attr("data-status") === "out" ){
+        paddingRight = $("#search-addon").outerWidth();
+    }
+    adjustViewBoundingBox(minPos, maxPos, [5,paddingRight,5,5]);
     if(routeLayer !== null){
         // Remove old Features
         map.removeLayer(routeLayer);

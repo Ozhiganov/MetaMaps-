@@ -1086,20 +1086,11 @@ $(document).ready(function() {
     // Initialize the Map
     initMap();
 
-    $("#closer").click(function() {
-        toggleResults();
-    });
-
     if(getPosition){
         checkGPS(startApplication);
     }else{
         startApplication();
     }
-    $(window).resize(function() {
-        updateResultsPosition();
-        updateCloserPosition();
-        updateMapSize();
-    });
 
     map.on('singleclick', mapClickFunction);
     $("#follow-location > span.button").click(function() {
@@ -1120,7 +1111,7 @@ function numberWithPoints(x) {
 }
 
 function deinitSearchBox() {
-    $("#search").addClass("hidden");
+    $("#search").remove();
 }
 
 function initStartNavigation() {
@@ -1136,105 +1127,32 @@ function initClearInput() {
     $("#clearInput").attr("title", "Sucheingabe löschen");
 }
 
+var resultsHeight = $(window).height() - 80;
 function toggleResults(status) {
+    var currentStatus = $("#results").attr("data-status");
     if (typeof status === "undefined") {
-        status = $("#results").attr("data-status");
+        status = currentStatus;
+        if(status === "in")
+            status = "out";
+        else if(status === "out")
+            status = "in";
+        else
+            status = "in";
     } else if (status !== "in" && status !== "out") {
         status = "in";
     }
-    if (status === "in") {
-        $("#closer").html("<");
-        $("#results").attr("data-status", "out");
-        $("#closer").attr("title", "Ergebnisse ausklappen");
-        updateResultsPosition();
-        updateCloserPosition();
-    } else {
-        $("#closer").html(">");
+    if (status === "in" && currentStatus !== "in") {
         $("#results").attr("data-status", "in");
-        $("#closer").attr("title", "Ergebnisse einklappen");
-        updateResultsPosition();
-        updateCloserPosition();
-    }
-    updateMapSize();
-}
-
-function updateMapSize() {
-    var resultsWidth = parseInt($("#results").width());
-    if ($("#results").hasClass("hidden")) {
-        resultsWidth = 0;
-    }
-    $("#search input[name=q]").attr("data-move-search", "false");
-    var displayWidth = $(window).width();
-    // Change Map Width
-    $("#map").width(displayWidth - resultsWidth);
-    var navBarHeight = $("nav").height();
-    if($("nav").hasClass("hidden")){
-        navBarHeight = 0;
-    }
-    var displayHeight = $(window).height();
-    // Change The Map Height
-    // It's possible that the <main> element has a max-height defined
-    if($("main").css("max-height") !== "none"){
-        $("#map").height($("main").css("max-height"));
-    }else{
-        $("#map").css("margin-top", navBarHeight);
-        $("#map").height(displayHeight - navBarHeight);
-    }
-
-    map.updateSize();
-    setTimeout(function() {
-        $("#search input[name=q]").attr("data-move-search", "");
-    }, 1500);
-}
-
-function doBounce(location) {
-    // Bouncing means we zoom out one level
-    map.getView().setZoom(map.getView().getZoom() - 1);
-    // Then Panning to the desired location
-    doPan(location);
-    // And Then zoom back in one level
-    map.getView().setZoom(map.getView().getZoom() + 1);
-}
-function doPan(location, zoom) {
-    if(zoom === null){
-        zoom = map.getView().getZoom();
-    }
-    map.getView().animate({
-        zoom: zoom,
-        center: location,
-        duration: 1500
-    });
-}
-
-function updateResultsPosition() {
-    if ($("#results").attr("data-status") === "out") {
-        $("#results").addClass("hidden");
-    } else {
-        $("#results").removeClass("hidden");
-    }
-}
-
-function updateCloserPosition() {
-    if($("#closer").hasClass("hidden")){
-        $("#closer").removeClass("hidden");
-    }
-    if ($("#results").attr("data-status") === "out") {
-        $("#closer").css("right", "0px");
-    } else {
-        var screenWidth = $(window).width();
-        var resultsWidth = $("#results").width() - 1;
-        var closerWidth = $("#closer").width();
-        if (screenWidth > (resultsWidth + closerWidth)) {
-            $("#closer").css("right", resultsWidth + "px");
-        } else {
-            $("#closer").css("right", (resultsWidth - closerWidth) + "px");
+        $("#result-toggler").html("Liste anzeigen")
+        $("#results").animate({"max-height": 0}, 600);
+    } else if(status === "out" && currentStatus !== "out"){
+        $("#results").attr("data-status", "out");
+        $("#result-toggler").html("Liste ausblenden")
+        $("#results").animate({"max-height": resultsHeight}, 600);
+        if($("#result-toggler").hasClass("hidden")){
+            $("#result-toggler").removeClass("hidden");
         }
     }
-    var top = 0;
-    if(!$("nav").hasClass("hidden")){
-        top = $("nav").height();
-    }
-    $("#closer").css("top", top);
 }
 
 function adjustView(results, limit) {
@@ -1277,7 +1195,13 @@ function adjustView(results, limit) {
     maxPosition = ol.proj.transform(maxPosition, 'EPSG:4326', 'EPSG:3857');
 
     if(minPosition.length === 2 && maxPosition.length === 2){
-        map.getView().fit([minPosition[0], minPosition[1], maxPosition[0], maxPosition[1]], { duration: 1500, nearest: true, maxZoom: 18});
+        // If this is not on a mobile AND the Results are Visible, we fit the Results to the left of the List
+        var paddingRight = 0;
+        if(parseInt( $(document).outerWidth()) > 768 && $("#results").attr("data-status") === "out" ){
+            paddingRight = $("#search-addon").outerWidth();
+        }
+
+        map.getView().fit([minPosition[0], minPosition[1], maxPosition[0], maxPosition[1]], { duration: 1500, nearest: true, maxZoom: 18, padding: [0, paddingRight, 0, 0]});
     }
 }
 /**
@@ -1324,17 +1248,20 @@ function getCity(address) {
     return city;
 }
 
-function adjustViewBoundingBox(minpos, maxpos) {
+function adjustViewBoundingBox(minpos, maxpos, padding) {
     minPosition = ol.proj.transform(minpos, 'EPSG:4326', 'EPSG:3857');
     maxPosition = ol.proj.transform(maxpos, 'EPSG:4326', 'EPSG:3857');
-    map.getView().fit([minPosition[0], minPosition[1], maxPosition[0], maxPosition[1]], {padding: [5,5,5,5], duration: 1500});
+    if(typeof padding === "undefined"){
+        padding = [5,5,5,5];
+    }
+    map.getView().fit([minPosition[0], minPosition[1], maxPosition[0], maxPosition[1]], {"padding": padding, duration: 1500});
     updateMapExtent();
 }
 /*
  * This Function takes an array of Positions and adjusts the view of the map so everything is visible
  * @param positions{Array} - Array with Position Objects ([lon,lat])
  */
-function adjustViewPosList(positions) {
+function adjustViewPosList(positions, padding) {
     var minpos = [null, null];
     var maxpos = [null, null];
     $.each(positions, function(index, value) {
@@ -1354,7 +1281,7 @@ function adjustViewPosList(positions) {
             maxpos[1] = value[1];
         }
     });
-    adjustViewBoundingBox(minpos, maxpos);
+    adjustViewBoundingBox(minpos, maxpos, padding);
 }
 
 function clearPOIS() {
@@ -1672,22 +1599,25 @@ function toggleResearchButtonMoveEvent(){
     map.on("moveend", showResearchButton);
 }
 var shouldUpdate = true;
-function start(){
+$(document).ready(function(){
     initStartNavigation();
-    map.on("moveend", updateUrl);
+    if(typeof vehicle === "undefined"){
+        map.on("moveend", updateUrl);
+    }
 
     // Initialize research Button
     var research = $("<div id=\"research-button\" class=\"hidden\"><button type=\"button\" class=\"btn btn-default\">In diesem Bereich erneut Suchen</button></div>")
     $("#map").append(research);
+    $(research).find("button").off();
     $(research).find("button").click(function(){
         $("#doSearch").click();
     });
 
-    if(typeof center !== "undefined" && typeof zoom !== "undefined"){
+    if(typeof center !== "undefined" && typeof zoom !== "undefined" && typeof vehicle === "undefined"){
         if(typeof query !== "undefined"){
             $("#search input[name=q]").val(query);
         }
-        
+        console.log("here");
         map.un("moveend", updateUrl);
         map.getView().animate({
             zoom: parseInt(zoom),
@@ -1695,6 +1625,7 @@ function start(){
             duration: 1500
         }, function(){
             setTimeout(function(){
+                map.un("moveend", updateUrl);
                 map.on("moveend", updateUrl);
                 if($("#search input[name=q]").val() !== ""){
                     $("#doSearch").click();
@@ -1708,60 +1639,65 @@ function start(){
     });
 
     
-
-    // Put the Popstate Event:
-    $(window).unbind('popstate');
-    $(window).bind('popstate', function(event) {
-        var state = event.originalEvent.state;
-        if (state !== null && state["center"] !== undefined && state["zoom"] !== undefined) {
-            center = state["center"].split(",");
-            zoom = state["zoom"];
-            q = state["q"];
-            var shouldSearch = false;
-            var shouldClear = false;
-            if($("#search input[name=q]").val() !== state["q"] && state["q"] !== ""){
-                shouldSearch = true;
+    if(typeof vehicle === "undefined"){
+        // Put the Popstate Event:
+        $(window).unbind('popstate');
+        $(window).bind('popstate', function(event) {
+            var state = event.originalEvent.state;
+            if (state !== null && state["center"] !== undefined && state["zoom"] !== undefined) {
+                center = state["center"].split(",");
+                zoom = state["zoom"];
+                q = state["q"];
+                var shouldSearch = false;
+                var shouldClear = false;
+                if($("#search input[name=q]").val() !== state["q"] && state["q"] !== ""){
+                    shouldSearch = true;
+                }
+                $("#search input[name=q]").val(state["q"]);
+                if(typeof searchResults !== "undefined" && $("#search input[name=q]").val() === ""){
+                    shouldClear = true;
+                }
+                
+                map.un("moveend", updateUrl);
+                map.getView().animate({
+                    zoom: parseInt(zoom),
+                    center: center,
+                    duration: 1500
+                }, function(){
+                    setTimeout(function(){
+                        map.on("moveend", updateUrl);
+                        if(shouldSearch){
+                            $("#doSearch").click();
+                        }else if(shouldClear){
+                            deinitResults();
+                        }
+                    }, 500); 
+                });
+            }else{
+                document.location.href = document.location.href;
             }
-            $("#search input[name=q]").val(state["q"]);
-            if(typeof searchResults !== "undefined" && $("#search input[name=q]").val() === ""){
-                shouldClear = true;
+        });
+
+        $("#doSearch").click(function() {
+
+            var navbarCollapsed = $("#navbar-collapse").hasClass("in");
+
+            // If the Navbar is collapsed we need to pull it in before we search because it takes too much space
+            if(navbarCollapsed){
+                // Start Search when the navbar is hidden
+                $("#navbar-collapse").on("hidden.bs.collapse", executeSearch);
+                // Hide Navbar
+                $(".collapse").collapse("hide");
+            }else{
+                executeSearch();
             }
-            
-            map.un("moveend", updateUrl);
-            map.getView().animate({
-                zoom: parseInt(zoom),
-                center: center,
-                duration: 1500
-            }, function(){
-                setTimeout(function(){
-                    map.on("moveend", updateUrl);
-                    if(shouldSearch){
-                        $("#doSearch").click();
-                    }else if(shouldClear){
-                        $("#clearInput").click();
-                    }
-                }, 500); 
-            });
-        }else{
-            document.location.href = document.location.href;
-        }
-    });
+        });
+    }
 
-    $("#doSearch").click(function() {
-
-        var navbarCollapsed = $("#navbar-collapse").hasClass("in");
-
-        // If the Navbar is collapsed we need to pull it in before we search because it takes too much space
-        if(navbarCollapsed){
-            // Start Search when the navbar is hidden
-            $("#navbar-collapse").on("hidden.bs.collapse", executeSearch);
-            // Hide Navbar
-            $(".collapse").collapse("hide");
-        }else{
-            executeSearch();
-        }
-    });
-}
+    $("#result-toggler").click(function(){
+        toggleResults();
+    })
+});
 
 function executeSearch(){
     q = $("#search input[name=q]").val();
@@ -1849,10 +1785,13 @@ function initMap() {
                 source: new ol.source.OSM({
                     attributions: [
                         new ol.Attribution({
-                            html: '<a href="https://metager.de/impressum">Impressum</a>'
+                            html: '&copy; ' + '<a href="https://metager.de/">MetaGer.de</a>'
                         }),
                         new ol.Attribution({
-                            html: 'All search results &copy; ' + '<a href="http://nominatim.openstreetmap.org/">Nominatim</a>'
+                            html: '&copy; ' + '<a href="https://metager.de/impressum">Impressum</a>'
+                        }),
+                        new ol.Attribution({
+                            html: '&copy; ' + '<a href="http://nominatim.openstreetmap.org/">Nominatim</a>'
                         }),
                         ol.source.OSM.ATTRIBUTION,
                     ],
@@ -1863,7 +1802,7 @@ function initMap() {
         target: 'map',
         controls: ol.control.defaults({
             attributionOptions: /** @type {olx.control.AttributionOptions} */ ({
-                collapsible: true
+                collapsible: false
             })
         }).extend([
             new ol.control.ScaleLine()
@@ -1904,12 +1843,16 @@ function getNearest(lon, lat) {
 }
 
 function deinitResults() {
-    toggleResults("out");
-    $("#results").addClass("hidden");
-    $("#closer").addClass("hidden");
+    toggleResults("in");
     $("#results").html("");
-    updateMapSize();
+    $("#result-toggler").addClass("hidden");
+    $("#search input[name=q]").val("");
+    clearPOIS();
+    q = "";
+    updateUrl();
     initStartNavigation();
+    map.on("singleclick", mapClickFunction);
+    $("#clear-search").remove();
 }
 /*
  * Different things need to be done to be able to find the points to route to
@@ -1934,7 +1877,7 @@ function start(){
             return;
         }
     });
-    if(needGPS && gpsLocation === null){
+    if(needGPS && !gps){
         // If this is the case we will simply return here.
         // If the geolocation API got triggered, then another call to this function will
         // happen, when the gpsLocation is available
@@ -1967,6 +1910,8 @@ function start(){
         addWaypoint(pos);
     });
 
+    map.un("moveend", updateUrl);
+
     if (getWayPointLength() >= 1) {
         var points = [];
         $.each(waypoints, function(index, value){
@@ -1976,7 +1921,14 @@ function start(){
                 points.push(value);
             }
         });
-        adjustViewPosList(points);
+
+        // We give adjust the view so the route is not under the result list
+        var paddingRight = 0;
+        if(parseInt( $(document).outerWidth()) > 768 && $("#results").attr("data-status") === "out" ){
+            paddingRight = $("#search-addon").outerWidth();
+        }
+        console.log(paddingRight);
+        adjustViewPosList(points, [5, paddingRight, 5, 5]);
     }
 };
 
@@ -2013,6 +1965,11 @@ function changeVehicle(newVehicle) {
 }
 
 function initRouteFinder() {
+    // To be consistent for multiple calls we need to remove eventually existing interfaces
+    $("#vehicle-chooser").remove();
+    $("#route-content").remove();
+
+    console.log("init");
     $("#results").html("");
     map.removeLayer(vectorLayerRoutePreview);
     // Remove Existing Markers
@@ -2027,11 +1984,17 @@ function initRouteFinder() {
             <label class=\"radio-inline\" title=\"Auto\">\
               <input type=\"radio\" name=\"vehicle\" value=\"car\"> <div><img src=\"/img/car.png\" height=\"20px\" /></div>\
             </label>\
-        </div>\
-        <div id=\"route-content\">\
+            <button type=\"button\" class=\"close\" aria-label=\"Close\">\
+              <span aria-hidden=\"true\">&times;</span>\
+            </button>\
         </div>\
         ");
-    $("#results").append(vehicleChooser);
+    $(vehicleChooser).find(".close").click(function(){
+        document.location.href = "/";
+    });
+    $("#search-addon").prepend(vehicleChooser);
+    var routeContent = $("<div id=\"route-content\" class=\"container-fluid\"></div>");
+    $("#results").append(routeContent);
     // Select the correct checkbox:
     $("#vehicle-chooser input[value=" + vehicle + "]").prop("checked", true);
     // Add the changed Listener to the Radio Buttons
@@ -2048,7 +2011,7 @@ function initRouteFinder() {
             waypoints.unshift('');
         }
         var firstEmpty = false;
-        var waypointHtml = $('<ul id="waypoint-container"></ul>');
+        var waypointHtml = $('<ul id="waypoint-container" class="row"></ul>');
         if (waypoints.length >= 1) {
             if(waypoints[0] === ""){
                 html = $("<div class=\"container-fluid new-waypoint-box\"><p>Startpunkt angeben:\

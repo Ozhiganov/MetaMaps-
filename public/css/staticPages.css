@@ -6810,6 +6810,27 @@ body {
     overflow: hidden;
 }
 
+.navbar-default {
+    background-color: transparent;
+    border: 0;
+}
+
+.input-group-addon#doSearch {
+    background-color: white;
+    border-bottom-right-radius: 0;
+    border-top-right-radius: 8px;
+}
+
+@media(max-width: 768px) {
+    #search input[name=q] {
+        border-top-left-radius: 8px;
+    }
+}
+
+input + .input-group-addon {
+    border-left: 0;
+}
+
 .navbar-toggle span.glyphicon-search {
     width: 2em;
 }
@@ -6897,13 +6918,23 @@ body {
     padding: 0;
 }
 
-.navbar {
+figure#search-addon {
     z-index: 20002;
+    position: absolute;
+    right: 0;
+    margin-right: 15px;
+    margin-left: 15px;
+    margin-top: 15px;
 }
 
-a.navbar-brand {
-    line-height: 100% !important;
-    padding: 0;
+figure#search-addon .form-group {
+    margin-bottom: 0;
+}
+
+#logo {
+    background-color: rgba(255, 128, 0, .7);
+    border-bottom-left-radius: 0;
+    border-top-left-radius: 8px;
 }
 
 .logo {
@@ -6912,16 +6943,15 @@ a.navbar-brand {
 }
 
 .logo > h1 {
-    color: rgb(255, 128, 0);
+    color: white;
     height: 100%;
-    padding-left: 20px;
-    padding-top: 8px;
     font-family: sans-serif;
     font-style: italic;
     margin: 0;
     font-weight: bold;
     line-height: 1;
     white-space: nowrap;
+    font-size: 20px;
 }
 
 .logo > h1 > small {
@@ -6961,6 +6991,20 @@ html, body, main, #map {
     background-color: #ff8000;
     border-radius: 3px;
     color: white;
+}
+
+.ol-attribution {
+    bottom: 8px!important;
+    line-height: 14px!important;
+    background: white!important;
+    height: 14px!important;
+    padding-top: 0!important;
+    padding-bottom: 0!important;
+}
+
+.ol-attribution ul {
+    font-size: 10px!important;
+    line-height: 14px!important;
 }
 
 
@@ -7011,18 +7055,7 @@ html, body, main, #map {
 }
 
 #results {
-    background-color: #f8f8f8;
-    border-color: #e7e7e7;
-    position: absolute;
-    overflow-y: scroll!important;
-    top: 0;
-    right: 0;
-    padding: 0;
     z-index: 20001;
-    overflow: visible;
-    /*-webkit-box-shadow: -5px 0px 1px 0px rgba(50, 50, 50, 0.16);
-    -moz-box-shadow: -5px 0px 1px 0px rgba(50, 50, 50, 0.16);
-    box-shadow: -5px 0px 1px 0px rgba(50, 50, 50, 0.16);*/
 }
 
 #gps-error {

@@ -1,6 +1,7 @@
 var searchResults = {!!$results!!};
 var exactMatches = {{$exactMatches}};
 clearPOIS();
+$("#clear-search").remove();
 var markers = [];
 
 $.each(searchResults, function(index, value) {
@@ -44,7 +45,7 @@ $.each(searchResults, function(index, value) {
     var resultHtml = buildResultFromData(value);
 
     var res = $("\
-        <div class=\"result-container col-xs-12\" id=\"result-" + index + "\">\
+        <div class=\"container-fluid result-container\" id=\"result-" + index + "\">\
             <div class=\"col-xs-2\">\
                 <span class=\"marker\" style=\"filter: hue-rotate(" + value["huerotate"] + "deg);\">" + index + "</span>\
             </div>\
@@ -111,18 +112,30 @@ map.un("moveend", showResearchButton);
 map.on("moveend", toggleResearchButtonMoveEvent);
 
 @if($adjustView === true)
-adjustView(searchResults, exactMatches);
 // Extra Small devices start with hidden results list
 // all others with visible
+$("#result-toggler").removeClass("hidden");
 if($("#map").width() < 576){
+    console.log("in");
     toggleResults("in");
 }else{
     toggleResults("out");
 }
+adjustView(searchResults, exactMatches);
 @endif
 
 // Deinit the Click Funktion for the map
 map.un('singleclick', mapClickFunction);
+// Give the user the possibility to delete his search.
+var deleteSearch = $('\
+    <div class="input-group-addon" id="clear-search">\
+        X\
+    </div> \
+    ');
+$(deleteSearch).click(deinitResults);
+$("#search input[name=q]").after(deleteSearch);
+
+// And update the Url
 
 
 

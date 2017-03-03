@@ -6811,6 +6811,27 @@ body {
     overflow: hidden;
 }
 
+.navbar-default {
+    background-color: transparent;
+    border: 0;
+}
+
+.input-group-addon#doSearch {
+    background-color: white;
+    border-bottom-right-radius: 0;
+    border-top-right-radius: 8px;
+}
+
+@media(max-width: 768px) {
+    #search input[name=q] {
+        border-top-left-radius: 8px;
+    }
+}
+
+input + .input-group-addon {
+    border-left: 0;
+}
+
 .navbar-toggle span.glyphicon-search {
     width: 2em;
 }
@@ -6898,13 +6919,23 @@ body {
     padding: 0;
 }
 
-.navbar {
+figure#search-addon {
     z-index: 20002;
+    position: absolute;
+    right: 0;
+    margin-right: 15px;
+    margin-left: 15px;
+    margin-top: 15px;
 }
 
-a.navbar-brand {
-    line-height: 100% !important;
-    padding: 0;
+figure#search-addon .form-group {
+    margin-bottom: 0;
+}
+
+#logo {
+    background-color: rgba(255, 128, 0, .7);
+    border-bottom-left-radius: 0;
+    border-top-left-radius: 8px;
 }
 
 .logo {
@@ -6913,16 +6944,15 @@ a.navbar-brand {
 }
 
 .logo > h1 {
-    color: rgb(255, 128, 0);
+    color: white;
     height: 100%;
-    padding-left: 20px;
-    padding-top: 8px;
     font-family: sans-serif;
     font-style: italic;
     margin: 0;
     font-weight: bold;
     line-height: 1;
     white-space: nowrap;
+    font-size: 20px;
 }
 
 .logo > h1 > small {
@@ -6962,6 +6992,20 @@ html, body, main, #map {
     background-color: #ff8000;
     border-radius: 3px;
     color: white;
+}
+
+.ol-attribution {
+    bottom: 8px!important;
+    line-height: 14px!important;
+    background: white!important;
+    height: 14px!important;
+    padding-top: 0!important;
+    padding-bottom: 0!important;
+}
+
+.ol-attribution ul {
+    font-size: 10px!important;
+    line-height: 14px!important;
 }
 
 
@@ -7012,18 +7056,7 @@ html, body, main, #map {
 }
 
 #results {
-    background-color: #f8f8f8;
-    border-color: #e7e7e7;
-    position: absolute;
-    overflow-y: scroll!important;
-    top: 0;
-    right: 0;
-    padding: 0;
     z-index: 20001;
-    overflow: visible;
-    /*-webkit-box-shadow: -5px 0px 1px 0px rgba(50, 50, 50, 0.16);
-    -moz-box-shadow: -5px 0px 1px 0px rgba(50, 50, 50, 0.16);
-    box-shadow: -5px 0px 1px 0px rgba(50, 50, 50, 0.16);*/
 }
 
 #gps-error {
@@ -7116,12 +7149,16 @@ html, body, main, #map {
 }
 
 #results {
-    height: 100vh;
-    padding-top: 51px;
+    background-color: white;
+    border: 1px solid #ccc;
+    border-top: 0;
+    border-radius: 0 0 15px 15px;
+    max-height: 0;
+    overflow: auto;
 }
 
-#closer {
-    top: 50px;
+#clear-search {
+    background-color: white;
 }
 
 #beta-info {
@@ -7137,6 +7174,28 @@ html, body, main, #map {
     bottom: 70px;
     width: 100%;
     text-align: center;
+}
+
+#search {
+    padding: 0;
+}
+
+#result-toggler {
+    position: relative;
+    width: 150px;
+    left: calc(50% - 75px);
+    top: 0px;
+    text-align: center;
+    color: white;
+    background-color: rgb(255, 128, 0);
+    border-radius: 0 0 8px 8px;
+    height: 20px;
+    font-size: 12px;
+    line-height: 20px;
+}
+
+#result-toggler:hover {
+    cursor: pointer;
 }
 .drop-target {
     margin: 10px 0;
@@ -7224,7 +7283,7 @@ html, body, main, #map {
 }
 
 #routing-steps {
-    margin-top: 10px;
+    margin: 0;
 }
 
 #routing-steps .step {
@@ -7249,6 +7308,26 @@ html, body, main, #map {
     margin-top: .5em;
 }
 
+#routing-steps .step .step-string, #routing-steps .step .step-length {
+    font-weight: bold;
+    font-size: 18px;
+    font-family: Liberation sans-serif;
+}
+
+#vehicle-chooser {
+    background-color: white;
+    border: 1px solid #ccc;
+    border-bottom: 0;
+    border-radius: 8px 8px 0 0;
+}
+
+#vehicle-chooser > .close {
+    font-size: 30px;
+    padding-top: 6px;
+    padding-right: 15px;
+    color: rgb(255, 128, 0);
+}
+
 #vehicle-chooser label.radio-inline {
     padding: 0;
     margin: 0;
@@ -7269,6 +7348,10 @@ html, body, main, #map {
     background-color: #ff8000;
     border: 1px solid #ddd;
     border-bottom-color: transparent;
+}
+
+#vehicle-chooser > label:first-child input + div {
+    border-top-left-radius: 8px;
 }
 
 .ol-attribution ul {
@@ -7334,6 +7417,7 @@ html, body, main, #map {
 #waypoint-container .adress-name {
     font-size: 0.75em;
     line-height: 1.5em;
+    max-width: 300px;
 }
 
 #waypoint-container > li > .row {
@@ -7372,5 +7456,9 @@ html, body, main, #map {
 
 .popover {
     z-index: 20002;
+}
+
+#results {
+    border-radius: 0 0 8px 8px;
 }
 /*# sourceMappingURL=routing.css.map */

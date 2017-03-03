@@ -3,12 +3,16 @@
 }
 
 #results {
-    height: 100vh;
-    padding-top: 51px;
+    background-color: white;
+    border: 1px solid #ccc;
+    border-top: 0;
+    border-radius: 0 0 15px 15px;
+    max-height: 0;
+    overflow: auto;
 }
 
-#closer {
-    top: 50px;
+#clear-search {
+    background-color: white;
 }
 
 #beta-info {
@@ -24,4 +28,26 @@
     bottom: 70px;
     width: 100%;
     text-align: center;
+}
+
+#search {
+    padding: 0;
+}
+
+#result-toggler {
+    position: relative;
+    width: 150px;
+    left: calc(50% - 75px);
+    top: 0px;
+    text-align: center;
+    color: white;
+    background-color: rgb(255, 128, 0);
+    border-radius: 0 0 8px 8px;
+    height: 20px;
+    font-size: 12px;
+    line-height: 20px;
+}
+
+#result-toggler:hover {
+    cursor: pointer;
 }

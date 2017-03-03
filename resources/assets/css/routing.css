@@ -84,7 +84,7 @@
 }
 
 #routing-steps {
-    margin-top: 10px;
+    margin: 0;
 }
 
 #routing-steps .step {
@@ -109,6 +109,26 @@
     margin-top: .5em;
 }
 
+#routing-steps .step .step-string, #routing-steps .step .step-length {
+    font-weight: bold;
+    font-size: 18px;
+    font-family: Liberation sans-serif;
+}
+
+#vehicle-chooser {
+    background-color: white;
+    border: 1px solid #ccc;
+    border-bottom: 0;
+    border-radius: 8px 8px 0 0;
+}
+
+#vehicle-chooser > .close {
+    font-size: 30px;
+    padding-top: 6px;
+    padding-right: 15px;
+    color: rgb(255, 128, 0);
+}
+
 #vehicle-chooser label.radio-inline {
     padding: 0;
     margin: 0;
@@ -129,6 +149,10 @@
     background-color: #ff8000;
     border: 1px solid #ddd;
     border-bottom-color: transparent;
+}
+
+#vehicle-chooser > label:first-child input + div {
+    border-top-left-radius: 8px;
 }
 
 .ol-attribution ul {
@@ -194,6 +218,7 @@
 #waypoint-container .adress-name {
     font-size: 0.75em;
     line-height: 1.5em;
+    max-width: 300px;
 }
 
 #waypoint-container > li > .row {
@@ -232,4 +257,8 @@
 
 .popover {
     z-index: 20002;
+}
+
+#results {
+    border-radius: 0 0 8px 8px;
 }

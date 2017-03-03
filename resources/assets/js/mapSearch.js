@@ -1,20 +1,23 @@
 var shouldUpdate = true;
-function start(){
+$(document).ready(function(){
     initStartNavigation();
-    map.on("moveend", updateUrl);
+    if(typeof vehicle === "undefined"){
+        map.on("moveend", updateUrl);
+    }
 
     // Initialize research Button
     var research = $("<div id=\"research-button\" class=\"hidden\"><button type=\"button\" class=\"btn btn-default\">In diesem Bereich erneut Suchen</button></div>")
     $("#map").append(research);
+    $(research).find("button").off();
     $(research).find("button").click(function(){
         $("#doSearch").click();
     });
 
-    if(typeof center !== "undefined" && typeof zoom !== "undefined"){
+    if(typeof center !== "undefined" && typeof zoom !== "undefined" && typeof vehicle === "undefined"){
         if(typeof query !== "undefined"){
             $("#search input[name=q]").val(query);
         }
-        
+        console.log("here");
         map.un("moveend", updateUrl);
         map.getView().animate({
             zoom: parseInt(zoom),
@@ -22,6 +25,7 @@ function start(){
             duration: 1500
         }, function(){
             setTimeout(function(){
+                map.un("moveend", updateUrl);
                 map.on("moveend", updateUrl);
                 if($("#search input[name=q]").val() !== ""){
                     $("#doSearch").click();
@@ -35,60 +39,65 @@ function start(){
     });
 
     
-
-    // Put the Popstate Event:
-    $(window).unbind('popstate');
-    $(window).bind('popstate', function(event) {
-        var state = event.originalEvent.state;
-        if (state !== null && state["center"] !== undefined && state["zoom"] !== undefined) {
-            center = state["center"].split(",");
-            zoom = state["zoom"];
-            q = state["q"];
-            var shouldSearch = false;
-            var shouldClear = false;
-            if($("#search input[name=q]").val() !== state["q"] && state["q"] !== ""){
-                shouldSearch = true;
+    if(typeof vehicle === "undefined"){
+        // Put the Popstate Event:
+        $(window).unbind('popstate');
+        $(window).bind('popstate', function(event) {
+            var state = event.originalEvent.state;
+            if (state !== null && state["center"] !== undefined && state["zoom"] !== undefined) {
+                center = state["center"].split(",");
+                zoom = state["zoom"];
+                q = state["q"];
+                var shouldSearch = false;
+                var shouldClear = false;
+                if($("#search input[name=q]").val() !== state["q"] && state["q"] !== ""){
+                    shouldSearch = true;
+                }
+                $("#search input[name=q]").val(state["q"]);
+                if(typeof searchResults !== "undefined" && $("#search input[name=q]").val() === ""){
+                    shouldClear = true;
+                }
+                
+                map.un("moveend", updateUrl);
+                map.getView().animate({
+                    zoom: parseInt(zoom),
+                    center: center,
+                    duration: 1500
+                }, function(){
+                    setTimeout(function(){
+                        map.on("moveend", updateUrl);
+                        if(shouldSearch){
+                            $("#doSearch").click();
+                        }else if(shouldClear){
+                            deinitResults();
+                        }
+                    }, 500); 
+                });
+            }else{
+                document.location.href = document.location.href;
             }
-            $("#search input[name=q]").val(state["q"]);
-            if(typeof searchResults !== "undefined" && $("#search input[name=q]").val() === ""){
-                shouldClear = true;
+        });
+
+        $("#doSearch").click(function() {
+
+            var navbarCollapsed = $("#navbar-collapse").hasClass("in");
+
+            // If the Navbar is collapsed we need to pull it in before we search because it takes too much space
+            if(navbarCollapsed){
+                // Start Search when the navbar is hidden
+                $("#navbar-collapse").on("hidden.bs.collapse", executeSearch);
+                // Hide Navbar
+                $(".collapse").collapse("hide");
+            }else{
+                executeSearch();
             }
-            
-            map.un("moveend", updateUrl);
-            map.getView().animate({
-                zoom: parseInt(zoom),
-                center: center,
-                duration: 1500
-            }, function(){
-                setTimeout(function(){
-                    map.on("moveend", updateUrl);
-                    if(shouldSearch){
-                        $("#doSearch").click();
-                    }else if(shouldClear){
-                        $("#clearInput").click();
-                    }
-                }, 500); 
-            });
-        }else{
-            document.location.href = document.location.href;
-        }
-    });
+        });
+    }
 
-    $("#doSearch").click(function() {
-
-        var navbarCollapsed = $("#navbar-collapse").hasClass("in");
-
-        // If the Navbar is collapsed we need to pull it in before we search because it takes too much space
-        if(navbarCollapsed){
-            // Start Search when the navbar is hidden
-            $("#navbar-collapse").on("hidden.bs.collapse", executeSearch);
-            // Hide Navbar
-            $(".collapse").collapse("hide");
-        }else{
-            executeSearch();
-        }
-    });
-}
+    $("#result-toggler").click(function(){
+        toggleResults();
+    })
+});
 
 function executeSearch(){
     q = $("#search input[name=q]").val();
@@ -176,10 +185,13 @@ function initMap() {
                 source: new ol.source.OSM({
                     attributions: [
                         new ol.Attribution({
-                            html: '<a href="https://metager.de/impressum">Impressum</a>'
+                            html: '&copy; ' + '<a href="https://metager.de/">MetaGer.de</a>'
                         }),
                         new ol.Attribution({
-                            html: 'All search results &copy; ' + '<a href="http://nominatim.openstreetmap.org/">Nominatim</a>'
+                            html: '&copy; ' + '<a href="https://metager.de/impressum">Impressum</a>'
+                        }),
+                        new ol.Attribution({
+                            html: '&copy; ' + '<a href="http://nominatim.openstreetmap.org/">Nominatim</a>'
                         }),
                         ol.source.OSM.ATTRIBUTION,
                     ],
@@ -190,7 +202,7 @@ function initMap() {
         target: 'map',
         controls: ol.control.defaults({
             attributionOptions: /** @type {olx.control.AttributionOptions} */ ({
-                collapsible: true
+                collapsible: false
             })
         }).extend([
             new ol.control.ScaleLine()
@@ -231,10 +243,14 @@ function getNearest(lon, lat) {
 }
 
 function deinitResults() {
-    toggleResults("out");
-    $("#results").addClass("hidden");
-    $("#closer").addClass("hidden");
+    toggleResults("in");
     $("#results").html("");
-    updateMapSize();
+    $("#result-toggler").addClass("hidden");
+    $("#search input[name=q]").val("");
+    clearPOIS();
+    q = "";
+    updateUrl();
     initStartNavigation();
+    map.on("singleclick", mapClickFunction);
+    $("#clear-search").remove();
 }

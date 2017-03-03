@@ -1068,20 +1068,11 @@ $(document).ready(function() {
     // Initialize the Map
     initMap();
 
-    $("#closer").click(function() {
-        toggleResults();
-    });
-
     if(getPosition){
         checkGPS(startApplication);
     }else{
         startApplication();
     }
-    $(window).resize(function() {
-        updateResultsPosition();
-        updateCloserPosition();
-        updateMapSize();
-    });
 
     map.on('singleclick', mapClickFunction);
     $("#follow-location > span.button").click(function() {
@@ -1102,7 +1093,7 @@ function numberWithPoints(x) {
 }
 
 function deinitSearchBox() {
-    $("#search").addClass("hidden");
+    $("#search").remove();
 }
 
 function initStartNavigation() {
@@ -1118,105 +1109,32 @@ function initClearInput() {
     $("#clearInput").attr("title", "Sucheingabe löschen");
 }
 
+var resultsHeight = $(window).height() - 80;
 function toggleResults(status) {
+    var currentStatus = $("#results").attr("data-status");
     if (typeof status === "undefined") {
-        status = $("#results").attr("data-status");
+        status = currentStatus;
+        if(status === "in")
+            status = "out";
+        else if(status === "out")
+            status = "in";
+        else
+            status = "in";
     } else if (status !== "in" && status !== "out") {
         status = "in";
     }
-    if (status === "in") {
-        $("#closer").html("<");
-        $("#results").attr("data-status", "out");
-        $("#closer").attr("title", "Ergebnisse ausklappen");
-        updateResultsPosition();
-        updateCloserPosition();
-    } else {
-        $("#closer").html(">");
+    if (status === "in" && currentStatus !== "in") {
         $("#results").attr("data-status", "in");
-        $("#closer").attr("title", "Ergebnisse einklappen");
-        updateResultsPosition();
-        updateCloserPosition();
-    }
-    updateMapSize();
-}
-
-function updateMapSize() {
-    var resultsWidth = parseInt($("#results").width());
-    if ($("#results").hasClass("hidden")) {
-        resultsWidth = 0;
-    }
-    $("#search input[name=q]").attr("data-move-search", "false");
-    var displayWidth = $(window).width();
-    // Change Map Width
-    $("#map").width(displayWidth - resultsWidth);
-    var navBarHeight = $("nav").height();
-    if($("nav").hasClass("hidden")){
-        navBarHeight = 0;
-    }
-    var displayHeight = $(window).height();
-    // Change The Map Height
-    // It's possible that the <main> element has a max-height defined
-    if($("main").css("max-height") !== "none"){
-        $("#map").height($("main").css("max-height"));
-    }else{
-        $("#map").css("margin-top", navBarHeight);
-        $("#map").height(displayHeight - navBarHeight);
-    }
-
-    map.updateSize();
-    setTimeout(function() {
-        $("#search input[name=q]").attr("data-move-search", "");
-    }, 1500);
-}
-
-function doBounce(location) {
-    // Bouncing means we zoom out one level
-    map.getView().setZoom(map.getView().getZoom() - 1);
-    // Then Panning to the desired location
-    doPan(location);
-    // And Then zoom back in one level
-    map.getView().setZoom(map.getView().getZoom() + 1);
-}
-function doPan(location, zoom) {
-    if(zoom === null){
-        zoom = map.getView().getZoom();
-    }
-    map.getView().animate({
-        zoom: zoom,
-        center: location,
-        duration: 1500
-    });
-}
-
-function updateResultsPosition() {
-    if ($("#results").attr("data-status") === "out") {
-        $("#results").addClass("hidden");
-    } else {
-        $("#results").removeClass("hidden");
-    }
-}
-
-function updateCloserPosition() {
-    if($("#closer").hasClass("hidden")){
-        $("#closer").removeClass("hidden");
-    }
-    if ($("#results").attr("data-status") === "out") {
-        $("#closer").css("right", "0px");
-    } else {
-        var screenWidth = $(window).width();
-        var resultsWidth = $("#results").width() - 1;
-        var closerWidth = $("#closer").width();
-        if (screenWidth > (resultsWidth + closerWidth)) {
-            $("#closer").css("right", resultsWidth + "px");
-        } else {
-            $("#closer").css("right", (resultsWidth - closerWidth) + "px");
+        $("#result-toggler").html("Liste anzeigen")
+        $("#results").animate({"max-height": 0}, 600);
+    } else if(status === "out" && currentStatus !== "out"){
+        $("#results").attr("data-status", "out");
+        $("#result-toggler").html("Liste ausblenden")
+        $("#results").animate({"max-height": resultsHeight}, 600);
+        if($("#result-toggler").hasClass("hidden")){
+            $("#result-toggler").removeClass("hidden");
         }
     }
-    var top = 0;
-    if(!$("nav").hasClass("hidden")){
-        top = $("nav").height();
-    }
-    $("#closer").css("top", top);
 }
 
 function adjustView(results, limit) {
@@ -1259,7 +1177,13 @@ function adjustView(results, limit) {
     maxPosition = ol.proj.transform(maxPosition, 'EPSG:4326', 'EPSG:3857');
 
     if(minPosition.length === 2 && maxPosition.length === 2){
-        map.getView().fit([minPosition[0], minPosition[1], maxPosition[0], maxPosition[1]], { duration: 1500, nearest: true, maxZoom: 18});
+        // If this is not on a mobile AND the Results are Visible, we fit the Results to the left of the List
+        var paddingRight = 0;
+        if(parseInt( $(document).outerWidth()) > 768 && $("#results").attr("data-status") === "out" ){
+            paddingRight = $("#search-addon").outerWidth();
+        }
+
+        map.getView().fit([minPosition[0], minPosition[1], maxPosition[0], maxPosition[1]], { duration: 1500, nearest: true, maxZoom: 18, padding: [0, paddingRight, 0, 0]});
     }
 }
 /**
@@ -1306,17 +1230,20 @@ function getCity(address) {
     return city;
 }
 
-function adjustViewBoundingBox(minpos, maxpos) {
+function adjustViewBoundingBox(minpos, maxpos, padding) {
     minPosition = ol.proj.transform(minpos, 'EPSG:4326', 'EPSG:3857');
     maxPosition = ol.proj.transform(maxpos, 'EPSG:4326', 'EPSG:3857');
-    map.getView().fit([minPosition[0], minPosition[1], maxPosition[0], maxPosition[1]], {padding: [5,5,5,5], duration: 1500});
+    if(typeof padding === "undefined"){
+        padding = [5,5,5,5];
+    }
+    map.getView().fit([minPosition[0], minPosition[1], maxPosition[0], maxPosition[1]], {"padding": padding, duration: 1500});
     updateMapExtent();
 }
 /*
  * This Function takes an array of Positions and adjusts the view of the map so everything is visible
  * @param positions{Array} - Array with Position Objects ([lon,lat])
  */
-function adjustViewPosList(positions) {
+function adjustViewPosList(positions, padding) {
     var minpos = [null, null];
     var maxpos = [null, null];
     $.each(positions, function(index, value) {
@@ -1336,7 +1263,7 @@ function adjustViewPosList(positions) {
             maxpos[1] = value[1];
         }
     });
-    adjustViewBoundingBox(minpos, maxpos);
+    adjustViewBoundingBox(minpos, maxpos, padding);
 }
 
 function clearPOIS() {
@@ -1653,172 +1580,10 @@ function toggleResearchButtonMoveEvent(){
     map.un("moveend", toggleResearchButtonMoveEvent);
     map.on("moveend", showResearchButton);
 }
-var shouldUpdate = true;
-function start(){
-    initStartNavigation();
-    map.on("moveend", updateUrl);
-
-    // Initialize research Button
-    var research = $("<div id=\"research-button\" class=\"hidden\"><button type=\"button\" class=\"btn btn-default\">In diesem Bereich erneut Suchen</button></div>")
-    $("#map").append(research);
-    $(research).find("button").click(function(){
-        $("#doSearch").click();
-    });
-
-    if(typeof center !== "undefined" && typeof zoom !== "undefined"){
-        if(typeof query !== "undefined"){
-            $("#search input[name=q]").val(query);
-        }
-        
-        map.un("moveend", updateUrl);
-        map.getView().animate({
-            zoom: parseInt(zoom),
-            center: center,
-            duration: 1500
-        }, function(){
-            setTimeout(function(){
-                map.on("moveend", updateUrl);
-                if($("#search input[name=q]").val() !== ""){
-                    $("#doSearch").click();
-                }
-            }, 500); 
-        });
-    }
-
-    $("#search input[name=q]").on("keydown", function(event) {
-        if (event.which == 13) $("#doSearch").click();
-    });
-
-    
-
-    // Put the Popstate Event:
-    $(window).unbind('popstate');
-    $(window).bind('popstate', function(event) {
-        var state = event.originalEvent.state;
-        if (state !== null && state["center"] !== undefined && state["zoom"] !== undefined) {
-            center = state["center"].split(",");
-            zoom = state["zoom"];
-            q = state["q"];
-            var shouldSearch = false;
-            var shouldClear = false;
-            if($("#search input[name=q]").val() !== state["q"] && state["q"] !== ""){
-                shouldSearch = true;
-            }
-            $("#search input[name=q]").val(state["q"]);
-            if(typeof searchResults !== "undefined" && $("#search input[name=q]").val() === ""){
-                shouldClear = true;
-            }
-            
-            map.un("moveend", updateUrl);
-            map.getView().animate({
-                zoom: parseInt(zoom),
-                center: center,
-                duration: 1500
-            }, function(){
-                setTimeout(function(){
-                    map.on("moveend", updateUrl);
-                    if(shouldSearch){
-                        $("#doSearch").click();
-                    }else if(shouldClear){
-                        $("#clearInput").click();
-                    }
-                }, 500); 
-            });
-        }else{
-            document.location.href = document.location.href;
-        }
-    });
-
-    $("#doSearch").click(function() {
-
-        var navbarCollapsed = $("#navbar-collapse").hasClass("in");
-
-        // If the Navbar is collapsed we need to pull it in before we search because it takes too much space
-        if(navbarCollapsed){
-            // Start Search when the navbar is hidden
-            $("#navbar-collapse").on("hidden.bs.collapse", executeSearch);
-            // Hide Navbar
-            $(".collapse").collapse("hide");
-        }else{
-            executeSearch();
-        }
-    });
-}
-
-function executeSearch(){
-    q = $("#search input[name=q]").val();
-    $("#clearInput").html("<img src=\"/img/ajax-loader.gif\" />");
-
-    // Calculate the current Extent of the map
-    var tmpExtent = map.getView().calculateExtent(map.getSize());
-    var extent = ol.proj.transform([tmpExtent[0], tmpExtent[1]], 'EPSG:3857', 'EPSG:4326').concat(ol.proj.transform([tmpExtent[2], tmpExtent[3]], 'EPSG:3857', 'EPSG:4326'));
-
-    var url = '/' + encodeURI(q) + '/' + encodeURI(extent[0]) + '/' + encodeURI(extent[1]) + '/' + encodeURI(extent[2]) + '/' + encodeURI(extent[3]);
-    $.getScript(url).fail(function(jqxhr, settings, exception) {
-        console.log(exception);
-    });
-    $("#navbar-collapse").off("hidden.bs.collapse");
-    $("#search input[name=q]").blur();
-}
-
-function updateUrl(){
-
-    if(typeof map.getView().getZoom() === "undefined"){
-        // If the Zoom is undefined for this resolution, we will round it so it is valid again.
-        var resolution = map.getView().getResolution() * 10;    // We'll round to one digit
-        resolution = Math.round(resolution) / 10;
-
-        map.getView().setResolution(resolution);
-
-        if(typeof map.getView().getZoom() === "undefined"){
-            // If the zoom is undefined again I can't help
-            return;
-        }     
-    }
-    if(typeof zoom === "undefined"){
-        zoom = map.getView().getZoom();
-    }
-
-    if(typeof center === "undefined"){
-        center = map.getView().getCenter();
-    }
-
-    if(typeof q === "undefined"){
-        q = $("#search input[name=q]").val();
-    }
-
-    if(map.getView().getCenter() === center && zoom === parseInt(map.getView().getZoom()) && $("#search input[name=q]").val() === q){
-        return;
-    }
-
-    center = map.getView().getCenter();
-    if(parseInt(map.getView().getZoom()) !== "NaN"){
-        zoom = parseInt(map.getView().getZoom());
-    }
-    q = $("#search input[name=q]").val();
-
-    var uri = '/map/';
-
-    var query = "";
-    if(typeof q !== "undefined" && q !== ""){
-        query = q;
-        uri += query + "/";
-    }
-
-    uri += center.toString() + "," + zoom;
-
-    var stateObj = {
-        center: center.toString(),
-        zoom: zoom,
-        q: query
-    };
-    // Change URL
-    window.history.pushState(stateObj, '', uri);
-}
-
 function initMap() {
-    popupOverlay = new ol.Overlay( /** @type {olx.OverlayOptions} */ ({
-        element: document.getElementById("popup"),
+
+    popupOverlay = new ol.Overlay(/** @type {olx.OverlayOptions} */ ({
+        element: $("#popup").get(0),
         autoPan: true,
         autoPanAnimation: {
             duration: 250
@@ -1843,54 +1608,56 @@ function initMap() {
             })
         ],
         target: 'map',
-        controls: ol.control.defaults({
-            attributionOptions: /** @type {olx.control.AttributionOptions} */ ({
-                collapsible: true
-            })
-        }).extend([
-            new ol.control.ScaleLine()
-        ]),
+        controls: [],
+            interactions: ol.interaction.defaults({
+                doubleClickZoom: false,
+                dragAndDrop: false,
+                dragPan: false,
+                dragBox: false,
+                dragRotate: false,
+                dragRotateAndZoom: false,
+                dragZoom: false,
+                draw: false,
+                extent: false,
+                interaction: false,
+                pointer: false,
+                keyboardPan: false,
+                keyboardZoom: false,
+                modify: false,
+                pinchRotate: false,
+                pinchZoom: false,
+                snap: false,
+                translate: false,
+                mouseWheelZoom: false,
+                pointer: false,
+                select: false
+            }),
         overlays: [popupOverlay],
         view: new ol.View({
             maxZoom: 18,
-            minZoom: 6,
+            minZoom: 5,
             center: ol.proj.transform(
                 [10.06897, 51.37247], 'EPSG:4326', 'EPSG:3857'),
-            zoom: 6
+            zoom: 5
         }),
         loadTilesWhileAnimating: true,
         loadTilesWhileInteracting: true
     });
     map.addControl(new ol.control.ZoomSlider());
-    $("#popup-closer").click(function() {
+    $("#popup-closer").click(function(){
         popupOverlay.setPosition(undefined);
         $(this).blur();
         return false;
     });
 }
-/**
- * This function sends a request to our Nominatim instance and evaluates the given coordinates to an adress
- * @param {Float} lon
- * @param {Float} lat
- * @return {Array} adress
+/*! iFrame Resizer (iframeSizer.contentWindow.min.js) - v3.5.5 - 2016-06-16
+ *  Desc: Include this file in any page being loaded into an iframe
+ *        to force the iframe to resize to the content size.
+ *  Requires: iframeResizer.min.js on host page.
+ *  Copyright: (c) 2016 David J. Bradshaw - dave@bradshaw.net
+ *  License: MIT
  */
-function getNearest(lon, lat) {
-    var url = "https://maps.metager.de/nominatim/reverse.php?format=json&lat=" + lat + "&lon=" + lon + "&zoom=18&extratags=1&addressdetails=1&namedetails=1";
-    // Send the Request
-    $.get(url, function(data) {
-        console.log(data);
-        var popup = buildResultFromData(data);
-        // And now we can show the Popup where the user clicked
-        createPopup(lon, lat, popup);
-    });
-}
 
-function deinitResults() {
-    toggleResults("out");
-    $("#results").addClass("hidden");
-    $("#closer").addClass("hidden");
-    $("#results").html("");
-    updateMapSize();
-    initStartNavigation();
-}
-//# sourceMappingURL=mapSearch.js.map
+!function(a,b){"use strict";function c(b,c,d){"addEventListener"in a?b.addEventListener(c,d,!1):"attachEvent"in a&&b.attachEvent("on"+c,d)}function d(b,c,d){"removeEventListener"in a?b.removeEventListener(c,d,!1):"detachEvent"in a&&b.detachEvent("on"+c,d)}function e(a){return a.charAt(0).toUpperCase()+a.slice(1)}function f(a){var b,c,d,e=null,f=0,g=function(){f=Ha(),e=null,d=a.apply(b,c),e||(b=c=null)};return function(){var h=Ha();f||(f=h);var i=ya-(h-f);return b=this,c=arguments,0>=i||i>ya?(e&&(clearTimeout(e),e=null),f=h,d=a.apply(b,c),e||(b=c=null)):e||(e=setTimeout(g,i)),d}}function g(a){return na+"["+pa+"] "+a}function h(b){ma&&"object"==typeof a.console&&console.log(g(b))}function i(b){"object"==typeof a.console&&console.warn(g(b))}function j(){k(),h("Initialising iFrame ("+location.href+")"),l(),o(),n("background",X),n("padding",_),B(),t(),u(),p(),D(),v(),ja=C(),O("init","Init message from host page"),Ea()}function k(){function a(a){return"true"===a?!0:!1}var c=ia.substr(oa).split(":");pa=c[0],Y=b!==c[1]?Number(c[1]):Y,aa=b!==c[2]?a(c[2]):aa,ma=b!==c[3]?a(c[3]):ma,ka=b!==c[4]?Number(c[4]):ka,V=b!==c[6]?a(c[6]):V,Z=c[7],ga=b!==c[8]?c[8]:ga,X=c[9],_=c[10],va=b!==c[11]?Number(c[11]):va,ja.enable=b!==c[12]?a(c[12]):!1,ra=b!==c[13]?c[13]:ra,Ba=b!==c[14]?c[14]:Ba}function l(){function b(){var b=a.iFrameResizer;h("Reading data from page: "+JSON.stringify(b)),Da="messageCallback"in b?b.messageCallback:Da,Ea="readyCallback"in b?b.readyCallback:Ea,ua="targetOrigin"in b?b.targetOrigin:ua,ga="heightCalculationMethod"in b?b.heightCalculationMethod:ga,Ba="widthCalculationMethod"in b?b.widthCalculationMethod:Ba}function c(a,b){return"function"==typeof a&&(h("Setup custom "+b+"CalcMethod"),Ga[b]=a,a="custom"),a}"iFrameResizer"in a&&Object===a.iFrameResizer.constructor&&(b(),ga=c(ga,"height"),Ba=c(Ba,"width")),h("TargetOrigin for parent set to: "+ua)}function m(a,b){return-1!==b.indexOf("-")&&(i("Negative CSS value ignored for "+a),b=""),b}function n(a,c){b!==c&&""!==c&&"null"!==c&&(document.body.style[a]=c,h("Body "+a+' set to "'+c+'"'))}function o(){b===Z&&(Z=Y+"px"),n("margin",m("margin",Z))}function p(){document.documentElement.style.height="",document.body.style.height="",h('HTML & body height set to "auto"')}function q(b){function f(){O(b.eventName,b.eventType)}var g={add:function(b){c(a,b,f)},remove:function(b){d(a,b,f)}};b.eventNames&&Array.prototype.map?(b.eventName=b.eventNames[0],b.eventNames.map(g[b.method])):g[b.method](b.eventName),h(e(b.method)+" event listener: "+b.eventType)}function r(a){q({method:a,eventType:"Animation Start",eventNames:["animationstart","webkitAnimationStart"]}),q({method:a,eventType:"Animation Iteration",eventNames:["animationiteration","webkitAnimationIteration"]}),q({method:a,eventType:"Animation End",eventNames:["animationend","webkitAnimationEnd"]}),q({method:a,eventType:"Input",eventName:"input"}),q({method:a,eventType:"Mouse Up",eventName:"mouseup"}),q({method:a,eventType:"Mouse Down",eventName:"mousedown"}),q({method:a,eventType:"Orientation Change",eventName:"orientationchange"}),q({method:a,eventType:"Print",eventName:["afterprint","beforeprint"]}),q({method:a,eventType:"Ready State Change",eventName:"readystatechange"}),q({method:a,eventType:"Touch Start",eventName:"touchstart"}),q({method:a,eventType:"Touch End",eventName:"touchend"}),q({method:a,eventType:"Touch Cancel",eventName:"touchcancel"}),q({method:a,eventType:"Transition Start",eventNames:["transitionstart","webkitTransitionStart","MSTransitionStart","oTransitionStart","otransitionstart"]}),q({method:a,eventType:"Transition Iteration",eventNames:["transitioniteration","webkitTransitionIteration","MSTransitionIteration","oTransitionIteration","otransitioniteration"]}),q({method:a,eventType:"Transition End",eventNames:["transitionend","webkitTransitionEnd","MSTransitionEnd","oTransitionEnd","otransitionend"]}),"child"===ra&&q({method:a,eventType:"IFrame Resized",eventName:"resize"})}function s(a,b,c,d){return b!==a&&(a in c||(i(a+" is not a valid option for "+d+"CalculationMethod."),a=b),h(d+' calculation method set to "'+a+'"')),a}function t(){ga=s(ga,fa,Ia,"height")}function u(){Ba=s(Ba,Aa,Ja,"width")}function v(){!0===V?(r("add"),G()):h("Auto Resize disabled")}function w(){h("Disable outgoing messages"),sa=!1}function x(){h("Remove event listener: Message"),d(a,"message",T)}function y(){null!==$&&$.disconnect()}function z(){r("remove"),y(),clearInterval(la)}function A(){w(),x(),!0===V&&z()}function B(){var a=document.createElement("div");a.style.clear="both",a.style.display="block",document.body.appendChild(a)}function C(){function d(){return{x:a.pageXOffset!==b?a.pageXOffset:document.documentElement.scrollLeft,y:a.pageYOffset!==b?a.pageYOffset:document.documentElement.scrollTop}}function e(a){var b=a.getBoundingClientRect(),c=d();return{x:parseInt(b.left,10)+parseInt(c.x,10),y:parseInt(b.top,10)+parseInt(c.y,10)}}function f(a){function c(a){var b=e(a);h("Moving to in page link (#"+d+") at x: "+b.x+" y: "+b.y),S(b.y,b.x,"scrollToOffset")}var d=a.split("#")[1]||a,f=decodeURIComponent(d),g=document.getElementById(f)||document.getElementsByName(f)[0];b!==g?c(g):(h("In page link (#"+d+") not found in iFrame, so sending to parent"),S(0,0,"inPageLink","#"+d))}function g(){""!==location.hash&&"#"!==location.hash&&f(location.href)}function j(){function a(a){function b(a){a.preventDefault(),f(this.getAttribute("href"))}"#"!==a.getAttribute("href")&&c(a,"click",b)}Array.prototype.forEach.call(document.querySelectorAll('a[href^="#"]'),a)}function k(){c(a,"hashchange",g)}function l(){setTimeout(g,ca)}function m(){Array.prototype.forEach&&document.querySelectorAll?(h("Setting up location.hash handlers"),j(),k(),l()):i("In page linking not fully supported in this browser! (See README.md for IE8 workaround)")}return ja.enable?m():h("In page linking not enabled"),{findTarget:f}}function D(){h("Enable public methods"),Ca.parentIFrame={autoResize:function(a){return!0===a&&!1===V?(V=!0,v()):!1===a&&!0===V&&(V=!1,z()),V},close:function(){S(0,0,"close"),A()},getId:function(){return pa},getPageInfo:function(a){"function"==typeof a?(Fa=a,S(0,0,"pageInfo")):(Fa=function(){},S(0,0,"pageInfoStop"))},moveToAnchor:function(a){ja.findTarget(a)},reset:function(){R("parentIFrame.reset")},scrollTo:function(a,b){S(b,a,"scrollTo")},scrollToOffset:function(a,b){S(b,a,"scrollToOffset")},sendMessage:function(a,b){S(0,0,"message",JSON.stringify(a),b)},setHeightCalculationMethod:function(a){ga=a,t()},setWidthCalculationMethod:function(a){Ba=a,u()},setTargetOrigin:function(a){h("Set targetOrigin: "+a),ua=a},size:function(a,b){var c=""+(a?a:"")+(b?","+b:"");O("size","parentIFrame.size("+c+")",a,b)}}}function E(){0!==ka&&(h("setInterval: "+ka+"ms"),la=setInterval(function(){O("interval","setInterval: "+ka)},Math.abs(ka)))}function F(){function c(a){function b(a){!1===a.complete&&(h("Attach listeners to "+a.src),a.addEventListener("load",g,!1),a.addEventListener("error",i,!1),l.push(a))}"attributes"===a.type&&"src"===a.attributeName?b(a.target):"childList"===a.type&&Array.prototype.forEach.call(a.target.querySelectorAll("img"),b)}function d(a){l.splice(l.indexOf(a),1)}function e(a){h("Remove listeners from "+a.src),a.removeEventListener("load",g,!1),a.removeEventListener("error",i,!1),d(a)}function f(a,c,d){e(a.target),O(c,d+": "+a.target.src,b,b)}function g(a){f(a,"imageLoad","Image loaded")}function i(a){f(a,"imageLoadFailed","Image load failed")}function j(a){O("mutationObserver","mutationObserver: "+a[0].target+" "+a[0].type),a.forEach(c)}function k(){var a=document.querySelector("body"),b={attributes:!0,attributeOldValue:!1,characterData:!0,characterDataOldValue:!1,childList:!0,subtree:!0};return n=new m(j),h("Create body MutationObserver"),n.observe(a,b),n}var l=[],m=a.MutationObserver||a.WebKitMutationObserver,n=k();return{disconnect:function(){"disconnect"in n&&(h("Disconnect body MutationObserver"),n.disconnect(),l.forEach(e))}}}function G(){var b=0>ka;a.MutationObserver||a.WebKitMutationObserver?b?E():$=F():(h("MutationObserver not supported in this browser!"),E())}function H(a,b){function c(a){var c=/^\d+(px)?$/i;if(c.test(a))return parseInt(a,W);var d=b.style.left,e=b.runtimeStyle.left;return b.runtimeStyle.left=b.currentStyle.left,b.style.left=a||0,a=b.style.pixelLeft,b.style.left=d,b.runtimeStyle.left=e,a}var d=0;return b=b||document.body,"defaultView"in document&&"getComputedStyle"in document.defaultView?(d=document.defaultView.getComputedStyle(b,null),d=null!==d?d[a]:0):d=c(b.currentStyle[a]),parseInt(d,W)}function I(a){a>ya/2&&(ya=2*a,h("Event throttle increased to "+ya+"ms"))}function J(a,b){for(var c=b.length,d=0,f=0,g=e(a),i=Ha(),j=0;c>j;j++)d=b[j].getBoundingClientRect()[a]+H("margin"+g,b[j]),d>f&&(f=d);return i=Ha()-i,h("Parsed "+c+" HTML elements"),h("Element position calculated in "+i+"ms"),I(i),f}function K(a){return[a.bodyOffset(),a.bodyScroll(),a.documentElementOffset(),a.documentElementScroll()]}function L(a,b){function c(){return i("No tagged elements ("+b+") found on page"),ea}var d=document.querySelectorAll("["+b+"]");return 0===d.length?c():J(a,d)}function M(){return document.querySelectorAll("body *")}function N(a,c,d,e){function f(){ea=m,za=n,S(ea,za,a)}function g(){function a(a,b){var c=Math.abs(a-b)<=va;return!c}return m=b!==d?d:Ia[ga](),n=b!==e?e:Ja[Ba](),a(ea,m)||aa&&a(za,n)}function i(){return!(a in{init:1,interval:1,size:1})}function j(){return ga in qa||aa&&Ba in qa}function k(){h("No change in size detected")}function l(){i()&&j()?R(c):a in{interval:1}||k()}var m,n;g()||"init"===a?(P(),f()):l()}function O(a,b,c,d){function e(){a in{reset:1,resetPage:1,init:1}||h("Trigger event: "+b)}function f(){return wa&&a in ba}f()?h("Trigger event cancelled: "+a):(e(),Ka(a,b,c,d))}function P(){wa||(wa=!0,h("Trigger event lock on")),clearTimeout(xa),xa=setTimeout(function(){wa=!1,h("Trigger event lock off"),h("--")},ca)}function Q(a){ea=Ia[ga](),za=Ja[Ba](),S(ea,za,a)}function R(a){var b=ga;ga=fa,h("Reset trigger event: "+a),P(),Q("reset"),ga=b}function S(a,c,d,e,f){function g(){b===f?f=ua:h("Message targetOrigin: "+f)}function i(){var g=a+":"+c,i=pa+":"+g+":"+d+(b!==e?":"+e:"");h("Sending message to host page ("+i+")"),ta.postMessage(na+i,f)}!0===sa&&(g(),i())}function T(b){function d(){return na===(""+b.data).substr(0,oa)}function e(){function d(){ia=b.data,ta=b.source,j(),da=!1,setTimeout(function(){ha=!1},ca)}document.body?d():(h("Waiting for page ready"),c(a,"readystatechange",e))}function f(){ha?h("Page reset ignored by init"):(h("Page size reset by host page"),Q("resetPage"))}function g(){O("resizeParent","Parent window requested size check")}function k(){var a=m();ja.findTarget(a)}function l(){return b.data.split("]")[1].split(":")[0]}function m(){return b.data.substr(b.data.indexOf(":")+1)}function n(){return"iFrameResize"in a}function o(){var a=m();h("MessageCallback called from parent: "+a),Da(JSON.parse(a)),h(" --")}function p(){var a=m();h("PageInfoFromParent called from parent: "+a),Fa(JSON.parse(a)),h(" --")}function q(){return b.data.split(":")[2]in{"true":1,"false":1}}function r(){switch(l()){case"reset":f();break;case"resize":g();break;case"inPageLink":case"moveToAnchor":k();break;case"message":o();break;case"pageInfo":p();break;default:n()||q()||i("Unexpected message ("+b.data+")")}}function s(){!1===da?r():q()?e():h('Ignored message of type "'+l()+'". Received before initialization.')}d()&&s()}function U(){"loading"!==document.readyState&&a.parent.postMessage("[iFrameResizerChild]Ready","*")}var V=!0,W=10,X="",Y=0,Z="",$=null,_="",aa=!1,ba={resize:1,click:1},ca=128,da=!0,ea=1,fa="bodyOffset",ga=fa,ha=!0,ia="",ja={},ka=32,la=null,ma=!1,na="[iFrameSizer]",oa=na.length,pa="",qa={max:1,min:1,bodyScroll:1,documentElementScroll:1},ra="child",sa=!0,ta=a.parent,ua="*",va=0,wa=!1,xa=null,ya=16,za=1,Aa="scroll",Ba=Aa,Ca=a,Da=function(){i("MessageCallback function not defined")},Ea=function(){},Fa=function(){},Ga={height:function(){return i("Custom height calculation function not defined"),document.documentElement.offsetHeight},width:function(){return i("Custom width calculation function not defined"),document.body.scrollWidth}},Ha=Date.now||function(){return(new Date).getTime()},Ia={bodyOffset:function(){return document.body.offsetHeight+H("marginTop")+H("marginBottom")},offset:function(){return Ia.bodyOffset()},bodyScroll:function(){return document.body.scrollHeight},custom:function(){return Ga.height()},documentElementOffset:function(){return document.documentElement.offsetHeight},documentElementScroll:function(){return document.documentElement.scrollHeight},max:function(){return Math.max.apply(null,K(Ia))},min:function(){return Math.min.apply(null,K(Ia))},grow:function(){return Ia.max()},lowestElement:function(){return Math.max(Ia.bodyOffset(),J("bottom",M()))},taggedElement:function(){return L("bottom","data-iframe-height")}},Ja={bodyScroll:function(){return document.body.scrollWidth},bodyOffset:function(){return document.body.offsetWidth},custom:function(){return Ga.width()},documentElementScroll:function(){return document.documentElement.scrollWidth},documentElementOffset:function(){return document.documentElement.offsetWidth},scroll:function(){return Math.max(Ja.bodyScroll(),Ja.documentElementScroll())},max:function(){return Math.max.apply(null,K(Ja))},min:function(){return Math.min.apply(null,K(Ja))},rightMostElement:function(){return J("right",M())},taggedElement:function(){return L("right","data-iframe-width")}},Ka=f(N);c(a,"message",T),U()}(window||{});
+//# sourceMappingURL=iframeResizer.contentWindow.map
+//# sourceMappingURL=iframeSearch.js.map

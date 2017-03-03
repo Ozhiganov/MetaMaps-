@@ -11,9 +11,13 @@ var distanceToNextPoint = null;
 
 function startAssistent() {
     if (gps && points.match(/^gps;/) !== null) {
-        alert("\
-            Bitte beachten Sie auf Ihrem Weg stets die geltenden Verkehrsregeln und fahren nur so, wie es die aktuelle Verkehrssituation zulässt.\n\
-            Die Route kann veraltete Informationen enthalten, wodurch die Vorschläge für die Route im aktuellen Straßenverkehr nicht mehr möglich sind.");
+        var text = "Bitte beachten Sie auf Ihrem Weg stets die geltenden Verkehrsregeln und fahren nur so, wie es die aktuelle Verkehrssituation zulässt.";
+        map.un("moveend", updateUrl)
+        if(typeof android === "undefined"){
+            alert(text);
+        }else{
+            android.showToast(text);
+        }
         positions = [];
         initWaypoints();
         prepareInterface();
@@ -60,8 +64,10 @@ function initAssistentGraphics() {
 function prepareInterface() {
     // Change Navigation-Bar to make it show the next Steps
     // Hide Navigation Bar
-    $("nav").removeClass("navbar");
-    $("nav").removeClass("navbar-default");
+    $("figure#search-addon").html("");
+    $("figure#search-addon").css("width", "100%");
+    $("figure#search-addon").css("margin", "0");
+    $("figure#search-addon").css("background-color", "white");
     // Create the Layout for the next Step:
     var nextStep = $('\
         <div id="route-content">\
@@ -80,7 +86,7 @@ function prepareInterface() {
             </table>\
         </div>\
   ');
-    $("nav").html(nextStep);
+    $("figure#search-addon").html(nextStep);
     var dialog = $('\
         <div id="continue-dialog" class="container-fluid hidden">\
             <div class="row heading">Sie haben ihr Zwischenziel erreicht.</div>\
@@ -91,8 +97,6 @@ function prepareInterface() {
         </div>\
     ');
     $("main").append(dialog);
-    //Hide Results
-    deinitResults();
     // Remove Zoom Bar
     $(".ol-zoom, .ol-zoomslider, #location-tool").addClass("hidden");
     var abort = $('\
@@ -103,7 +107,6 @@ function prepareInterface() {
     $(".ol-attribution").removeClass("ol-attribution");
     $(".ol-abort").html(abort);
     //Update Map Size
-    updateMapSize();
 }
 
 function deinitAssistent() {
@@ -368,11 +371,11 @@ function initFinish() {
 }
 
 function openNextWaypointDialog() {
-    $("nav").addClass("hidden");
+    $("#search-addon").addClass("hidden");
     updateMapSize();
     $("#continue-dialog #next-waypoint").off();
     $("#continue-dialog #next-waypoint").click(function() {
-        $("nav").removeClass("hidden");
+        $("#search-addon").removeClass("hidden");
         updateMapSize();
         $("#continue-dialog").addClass("hidden");
         startLocationFollowing();
@@ -559,18 +562,18 @@ function updateNextStep(gpsPos, bearing, distTraveled, durTraveled) {
     // Route Metadata
     var duration = parseFloat(data.routes[0].duration) - durTraveled;
     duration = parseDuration(duration);
-    $("nav #route-information #duration").html(duration);
+    $("#search-addon #route-information #duration").html(duration);
     distance = parseFloat(data.routes[0].distance) - distTraveled;
     distance = parseDistance(distance);
-    $("nav #route-information #length").html(distance);
+    $("#search-addon #route-information #length").html(distance);
     // Next Step
     var step = data.routes[0].legs[0].steps[1];
     var stepString = parseManeuver(step["maneuver"], data.routes[0], 0, 1);
-    $("nav #routing-steps .step-string").html(stepString);
+    $("#search-addon #routing-steps .step-string").html(stepString);
     var img = parseImg(step);
-    $("nav #routing-steps .step-image img").attr('src', img);
+    $("#search-addon #routing-steps .step-image img").attr('src', img);
     var stepDistance = parseDistance(parseFloat(data.routes[0].legs[0].steps[0].distance) - distTraveled);
-    $("nav #routing-steps .step-length").html(stepDistance);
+    $("#search-addon #routing-steps .step-length").html(stepDistance);
     // So now that everything is Drawn we adjust the Map View
     // The new Rotation is The bearing of the first step of the route:
     var rotation = parseInt(data.routes[0].legs[0].steps[0].maneuver.bearing_after);

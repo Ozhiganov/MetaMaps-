@@ -21,7 +21,7 @@ function start(){
             return;
         }
     });
-    if(needGPS && gpsLocation === null){
+    if(needGPS && !gps){
         // If this is the case we will simply return here.
         // If the geolocation API got triggered, then another call to this function will
         // happen, when the gpsLocation is available
@@ -54,6 +54,8 @@ function start(){
         addWaypoint(pos);
     });
 
+    map.un("moveend", updateUrl);
+
     if (getWayPointLength() >= 1) {
         var points = [];
         $.each(waypoints, function(index, value){
@@ -63,7 +65,14 @@ function start(){
                 points.push(value);
             }
         });
-        adjustViewPosList(points);
+
+        // We give adjust the view so the route is not under the result list
+        var paddingRight = 0;
+        if(parseInt( $(document).outerWidth()) > 768 && $("#results").attr("data-status") === "out" ){
+            paddingRight = $("#search-addon").outerWidth();
+        }
+        console.log(paddingRight);
+        adjustViewPosList(points, [5, paddingRight, 5, 5]);
     }
 };
 
@@ -100,6 +109,11 @@ function changeVehicle(newVehicle) {
 }
 
 function initRouteFinder() {
+    // To be consistent for multiple calls we need to remove eventually existing interfaces
+    $("#vehicle-chooser").remove();
+    $("#route-content").remove();
+
+    console.log("init");
     $("#results").html("");
     map.removeLayer(vectorLayerRoutePreview);
     // Remove Existing Markers
@@ -114,11 +128,17 @@ function initRouteFinder() {
             <label class=\"radio-inline\" title=\"Auto\">\
               <input type=\"radio\" name=\"vehicle\" value=\"car\"> <div><img src=\"/img/car.png\" height=\"20px\" /></div>\
             </label>\
-        </div>\
-        <div id=\"route-content\">\
+            <button type=\"button\" class=\"close\" aria-label=\"Close\">\
+              <span aria-hidden=\"true\">&times;</span>\
+            </button>\
         </div>\
         ");
-    $("#results").append(vehicleChooser);
+    $(vehicleChooser).find(".close").click(function(){
+        document.location.href = "/";
+    });
+    $("#search-addon").prepend(vehicleChooser);
+    var routeContent = $("<div id=\"route-content\" class=\"container-fluid\"></div>");
+    $("#results").append(routeContent);
     // Select the correct checkbox:
     $("#vehicle-chooser input[value=" + vehicle + "]").prop("checked", true);
     // Add the changed Listener to the Radio Buttons
@@ -135,7 +155,7 @@ function initRouteFinder() {
             waypoints.unshift('');
         }
         var firstEmpty = false;
-        var waypointHtml = $('<ul id="waypoint-container"></ul>');
+        var waypointHtml = $('<ul id="waypoint-container" class="row"></ul>');
         if (waypoints.length >= 1) {
             if(waypoints[0] === ""){
                 html = $("<div class=\"container-fluid new-waypoint-box\"><p>Startpunkt angeben:\
