@@ -1788,10 +1788,10 @@ function initMap() {
                             html: '&copy; ' + '<a href="https://metager.de/">MetaGer.de</a>'
                         }),
                         new ol.Attribution({
-                            html: '&copy; ' + '<a href="https://metager.de/impressum">Impressum</a>'
+                            html: '| <a href="https://metager.de/impressum">Impressum</a>'
                         }),
                         new ol.Attribution({
-                            html: '&copy; ' + '<a href="http://nominatim.openstreetmap.org/">Nominatim</a>'
+                            html: '| &copy; ' + '<a href="http://nominatim.openstreetmap.org/">Nominatim</a>'
                         }),
                         ol.source.OSM.ATTRIBUTION,
                     ],

@@ -7164,6 +7164,7 @@ main {
 
 #results {
     height: 300px;
+    overflow-y: auto;
 }
 
 .ol-zoomslider.ol-unselectable.ol-control {

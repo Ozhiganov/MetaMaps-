@@ -126,16 +126,15 @@ adjustView(searchResults, exactMatches);
 
 // Deinit the Click Funktion for the map
 map.un('singleclick', mapClickFunction);
-// Give the user the possibility to delete his search.
-var deleteSearch = $('\
-    <div class="input-group-addon" id="clear-search">\
-        X\
-    </div> \
-    ');
-$(deleteSearch).click(deinitResults);
-$("#search input[name=q]").after(deleteSearch);
-
-// And update the Url
-
+if(typeof deinitResults === "function"){
+    // Give the user the possibility to delete his search.
+    var deleteSearch = $('\
+        <div class="input-group-addon" id="clear-search">\
+            X\
+        </div> \
+        ');
+    $(deleteSearch).click(deinitResults);
+    $("#search input[name=q]").after(deleteSearch);
+}
 
 

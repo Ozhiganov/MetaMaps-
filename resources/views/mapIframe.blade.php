@@ -36,6 +36,7 @@
                 var link = "https://maps.metager.de/map/"+q+"/"+extent[0]+"/"+extent[1]+"/"+extent[2]+"/"+extent[3];
                 if(typeof searchResults !== "undefined" && searchResults.length > 0){
                     $("body").css("visibility", "visible");
+                    $("#results").removeClass("hidden");
                 }
                 $("#results .result, #map").click(function(){
                     updateMapExtent();
