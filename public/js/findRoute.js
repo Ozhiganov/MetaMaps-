@@ -1115,9 +1115,11 @@ function deinitSearchBox() {
 }
 
 function initStartNavigation() {
-    $("#clearInput").html('<a href="/route/start/foot" target="_self"><img src="/img/navigation-arrow.svg" height="20px"></a>');
-    $("#clearInput").off();
-    $("#clearInput").attr("title", "Routenplaner starten");
+    $("#start-navigation").removeClass("hidden");
+}
+
+function deinitStartNavigation() {
+    $("#start-navigation").addClass("hidden");
 }
 
 function initClearInput() {
@@ -1327,6 +1329,7 @@ function toggleGpsWarning(){
 }
 
 function checkGPS(callback) {
+    console.log("checkingGps");
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(function(position){
             if(position.coords.accuracy > 1500){
@@ -1602,9 +1605,10 @@ function toggleResearchButtonMoveEvent(){
 }
 var shouldUpdate = true;
 $(document).ready(function(){
-    initStartNavigation();
+    
     if(typeof vehicle === "undefined"){
         map.on("moveend", updateUrl);
+        initStartNavigation();
     }
 
     // Initialize research Button
@@ -1680,18 +1684,8 @@ $(document).ready(function(){
         });
 
         $("#doSearch").click(function() {
-
-            var navbarCollapsed = $("#navbar-collapse").hasClass("in");
-
-            // If the Navbar is collapsed we need to pull it in before we search because it takes too much space
-            if(navbarCollapsed){
-                // Start Search when the navbar is hidden
-                $("#navbar-collapse").on("hidden.bs.collapse", executeSearch);
-                // Hide Navbar
-                $(".collapse").collapse("hide");
-            }else{
-                executeSearch();
-            }
+            deinitStartNavigation();
+            executeSearch();
         });
     }
 
@@ -1861,7 +1855,7 @@ function deinitResults() {
 var vectorLayerRoutePreview;
 var markers = [];
 var autoChooseVehicle = true;
-
+var findRouteInitialized = false;
 function start(){
 
     // The GPS Location is tricky
@@ -1871,19 +1865,22 @@ function start(){
     // We have to wait for the geolocation API to finish but in case of a failure of retrieving Location data we need to do something
     // So check here wheter a GPS Location is needed (one waypoint is "gps") AND the GPS Position isn't ready
     var needGPS = false;
+    deinitStartNavigation();
     $.each(waypoints, function(index, value){
         if(value === "gps"){
             needGPS = true;
             return;
         }
     });
-    if(needGPS && !gps){
+    if((needGPS && !gps) || findRouteInitialized){
         // If this is the case we will simply return here.
         // If the geolocation API got triggered, then another call to this function will
         // happen, when the gpsLocation is available
         return;
+    }else{
+        findRouteInitialized = true;
     }
-
+    console.log("init", findRouteInitialized);
     // Put the Popstate Event:
     $(window).unbind('popstate');
     $(window).bind('popstate', function(event) {
@@ -1933,6 +1930,7 @@ function start(){
 };
 
 function addWaypoint(pos) {
+    console.log("adding");
     pos = ol.proj.transform(pos, 'EPSG:3857', 'EPSG:4326');
     $.each(waypoints, function(index, value) {
         if (value === '') {
@@ -1969,7 +1967,6 @@ function initRouteFinder() {
     $("#vehicle-chooser").remove();
     $("#route-content").remove();
 
-    console.log("init");
     $("#results").html("");
     map.removeLayer(vectorLayerRoutePreview);
     // Remove Existing Markers

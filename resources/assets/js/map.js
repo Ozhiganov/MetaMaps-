@@ -77,9 +77,11 @@ function deinitSearchBox() {
 }
 
 function initStartNavigation() {
-    $("#clearInput").html('<a href="/route/start/foot" target="_self"><img src="/img/navigation-arrow.svg" height="20px"></a>');
-    $("#clearInput").off();
-    $("#clearInput").attr("title", "Routenplaner starten");
+    $("#start-navigation").removeClass("hidden");
+}
+
+function deinitStartNavigation() {
+    $("#start-navigation").addClass("hidden");
 }
 
 function initClearInput() {
@@ -289,6 +291,7 @@ function toggleGpsWarning(){
 }
 
 function checkGPS(callback) {
+    console.log("checkingGps");
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(function(position){
             if(position.coords.accuracy > 1500){

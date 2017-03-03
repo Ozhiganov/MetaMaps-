@@ -49,6 +49,12 @@
             <div class="map" id="map">
             </div>
 
+            <div id="start-navigation" class="hidden" title="Routenplaner starten">
+                <a href="/route/start/foot">
+                    <img src="/img/start-navigation.png" alt="Start Navigation" />
+                </a>
+            </div>
+
             <ul id="location-tool" class="list-unstyled hidden">
                 <li id="lock-location" class="hidden"><span class="button glyphicon glyphicon-lock"></span><span class="info">Ansicht zentriert</span></li>
                 <li id="follow-location"><span class="button glyphicon glyphicon-record"></span></li>

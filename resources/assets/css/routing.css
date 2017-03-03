@@ -245,6 +245,10 @@
     text-align: right;
 }
 
+#route-content .new-waypoint-box:last-child {
+    padding-bottom: 15px;
+}
+
 #route-content .new-waypoint-box > p {
     font-weight: bold;
     margin-bottom: 3px;

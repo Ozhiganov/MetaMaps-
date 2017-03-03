@@ -7143,6 +7143,18 @@ html, body, main, #map {
 .ol-control button, .ol-control button:hover, .ol-zoomslider-thumb, .ol-scale-line {
     background-color: #ff8000;
 }
+
+#start-navigation {
+    position: absolute;
+    bottom: 50px;
+    right: 50px;
+    width: 50px;
+    height: 50px;
+}
+
+#start-navigation img {
+    width: 50px;
+}
 html, body, main {
     max-height: initial;
     overflow: initial;

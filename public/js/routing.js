@@ -1097,9 +1097,11 @@ function deinitSearchBox() {
 }
 
 function initStartNavigation() {
-    $("#clearInput").html('<a href="/route/start/foot" target="_self"><img src="/img/navigation-arrow.svg" height="20px"></a>');
-    $("#clearInput").off();
-    $("#clearInput").attr("title", "Routenplaner starten");
+    $("#start-navigation").removeClass("hidden");
+}
+
+function deinitStartNavigation() {
+    $("#start-navigation").addClass("hidden");
 }
 
 function initClearInput() {
@@ -1309,6 +1311,7 @@ function toggleGpsWarning(){
 }
 
 function checkGPS(callback) {
+    console.log("checkingGps");
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(function(position){
             if(position.coords.accuracy > 1500){
@@ -1584,9 +1587,10 @@ function toggleResearchButtonMoveEvent(){
 }
 var shouldUpdate = true;
 $(document).ready(function(){
-    initStartNavigation();
+    
     if(typeof vehicle === "undefined"){
         map.on("moveend", updateUrl);
+        initStartNavigation();
     }
 
     // Initialize research Button
@@ -1662,18 +1666,8 @@ $(document).ready(function(){
         });
 
         $("#doSearch").click(function() {
-
-            var navbarCollapsed = $("#navbar-collapse").hasClass("in");
-
-            // If the Navbar is collapsed we need to pull it in before we search because it takes too much space
-            if(navbarCollapsed){
-                // Start Search when the navbar is hidden
-                $("#navbar-collapse").on("hidden.bs.collapse", executeSearch);
-                // Hide Navbar
-                $(".collapse").collapse("hide");
-            }else{
-                executeSearch();
-            }
+            deinitStartNavigation();
+            executeSearch();
         });
     }
 
