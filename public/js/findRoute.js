@@ -1116,6 +1116,11 @@ function deinitSearchBox() {
 
 function initStartNavigation() {
     $("#start-navigation").removeClass("hidden");
+    if(gps){
+        $("#start-navigation > a").attr("href", "/route/start/foot/gps;")
+    }else{
+        $("#start-navigation > a").attr("href", "/route/start/foot")
+    }
 }
 
 function deinitStartNavigation() {
@@ -1584,8 +1589,16 @@ function buildResultFromData(data){
             html += '<a href=\"'+url+'\" class=\"btn btn-default btn-xs\">Route berechnen</a>';
 
             // And the Link to the MetaGer Search
+            // build the search query
+            var query = "";
             if(typeof data["namedetails"]["name"] !== "undefined"){
-                var url = 'https://metager.de/meta/meta.ger3?focus=web&eingabe=' + encodeURIComponent(data["namedetails"]["name"]) + '&encoding=utf8&lang=all';
+                query += data["namedetails"]["name"];
+            }
+            query += " " + road;
+            query += " " + city;
+            query = query.trim();
+            if(query.length > 0){
+                var url = 'https://metager.de/meta/meta.ger3?focus=web&eingabe=' + encodeURIComponent(query) + '&encoding=utf8&lang=all';
                 html += '<a href=\"'+url+'\" class=\"btn btn-default btn-xs\" target=_blank>MetaGer Suche</a>';
             }
 
@@ -2239,7 +2252,32 @@ function generatePreviewRoute() {
             countLoggedWaypoints++;
         }
     });
+    // We give adjust the view so the route is not under the result list
+    paddingRight = 0;
+    if(parseInt( $(document).outerWidth()) > 768 && $("#results").attr("data-status") === "out" ){
+        paddingRight = $("#search-addon").outerWidth();
+    }
     if (countLoggedWaypoints < 2 ) {
+        if(countLoggedWaypoints === 1){
+            // Let's Zoom into this point
+            var point = null;
+            $.each(waypoints, function(index, value){
+                if(value !== ""){
+                    point = value;
+                    return false;
+                }
+            });
+            if(point === "gps"){
+                point = gpsLocation;
+            }
+            point = ol.proj.transform(point, 'EPSG:4326', 'EPSG:3857');
+            map.getView().animate({
+                center: point,
+                zoom: 15,
+                duration: 1500,
+                padding: [5, paddingRight, 5, 5]
+            });
+        }
         return;
     } else {
         var points = "";
@@ -2298,14 +2336,9 @@ function generatePreviewRoute() {
                 }
             }
 
-            // We give adjust the view so the route is not under the result list
-            paddingRight = 0;
-            if(parseInt( $(document).outerWidth()) > 768 && $("#results").attr("data-status") === "out" ){
-                paddingRight = $("#search-addon").outerWidth();
-            }
             map.getView().fit(geom, {
                 duration: 1500,
-                padding: [5, (paddingRight + 5), 5, 6],
+                padding: [5, (paddingRight + 20), 5, 6],
                 maxZoom: 18,
             });
         });

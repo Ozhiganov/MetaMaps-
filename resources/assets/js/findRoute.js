@@ -383,7 +383,32 @@ function generatePreviewRoute() {
             countLoggedWaypoints++;
         }
     });
+    // We give adjust the view so the route is not under the result list
+    paddingRight = 0;
+    if(parseInt( $(document).outerWidth()) > 768 && $("#results").attr("data-status") === "out" ){
+        paddingRight = $("#search-addon").outerWidth();
+    }
     if (countLoggedWaypoints < 2 ) {
+        if(countLoggedWaypoints === 1){
+            // Let's Zoom into this point
+            var point = null;
+            $.each(waypoints, function(index, value){
+                if(value !== ""){
+                    point = value;
+                    return false;
+                }
+            });
+            if(point === "gps"){
+                point = gpsLocation;
+            }
+            point = ol.proj.transform(point, 'EPSG:4326', 'EPSG:3857');
+            map.getView().animate({
+                center: point,
+                zoom: 15,
+                duration: 1500,
+                padding: [5, paddingRight, 5, 5]
+            });
+        }
         return;
     } else {
         var points = "";
@@ -442,14 +467,9 @@ function generatePreviewRoute() {
                 }
             }
 
-            // We give adjust the view so the route is not under the result list
-            paddingRight = 0;
-            if(parseInt( $(document).outerWidth()) > 768 && $("#results").attr("data-status") === "out" ){
-                paddingRight = $("#search-addon").outerWidth();
-            }
             map.getView().fit(geom, {
                 duration: 1500,
-                padding: [5, (paddingRight + 5), 5, 6],
+                padding: [5, (paddingRight + 20), 5, 6],
                 maxZoom: 18,
             });
         });

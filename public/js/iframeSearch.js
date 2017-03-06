@@ -1098,6 +1098,11 @@ function deinitSearchBox() {
 
 function initStartNavigation() {
     $("#start-navigation").removeClass("hidden");
+    if(gps){
+        $("#start-navigation > a").attr("href", "/route/start/foot/gps;")
+    }else{
+        $("#start-navigation > a").attr("href", "/route/start/foot")
+    }
 }
 
 function deinitStartNavigation() {
@@ -1566,8 +1571,16 @@ function buildResultFromData(data){
             html += '<a href=\"'+url+'\" class=\"btn btn-default btn-xs\">Route berechnen</a>';
 
             // And the Link to the MetaGer Search
+            // build the search query
+            var query = "";
             if(typeof data["namedetails"]["name"] !== "undefined"){
-                var url = 'https://metager.de/meta/meta.ger3?focus=web&eingabe=' + encodeURIComponent(data["namedetails"]["name"]) + '&encoding=utf8&lang=all';
+                query += data["namedetails"]["name"];
+            }
+            query += " " + road;
+            query += " " + city;
+            query = query.trim();
+            if(query.length > 0){
+                var url = 'https://metager.de/meta/meta.ger3?focus=web&eingabe=' + encodeURIComponent(query) + '&encoding=utf8&lang=all';
                 html += '<a href=\"'+url+'\" class=\"btn btn-default btn-xs\" target=_blank>MetaGer Suche</a>';
             }
 
