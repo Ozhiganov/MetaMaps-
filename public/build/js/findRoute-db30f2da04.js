@@ -1256,7 +1256,7 @@ function adjustViewBoundingBox(minpos, maxpos, padding) {
     if(typeof padding === "undefined"){
         padding = [5,5,5,5];
     }
-    map.getView().fit([minPosition[0], minPosition[1], maxPosition[0], maxPosition[1]], {"padding": padding, duration: 1500});
+    map.getView().fit([minPosition[0], minPosition[1], maxPosition[0], maxPosition[1]], {padding: padding, duration: 1500});
     updateMapExtent();
 }
 /*
@@ -1269,6 +1269,12 @@ function adjustViewPosList(positions, padding) {
     $.each(positions, function(index, value) {
         if(value === ""){
             return;
+        }else if(value === "gps" ){
+            if(typeof gpsLocation !== "undefined"){
+                value = gpsLocation;
+            }else{
+                return;
+            }
         }
         if (minpos[0] === null || value[0] < minpos[0]) {
             minpos[0] = value[0];
@@ -1283,6 +1289,7 @@ function adjustViewPosList(positions, padding) {
             maxpos[1] = value[1];
         }
     });
+    console.log(padding);
     adjustViewBoundingBox(minpos, maxpos, padding);
 }
 
@@ -1855,6 +1862,7 @@ var vectorLayerRoutePreview;
 var markers = [];
 var autoChooseVehicle = true;
 var findRouteInitialized = false;
+var paddingRight = null;
 function start(){
 
     // The GPS Location is tricky
@@ -1916,13 +1924,6 @@ function start(){
                 points.push(value);
             }
         });
-
-        // We give adjust the view so the route is not under the result list
-        var paddingRight = 0;
-        if(parseInt( $(document).outerWidth()) > 768 && $("#results").attr("data-status") === "out" ){
-            paddingRight = $("#search-addon").outerWidth();
-        }
-        adjustViewPosList(points, [5, paddingRight, 5, 5]);
     }
 };
 
@@ -2232,7 +2233,13 @@ function generatePreviewRoute() {
             color: 'rgba(255,0,0,.03)'
         })
     });
-    if (waypoints.length < 2 || waypoints[0] === '' || (waypoints[waypoints.length - 1] === '' && waypoints.length === 2)) {
+    var countLoggedWaypoints = 0;
+    $.each(waypoints, function(index, value){
+        if(value !== ""){
+            countLoggedWaypoints++;
+        }
+    });
+    if (countLoggedWaypoints < 2 ) {
         return;
     } else {
         var points = "";
@@ -2290,8 +2297,21 @@ function generatePreviewRoute() {
                     refreshUrl();
                 }
             }
+
+            // We give adjust the view so the route is not under the result list
+            paddingRight = 0;
+            if(parseInt( $(document).outerWidth()) > 768 && $("#results").attr("data-status") === "out" ){
+                paddingRight = $("#search-addon").outerWidth();
+            }
+            map.getView().fit(geom, {
+                duration: 1500,
+                padding: [5, (paddingRight + 5), 5, 6],
+                maxZoom: 18,
+            });
         });
     }
+
+    
 }
 
 function parseDistance(distance) {
@@ -2576,7 +2596,6 @@ function addToHistory(name, lon, lat) {
     }
 }
 var marker = null;
-
 function addTemporaryMarker(lon, lat) {
     // So now the Pin
     var el = $('<span class="marker"></span>');

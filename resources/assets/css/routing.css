@@ -120,6 +120,7 @@
     border: 1px solid #ccc;
     border-bottom: 0;
     border-radius: 8px 8px 0 0;
+    max-width: 450px;
 }
 
 #vehicle-chooser > .close {
@@ -160,11 +161,11 @@
 }
 
 #route-assistent {
-    width: 100%;
-    display: block;
-    text-align: center;
-    padding: 9px 0;
-    cursor: pointer;
+    position: absolute;
+    z-index: 222;
+    top: 3px;
+    right: 9px;
+    font-size: 17px;
 }
 
 #user-pos {
@@ -265,4 +266,5 @@
 
 #results {
     border-radius: 0 0 8px 8px;
+    max-width: 450px;
 }

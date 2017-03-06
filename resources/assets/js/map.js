@@ -218,7 +218,7 @@ function adjustViewBoundingBox(minpos, maxpos, padding) {
     if(typeof padding === "undefined"){
         padding = [5,5,5,5];
     }
-    map.getView().fit([minPosition[0], minPosition[1], maxPosition[0], maxPosition[1]], {"padding": padding, duration: 1500});
+    map.getView().fit([minPosition[0], minPosition[1], maxPosition[0], maxPosition[1]], {padding: padding, duration: 1500});
     updateMapExtent();
 }
 /*
@@ -231,6 +231,12 @@ function adjustViewPosList(positions, padding) {
     $.each(positions, function(index, value) {
         if(value === ""){
             return;
+        }else if(value === "gps" ){
+            if(typeof gpsLocation !== "undefined"){
+                value = gpsLocation;
+            }else{
+                return;
+            }
         }
         if (minpos[0] === null || value[0] < minpos[0]) {
             minpos[0] = value[0];
@@ -245,6 +251,7 @@ function adjustViewPosList(positions, padding) {
             maxpos[1] = value[1];
         }
     });
+    console.log(padding);
     adjustViewBoundingBox(minpos, maxpos, padding);
 }
 

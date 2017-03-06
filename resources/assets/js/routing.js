@@ -41,9 +41,10 @@ function start(){
         // If the Route could be loaded and there is a route between the points we can show it:
         if (typeof route["code"] !== 'undefined' && route["code"] === "Ok" && route["routes"].length >= 1) {
             deinitSearchBox();
-            addGraphics();
             addResults();
             toggleResults("out");
+            addGraphics();
+            
         }
     });
 };
@@ -85,13 +86,11 @@ function addResults() {
     // Add Button for starting the route assistent
     if(points.match(/^gps/) !== null){
         var routeAssistent = $('\
-            <div class="container-fluid">\
-                <div class="row">\
-                    <div class="col-xs-12">\
-                        <a id="route-assistent" href="javascript:updateCurrentLocation(startAssistent);">Routenführung starten</a>\
-                    </div>\
-                </div>\
-            </div>');
+            <btn class="btn btn-success" id="route-assistent">Starten <span class="glyphicon glyphicon-play"></span></a>\
+        ');
+        $(routeAssistent).click(function(){
+            updateCurrentLocation(startAssistent);
+        });
         $("#route-content").prepend(routeAssistent);
     }
     addRouteMetaData();
@@ -176,7 +175,6 @@ function parseImg(step) {
                 case "straight":
                     return "/img/straight.png";
                 default:
-                    // console.log(step);
             }
             break;
         case "roundabout":
@@ -197,10 +195,8 @@ function parseImg(step) {
                 case "straight":
                     return "/img/straight.png";
                 default:
-                    // console.log(step);
             }
         default:
-            //  console.log(step);
     }
     return "";
 }
@@ -225,7 +221,6 @@ function addRouteMetaData() {
 }
 
 function parseManeuver(maneuver, takenRoute, legIndex, stepIndex) {
-    //console.log(maneuver);
     var stepString = "";
     var type = maneuver["type"];
     var modifier = maneuver["modifier"];
