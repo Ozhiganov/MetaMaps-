@@ -1099,11 +1099,6 @@ function deinitSearchBox() {
 
 function initStartNavigation() {
     $("#start-navigation").removeClass("hidden");
-    if(gps){
-        $("#start-navigation > a").attr("href", "/route/start/foot/gps;")
-    }else{
-        $("#start-navigation > a").attr("href", "/route/start/foot")
-    }
 }
 
 function deinitStartNavigation() {
@@ -1374,10 +1369,17 @@ function startApplication(){
 }
 
 function toggleGPSLocator(visible){
+    if(gps){
+       
+    }else{
+        
+    }
     if(visible){
         $("#location-tool").removeClass("hidden");
+        $("#start-navigation > a").attr("href", "/route/start/foot/gps;");
     }else{
         $("#location-tool").addClass("hidden");
+        $("#start-navigation > a").attr("href", "/route/start/foot");
     }
 }
 
