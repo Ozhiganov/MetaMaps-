@@ -21,6 +21,7 @@ var featureStyle = new ol.style.Style({
 });
 var mapClickFunction = function(evt) {
     var pos = ol.proj.transform(evt["coordinate"], 'EPSG:3857', 'EPSG:4326');
+    console.log(pos);
     lastClick = pos;
     getNearest(pos[0], pos[1]);
 };
