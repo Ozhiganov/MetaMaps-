@@ -410,10 +410,16 @@ function redrawRoute(gpsLocation) {
             drawGeojson(geom, 'red');
         });
     });
+
     var drivenGeom = {
         coordinates: drivenRoute.coordinates.slice(),
         type: "LineString"
     };
+    // Wir müssen noch einen Punkt zur gefahrenen Route temporär hinzufügen.
+    // Wir wollen von dem letzten Punkt der gefahrenen Route nicht direkt zur GPS Position zeichnen.
+    // Wenn sich nämlich die Richtung der Straße geändert hat, ohne dass ein Step abgeschlossen wurde,
+    // fehlt uns der Erste Punkt des nächsten Steps, damit die gezeichnete Route auch wirklich stimmt.
+    drivenGeom.coordinates.push(route.routes[0].legs[0].steps[0].geometry.coordinates[0]);
     if (gpsLocation !== null) {
         // Beim verfolgen der Route soll der Erste Punkt IMMER die GPS Position auf der Route sein
         drivenGeom.coordinates.push(ol.proj.transform(gpsLocation, 'EPSG:3857', 'EPSG:4326'));
