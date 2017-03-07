@@ -2885,7 +2885,55 @@ function updateUserPosition(pos, rot) {
     });
 */
 
-    map.getView().on("change:center", eventUserPositionUpdate);
+    //map.getView().on("change:center", eventUserPositionUpdate);
+
+    // We will display the Route until the next step.
+    // We don't wanna hide something behind the route Text, so we calc the height of it:
+    var height = $("figure#search-addon").outerHeight();
+    // Get the Geom of the next Step to adjust the view
+    var geojson = route.routes[0].legs[0].steps[0].geometry;
+
+
+
+    // When we are on the highway we don't want to show the whole i.e. 80km of road until the next step
+    // Let's limit this to let's say 3km?
+    var limit = 3000;
+    // Check whether the step is longer
+    if(route.routes[0].legs[0].steps[0].distance > limit){
+        // Darn we need to remove some of the step-points 
+        // Let's find out at which point we exceed the limit
+        var tmpDistance = 0;
+        var lastIndex = 1;
+        $.each(route.routes[0].legs[0].annotation.distance, function(index, value){
+            if( (tmpDistance + value) < limit){
+                tmpDistance += value;
+            }else{
+                lastIndex = (index + 1);
+                return false;
+            }
+        });
+        geojson = {
+            coordinates : geojson.coordinates.slice(0,lastIndex),
+            type: "LineString"
+        }
+        console.log(lastIndex, geojson);
+    }
+
+    geojson.coordinates[0] = ol.proj.transform(pos, 'EPSG:3857', 'EPSG:4326');
+
+    var geom = (new ol.format.GeoJSON()).readGeometry(geojson, {
+        'dataProjection' : 'EPSG:4326',
+        'featureProjection' : 'EPSG:3857'
+    });
+    map.getView().animate({rotation: rot, duration: 200}, function(){
+        setTimeout(function(){
+            map.getView().fit(geom, {duration: 600, padding: [height, 0, 30, 0]});
+        }, 200);
+
+    });
+    userPosOverlay.setPosition(pos);
+    
+/*
     map.getView().animate({
         center: pos,
         rotation: rot,
@@ -2895,6 +2943,7 @@ function updateUserPosition(pos, rot) {
         map.getView().un("change:center", eventUserPositionUpdate);
         //map.addOverlay(userPosOverlay);
     });
+    */
 /*
     map.getView().centerOn(pos, map.getSize(), [$("#map").width()/2,$("#map").height() - 150]);
     map.getView().setRotation(rot);

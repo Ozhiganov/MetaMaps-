@@ -182,6 +182,10 @@ html, body, main, #map {
     max-width: calc(100% - 1.3em);
 }
 
+.ol-rotate {
+    top: 5em;
+}
+
 .ol-abort > span {
     padding: 8px;
     background-color: #ff8000;
