@@ -91,7 +91,8 @@ function prepareInterface() {
             <div class="row heading">Sie haben ihr Zwischenziel erreicht.</div>\
             <div class="row options">\
                 <div id="next-waypoint" class="col-xs-6 first"><a href="#">Weiter zum nächsten Wegpunkt</a></div>\
-                <div id="abort-routing" class="col-xs-6"><a href="#">Navigation abbrechen</a></div>\
+                <div id="new-route" class="col-xs-6 first hidden"><a href="#">Neues Ziel eingeben</a></div>\
+                <div id="abort-routing" class="col-xs-6"><a href="#">Fertig</a></div>\
             </div>\
         </div>\
     ');
@@ -119,10 +120,16 @@ function deinitAssistent() {
         navigator.geolocation.clearWatch(followingId);
         followingId = null;
     }
-    if (route.waypoints.length <= 1) {
+    if(route.waypoints.length === 0){
         // If just one waypoint is left then we finished the route and we redirect to the startpage
         window.location.href = "/";
-    } else {
+    } else if (route.waypoints.length === 1) {
+        var pos = route.waypoints[0].location;
+        // Transform Position
+        pos = ol.proj.transform(pos, 'EPSG:4326', 'EPSG:3857');
+        var url = "/map/" + pos.toString() + ",18";
+        window.location.href = url;
+    }else {
         // We redirect to the route Overview at the current state
         var pointString = "";
         $.each(route.waypoints, function(index, value) {
@@ -248,6 +255,10 @@ function startLocationFollowing() {
 
                 if((route.routes[0].legs[0].distance - distTraveled) <= 20){
                     removeLeg();
+                    // If this was the last leg we can return at this point
+                    if(typeof route.routes[0].legs[0] === "undefined"){
+                        return;
+                    }
                 }
 
                 var durTraveled = 0;
@@ -354,10 +365,28 @@ function initFinish() {
     cancleFollowing();
     // If a leg get's removed it means that we have passed a waypoint
     if (route.waypoints.length >= 2) {
-        console.log(route.waypoints);
-        route.waypoints.splice(1, 1);
+        route.waypoints.splice(0, 1);
+        waypoints.splice(1,1);
     }
     if (route.waypoints.length >= 2) {
+        // We have our targeted Rotation Value
+        // Problem is, that we need to rotate the map in the shortest way. (Turn Right or Left)
+        // We can calculate that if we calculate the delta angle of the shortest Way:
+        // (targetAngle - sourceAngle + 180) % 360 - 180
+        // The result is gonna be positive or negative so we are gonna add that value to our current angle
+        var fullRotation = 2 * Math.PI;
+        var halfRotation = Math.PI;
+        var a = 0 - map.getView().getRotation() + halfRotation;
+        var mod = (a % fullRotation + fullRotation) % fullRotation - halfRotation;
+        var targetRotation = map.getView().getRotation() + mod;
+        map.getView().animate({
+            center: ol.proj.transform(route.waypoints[0].location, 'EPSG:4326', 'EPSG:3857'),
+            rotation: targetRotation,
+            zoom: 18,
+            duration: 2000
+        }, function(){
+            map.getView().setRotation(0);
+        });
         // First Point is the GPS Location
         // At least 2 additional Waypoints are to go
         // So when we removed one now we aren't finished
@@ -365,17 +394,37 @@ function initFinish() {
     } else {
         // We have a maximum of two waypoints left
         // One of these is the GPS Location so when we removed it we finished routing
-        deinitAssistent();
+        openNextWaypointDialog();
     }
 }
 
 function openNextWaypointDialog() {
+    // At this point the passed waypoint already got removed
+    // We need to check whether there are more waypoints to navigate to
+    // We are gonna show a slight different version in either case.
+    // If there is only one Waypoint left, we're finished with the navigation
+    if(route.waypoints.length <= 1){
+        $("#continue-dialog > .heading").html("Sie haben Ihr Ziel erreicht!");
+        $("#next-waypoint").addClass("hidden");
+        $("#new-route").removeClass("hidden");
+    }else{
+        // Otherwise there are more waypoints to navigate to
+        $("#continue-dialog > .heading").html("Sie haben Ihr Zwischenziel erreicht!");
+        $("#new-route").addClass("hidden");
+        $("#next-waypoint").removeClass("hidden");
+    }
     $("#search-addon").addClass("hidden");
     $("#continue-dialog #next-waypoint").off();
     $("#continue-dialog #next-waypoint").click(function() {
         $("#search-addon").removeClass("hidden");
         $("#continue-dialog").addClass("hidden");
+        map.removeOverlay(routeMarkers[0]);
+        routeMarkers.splice(0,1);
         startLocationFollowing();
+    });
+    $("#continue-dialog #new-route").off();
+    $("#continue-dialog #new-route").click(function(){
+        document.location.href = "/route/start/" + vehicle + "/gps;";
     });
     $("#continue-dialog #abort-routing").off();
     $("#continue-dialog #abort-routing").click(function() {
@@ -571,8 +620,19 @@ function updateUserPosition(pos, rot) {
         'dataProjection' : 'EPSG:4326',
         'featureProjection' : 'EPSG:3857'
     });
-    map.getView().animate({rotation: rot, duration: 200}, function(){
+    // We have our targeted Rotation Value
+    // Problem is, that we need to rotate the map in the shortest way. (Turn Right or Left)
+    // We can calculate that if we calculate the delta angle of the shortest Way:
+    // (targetAngle - sourceAngle + 180) % 360 - 180
+    // The result is gonna be positive or negative so we are gonna add that value to our current angle
+    var fullRotation = 2 * Math.PI;
+    var halfRotation = Math.PI;
+    var a = rot - map.getView().getRotation() + halfRotation;
+    var mod = (a % fullRotation + fullRotation) % fullRotation - halfRotation;
+    var targetRotation = map.getView().getRotation() + mod;
+    map.getView().animate({rotation: targetRotation, duration: 200}, function(){
         setTimeout(function(){
+            map.getView().setRotation(((2* Math.PI) + (map.getView().getRotation() % (2*Math.PI))) % (2 * Math.PI));
             map.getView().fit(geom, {duration: 600, padding: [height, 0, 30, 0]});
         }, 200);
 
