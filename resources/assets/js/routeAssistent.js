@@ -55,10 +55,9 @@ function initAssistentGraphics() {
     }
     // Set The Route Layer to the new one:
     routeLayer.setSource(routeAssistentVectorSource);
-    // Remove old Markers
-    $.each(routeMarkers, function(index, value) {
-        map.removeOverlay(value);
-    });
+    // Remove the first Map Marker (The User Position is gonna replace it)
+    map.removeOverlay(routeMarkers[0]);
+    routeMarkers.splice(0,1);
 }
 
 function prepareInterface() {
@@ -372,11 +371,9 @@ function initFinish() {
 
 function openNextWaypointDialog() {
     $("#search-addon").addClass("hidden");
-    updateMapSize();
     $("#continue-dialog #next-waypoint").off();
     $("#continue-dialog #next-waypoint").click(function() {
         $("#search-addon").removeClass("hidden");
-        updateMapSize();
         $("#continue-dialog").addClass("hidden");
         startLocationFollowing();
     });
