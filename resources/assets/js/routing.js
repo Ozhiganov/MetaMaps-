@@ -327,7 +327,7 @@ function parseManeuver(maneuver, takenRoute, legIndex, stepIndex) {
             }
             break;
         case "new name":
-            stepString = "Weiter auf " + targetStreet;
+            stepString = "Weiter auf ";
             break;
         case "merge":
             var mod = parseModifier(modifier);
@@ -381,6 +381,7 @@ function makeTrafficSigns(destinations){
             // Let's check what kind of destination we have:
             if(destinations.match(/^[^,]+?:/)){
                 var track = destinations.substring(0, destinations.indexOf(":")).trim();
+                track = track.split(/;/g);
                 destinations = destinations.substr(destinations.indexOf(":") + 1);
                 // No we get the destinations of this track an make them to a traffic sign
                 var tmpDests = [];
@@ -395,17 +396,23 @@ function makeTrafficSigns(destinations){
                 }
                 // Generate Output from the generated data
                 var tmpClass = "";
-                if(track.indexOf("A ") === 0){
+                if(track[0].indexOf("A ") === 0){
                     tmpClass = "autobahn";
-                }else if(track.match(/^L\s*\d/) !== null || track.match(/^B\s*\d/) !== null){
+                }else if(track[0].match(/^L\s*\d/) !== null || track[0].match(/^B\s*\d/) !== null || track[0].match(/^Ring\s\d+/)){
                     tmpClass = "landstrasse";
                 }
-                tmp += "<span class=\"" + tmpClass + " schild\"><span class=\"highway-number\">" + track + "</span>" + " " + tmpDests + "</span>";
-                console.log(tmpDests);
+                tmp += "<span class=\"" + tmpClass + " schild\">";
+                $.each(track, function(index, value){
+                    tmp += "<span class=\"highway-number\">" + value + "</span>";
+                });
+                tmp += " " + tmpDests + "</span>";
             }else{
-                if(destinations.indexOf(",") !== -1){
+                if(destinations.match(/^\w+?,/)){
                     tmp += destinations.substring(0, destinations.indexOf(","));
                     destinations = destinations.substring(destinations.indexOf(",")+1);
+                }else if(destinations.match(/^\w+?;/)){
+                    tmp += destinations.substring(0, destinations.indexOf(";"));
+                    destinations = destinations.substring(destinations.indexOf(";")+1);
                 }else{
                     tmp += destinations;
                     destinations = "";
