@@ -336,7 +336,7 @@ function parseManeuver(maneuver, takenRoute, legIndex, stepIndex) {
         case "off ramp":
         case "fork":
             var mod = parseModifier(modifier);
-            stepString = "An der Gabelung " + mod + " halten.";
+            stepString = mod + " halten.";
             break;
         case "on ramp":
             var mod = parseModifier(modifier);
@@ -398,7 +398,9 @@ function makeTrafficSigns(destinations){
                 var tmpClass = "";
                 if(track[0].indexOf("A ") === 0){
                     tmpClass = "autobahn";
-                }else if(track[0].match(/^L\s*\d/) !== null || track[0].match(/^B\s*\d/) !== null || track[0].match(/^Ring\s\d+/)){
+                }else if(track[0].trim().match(/^\w{0,3}\s*\d/) !== null 
+                    || track[0].trim().match(/^Ring\s\d+/) !== null)
+                    {
                     tmpClass = "landstrasse";
                 }
                 tmp += "<span class=\"" + tmpClass + " schild\">";
