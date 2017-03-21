@@ -180,6 +180,8 @@ function parseImg(step) {
         case "roundabout":
         case "rotary":
             return "/img/roundabout.png";
+        case "on ramp":
+            return "/img/auffahren.png";
         case "merge":
         case "off ramp":
         case "fork":
@@ -226,9 +228,23 @@ function parseManeuver(maneuver, takenRoute, legIndex, stepIndex) {
     var modifier = maneuver["modifier"];
     var targetStreet = takenRoute["legs"][legIndex]["steps"][stepIndex]["name"];
     var destinations = takenRoute["legs"][legIndex]["steps"][stepIndex]["destinations"];
-    if (!destinations) {
-        destinations = takenRoute["legs"][legIndex]["steps"][stepIndex]["ref"]
+    if(destinations){
+        //destinations = destinations.replace(/\s/g, "");
+        // Destinations should be seperated by a ","
+        destinations = destinations.split(",");
+        $.each(destinations, function(index, value){
+            var tmpClass = "";
+            if(value.trim().indexOf("A ") === 0){
+                tmpClass = "autobahn";
+            }
+            value = value.replace(/\s/g, "");
+            if(tmpClass !== ""){
+                destinations[index] = "<span class=\"" + tmpClass + "\">" + value + "</span>";
+            }
+        });
+        destinations = destinations.join(" ");
     }
+    
     switch (type) {
         case "depart":
             var direction = parseBearing(maneuver["bearing_after"]);
@@ -327,6 +343,12 @@ function parseManeuver(maneuver, takenRoute, legIndex, stepIndex) {
                 stepString = "An der Gabelung " + mod + " halten. (" + destinations + ")";
             } else if (targetStreet && destinations) {
                 stepString = "An der Gabelung " + mod + " halten. Richtung " + targetStreet + " (" + destinations + ")";
+            }
+            break;
+        case "on ramp":
+            var mod = parseModifier(modifier);
+            if(typeof destinations !== "undefined"){
+                stepString = mod + " auffahren Richtung " + destinations;
             }
             break;
         default:
