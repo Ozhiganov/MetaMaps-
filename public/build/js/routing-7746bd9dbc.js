@@ -2080,37 +2080,48 @@ function parseManeuver(maneuver, takenRoute, legIndex, stepIndex) {
     var stepString = "";
     var type = maneuver["type"];
     var modifier = maneuver["modifier"];
-    var targetStreet = takenRoute["legs"][legIndex]["steps"][stepIndex]["name"];
+
+    var targetStreet = "";
+    if(typeof takenRoute["legs"][legIndex]["steps"][stepIndex]["name"] !== "undefined" && typeof takenRoute["legs"][legIndex]["steps"][stepIndex]["ref"] !== "undefined"){
+        targetStreet = makeTrafficSigns(takenRoute["legs"][legIndex]["steps"][stepIndex]["ref"] + ":" + takenRoute["legs"][legIndex]["steps"][stepIndex]["name"]);
+    }else if(typeof takenRoute["legs"][legIndex]["steps"][stepIndex]["ref"] !== "undefined" && typeof takenRoute["legs"][legIndex]["steps"][stepIndex]["name"] === "undefined"){
+        targetStreet = makeTrafficSigns(takenRoute["legs"][legIndex]["steps"][stepIndex]["ref"] + ":");
+    }else if(typeof takenRoute["legs"][legIndex]["steps"][stepIndex]["ref"] === "undefined" && typeof takenRoute["legs"][legIndex]["steps"][stepIndex]["name"] !== "undefined"){
+        targetStreet = takenRoute["legs"][legIndex]["steps"][stepIndex]["name"];
+    }
+    if(typeof targetStreet === "undefined"){
+        targetStreet = "";
+    }
+
     var destinations = takenRoute["legs"][legIndex]["steps"][stepIndex]["destinations"];
-    if(destinations){
-        //destinations = destinations.replace(/\s/g, "");
-        // Destinations should be seperated by a ","
-        destinations = destinations.split(",");
-        $.each(destinations, function(index, value){
-            var tmpClass = "";
-            if(value.trim().indexOf("A ") === 0){
-                tmpClass = "autobahn";
-            }
-            value = value.replace(/\s/g, "");
-            if(tmpClass !== ""){
-                destinations[index] = "<span class=\"" + tmpClass + "\">" + value + "</span>";
-            }
-        });
-        destinations = destinations.join(" ");
+    if(typeof destinations !== "undefined"){
+        destinations = destinations.trim();
+        destinations = makeTrafficSigns(destinations);
+    }else{
+        destinations = "";
     }
     
     switch (type) {
         case "depart":
             var direction = parseBearing(maneuver["bearing_after"]);
             var start = takenRoute["legs"][legIndex]["steps"][stepIndex]["name"];
-            stepString = "Auf " + start + " nach " + direction;
+
+            if(typeof start !== "undefined"){
+                stepString = "Auf " + start + " nach " + direction;
+            }else{
+                stepString = "Starte Richtung " + direction;
+            }
+
             var nextStreet = takenRoute["legs"][legIndex]["steps"][stepIndex + 1]["name"];
-            if (nextStreet !== start) {
+            if (typeof nextStreet !== "undefined" && nextStreet !== start) {
                 stepString += " Richtung " + nextStreet;
             }
             break;
-        case "roundabout turn":
         case "continue":
+            var mod = parseModifier(maneuver["modifier"]);
+            stepString = mod + " einordnen.";
+            break;
+        case "roundabout turn":
         case "end of road":
         case "turn":
             var direction = "";
@@ -2122,9 +2133,6 @@ function parseManeuver(maneuver, takenRoute, legIndex, stepIndex) {
                     modifier += " abbiegen";
                 }
                 stepString = modifier;
-            }
-            if (targetStreet !== "") {
-                stepString += " auf " + targetStreet;
             }
             break;
         case "roundabout":
@@ -2162,9 +2170,6 @@ function parseManeuver(maneuver, takenRoute, legIndex, stepIndex) {
                         break;
                 }
                 stepString += "Ausfahrt nehmen."
-                if (destinations) {
-                    stepString += " <nobr>(" + destinations + ")</nobr>";
-                }
             }
             break;
         case "arrive":
@@ -2181,35 +2186,87 @@ function parseManeuver(maneuver, takenRoute, legIndex, stepIndex) {
         case "merge":
             var mod = parseModifier(modifier);
             stepString = mod + " auffahren.";
-            if (targetStreet && !destinations) {
-                stepString = mod + " auffahren auf " + targetStreet + ".";
-            } else if (targetStreet && destinations) {
-                stepString = mod + " halten um auf " + targetStreet + " (" + destinations + ") aufzufahren.";
-            }
             break;
         case "off ramp":
         case "fork":
             var mod = parseModifier(modifier);
             stepString = "An der Gabelung " + mod + " halten.";
-            if (targetStreet && !destinations) {
-                stepString = "An der Gabelung " + mod + " halten. Richtung " + targetStreet;
-            } else if (!targetStreet && destinations) {
-                stepString = "An der Gabelung " + mod + " halten. (" + destinations + ")";
-            } else if (targetStreet && destinations) {
-                stepString = "An der Gabelung " + mod + " halten. Richtung " + targetStreet + " (" + destinations + ")";
-            }
             break;
         case "on ramp":
             var mod = parseModifier(modifier);
-            if(typeof destinations !== "undefined"){
-                stepString = mod + " auffahren Richtung " + destinations;
+            stepString = mod + " auffahren.";
+            break;
+        case "use lane":
+            switch(modifier){
+                case "left":
+                    stepString = "Linke ";
+                    break;
+                case "right":
+                    stepString = "Rechte ";
+                    break;
+                case "middle":
+                case "center":
+                    stepString = "Mittlere ";
+                    break;
+                default:
+            }
+            if(stepString !== ""){
+                stepString += "Spur verwenden.";
             }
             break;
         default:
             console.log(takenRoute["legs"][legIndex]["steps"][stepIndex]);
             stepString = "Konnte diesen Schritt nicht zu einem String auswerten";
     }
+
+    // Die Anweisung kann nun noch erweitert werden, um eine Straße auf der weiter gefahren wird, oder um eine Richtung
+    if(typeof destinations !== "undefined" && typeof targetStreet !== "undefined"){
+        stepString += "<ul class=\"list-unstyled\"><li>" + targetStreet + "</li><li>" + destinations + "</li></ul>";
+    }else{
+        stepString += " <span class=\"destination\">" + targetStreet + destinations + "</span>";
+    }
+
     return stepString;
+}
+
+function makeTrafficSigns(destinations){
+    var tmp = "";
+        while(destinations.length > 0){
+            // Let's check what kind of destination we have:
+            if(destinations.match(/^[^,]+?:/)){
+                var track = destinations.substring(0, destinations.indexOf(":")).trim();
+                destinations = destinations.substr(destinations.indexOf(":") + 1);
+                // No we get the destinations of this track an make them to a traffic sign
+                var tmpDests = [];
+                while(destinations.match(/^[^,]+/) !== null){
+                    if(destinations.indexOf(",") !== -1){
+                        tmpDests.push(destinations.substring(0, destinations.indexOf(",")));
+                        destinations = destinations.substring(destinations.indexOf(",")+1);
+                    }else{
+                        tmpDests.push(destinations);
+                        destinations = "";
+                    }
+                }
+                // Generate Output from the generated data
+                var tmpClass = "";
+                if(track.indexOf("A ") === 0){
+                    tmpClass = "autobahn";
+                }else if(track.match(/^L\s*\d/) !== null || track.match(/^B\s*\d/) !== null){
+                    tmpClass = "landstrasse";
+                }
+                tmp += "<span class=\"" + tmpClass + " schild\"><span class=\"highway-number\">" + track + "</span>" + " " + tmpDests + "</span>";
+                console.log(tmpDests);
+            }else{
+                if(destinations.indexOf(",") !== -1){
+                    tmp += destinations.substring(0, destinations.indexOf(","));
+                    destinations = destinations.substring(destinations.indexOf(",")+1);
+                }else{
+                    tmp += destinations;
+                    destinations = "";
+                }
+            }
+        }
+        return tmp;
 }
 
 function parseModifier(modifier) {
@@ -2225,19 +2282,19 @@ function parseModifier(modifier) {
             direction = "Rechts";
             break;
         case "slight right":
-            direction = "Leicht Rechts";
+            direction = "Leicht rechts";
             break;
         case "straight":
             direction = "Weiter";
             break;
         case "slight left":
-            direction = "Leicht Links";
+            direction = "Leicht links";
             break;
         case "left":
             direction = "Links";
             break;
         case "sharp left":
-            direction = "Scharf Links";
+            direction = "Scharf links";
             break;
         default:
             direction = "Konnte Richtungs-Modifizierer nicht auswerten: " + modifier;
@@ -2963,7 +3020,7 @@ function updateUserPosition(pos, rot) {
 
     // We will display the Route until the next step.
     // We don't wanna hide something behind the route Text, so we calc the height of it:
-    var height = $("figure#search-addon").outerHeight();
+    var height = $("figure#search-addon").outerHeight() + 50;
     // Get the Geom of the next Step to adjust the view
     var geojson = route.routes[0].legs[0].steps[0].geometry;
 

@@ -584,7 +584,7 @@ function updateUserPosition(pos, rot) {
 
     // We will display the Route until the next step.
     // We don't wanna hide something behind the route Text, so we calc the height of it:
-    var height = $("figure#search-addon").outerHeight();
+    var height = $("figure#search-addon").outerHeight() + 50;
     // Get the Geom of the next Step to adjust the view
     var geojson = route.routes[0].legs[0].steps[0].geometry;
 
