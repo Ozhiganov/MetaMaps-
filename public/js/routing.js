@@ -2786,7 +2786,18 @@ function startLocationFollowing() {
                     }
                 });
                 pointString = pointString.replace(/;$/, '');
+
                 var url = '/route/find/' + vehicle + '/' + pointString;
+
+                // Let's check if we can submit a bearing for the starting point to generate a better route
+                if(drivenRoute.coordinates.length >= 2){
+                    // We can calculate the current bearing. Let's do so:
+                    var bearing = getBearing(drivenRoute.coordinates[drivenRoute.coordinates.length-2], drivenRoute.coordinates[drivenRoute.coordinates.length-1]);
+                    bearing = Math.round(bearing);
+                    url += "/" + bearing;
+                }
+
+                
                 $.getJSON(url, function(response) {
                     route = response;
                     startLocationFollowing();
@@ -2981,7 +2992,11 @@ function getBearing(p1, p2) {
     var x = Math.cos(p2r[1]) * Math.sin(p2r[0] - p1r[0]);
     var y = Math.cos(p1r[1]) * Math.sin(p2r[1]) - Math.sin(p1r[1]) * Math.cos(p2r[1]) * Math.cos(p2r[0] - p1r[0]);
     var bearing = Math.atan2(x, y);
-    return toDegrees(bearing);
+    bearing = toDegrees(bearing);
+    if(bearing < 0){
+        bearing += 360;
+    }
+    return bearing;
 }
 
 function toRadians(angle) {

@@ -75,7 +75,7 @@ class RoutingController extends Controller
         return $response;
     }
 
-    public function routingGeoJson($vehicle, $points, $hints = "")
+    public function routingGeoJson($vehicle, $points, $bearingStartPoint = "")
     {
         // This is the function to calculate the Route from $from to $to with the given vehicle
         $port = 0;
@@ -90,9 +90,20 @@ class RoutingController extends Controller
                 $port = 5000;
         }
         $url = "http://maps.metager.de:$port/route/v1/$vehicle/$points?steps=true&geometries=geojson&overview=full&annotations=true";
-        if ($hints !== "") {
-            $url .= "&hints=$hints";
+
+        # Maybe we need to add Bearings:
+        if ($bearingStartPoint !== "") {
+            $bearing = $bearingStartPoint . ",90";
+            # We got the starting Bearing submitted but we need to add bearings for the rest of the points, too
+            $remainingPoints = sizeof(explode(";", $points)) - 1;
+            for ($i = $remainingPoints; $i > 0; $i--) {
+                # For each remaining Point we are gonna add a bearing of 0 with a range of 180°
+                # Hopefully this will nullify the value
+                $bearing .= ";0,180";
+            }
+            $url .= "&bearings=" . $bearing;
         }
+
         $cacheHash = md5($url);
         if (Cache::has($cacheHash)) {
             $result = Cache::get($cacheHash);
