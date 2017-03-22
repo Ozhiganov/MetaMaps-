@@ -1662,7 +1662,10 @@ $(document).ready(function(){
     }
 
     $("#search input[name=q]").on("keydown", function(event) {
-        if (event.which == 13) $("#doSearch").click();
+        if (event.which == 13){
+            $("#search-addon input[name=q]").blur();
+            $("#doSearch").click();
+        }
     });
 
     
@@ -1756,6 +1759,12 @@ function executeSearch(){
 
         var url = '/' + encodeURI(q) + '/' + encodeURI(extent[0]) + '/' + encodeURI(extent[1]) + '/' + encodeURI(extent[2]) + '/' + encodeURI(extent[3]);
         
+        // Before we go on -> let's remove the current results
+        searchResults = undefined;
+        clearPOIS();
+        $("#clear-search").remove();
+        var markers = [];
+
         var xhr = $.getScript(url)
             .fail(function(jqxhr, settings, exception) {
                 console.log(exception);
@@ -1771,12 +1780,28 @@ function executeSearch(){
                 $("#search-addon #doSearch").removeClass("hidden");
                 $("#search-addon #clear-search").removeClass("hidden");
                 $("#search-addon input[name=q]").attr("readonly", false);
+                if(typeof searchResults === "undefined" || searchResults.length <= 0){
+                    console.log("keine Ergebnisse");
+                    makeError($("#search-addon input[name=q]"), "Keine Ergebnisse gefunden :(");
+                }
             });
         $("#cancel-search").click(function(){
             xhr.abort();
-
         });
     });
+}
+
+function makeError(element, message){
+    $(element).css("border", "3px solid red");
+    $(element).tooltip({
+        placement: 'auto',
+        title: message
+    }).tooltip('show');
+
+    setTimeout(function(){
+        $(element).css("border", "");
+        $(element).tooltip('destroy');
+    }, 5000);
 }
 
 function updateUrl(){
@@ -1906,6 +1931,7 @@ function getNearest(lon, lat) {
 }
 
 function deinitResults() {
+    searchResults = undefined;
     toggleResults("in");
     $("#results").html("");
     $("#result-toggler").addClass("hidden");
