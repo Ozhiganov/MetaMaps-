@@ -1699,19 +1699,64 @@ $(document).ready(function(){
 });
 
 function executeSearch(){
-    q = $("#search input[name=q]").val();
-    $("#clearInput").html("<img src=\"/img/ajax-loader.gif\" />");
+    // we need some Feedback that the search has startet
+    // Depending on the search it could last pretty long
+    // because our servers aren't that strong so the user
+    // has to know what's going on.
+    // Let's make the Input Field readonly
+    $("#search-addon input[name=q]").attr("readonly", true);
+    // Let's hide the search Button and the clear-search button
+    $("#search-addon #doSearch").addClass("hidden");
+    $("#search-addon #clear-search").addClass("hidden");
+    // Let's make a new input-group-addon to cancel the search if it takes too long
+    var cancelSearch = $('\
+        <div class="input-group-addon" id="cancel-search" title="Suche abbrechen">\
+            X\
+        </div> \
+    ');
+    $("#search input[name=q]").after(cancelSearch);
+    // Let's add a Loading animation:
+    var loading = $('\
+        <div class="container-fluid wait-for-search">\
+            <p>\
+                Ergebnisse werden geladen \
+                <img src="/img/ajax-loader.gif" alt="loading..." id="loading-search-results" />\
+            </p>\
+        </div>\
+        ');
+    $("#results").html(loading);
+    toggleResults("out");
+    $("#loading-search-results").load(function(){
+        q = $("#search input[name=q]").val();
+        $("#clearInput").html("<img src=\"/img/ajax-loader.gif\" />");
 
-    // Calculate the current Extent of the map
-    var tmpExtent = map.getView().calculateExtent(map.getSize());
-    var extent = ol.proj.transform([tmpExtent[0], tmpExtent[1]], 'EPSG:3857', 'EPSG:4326').concat(ol.proj.transform([tmpExtent[2], tmpExtent[3]], 'EPSG:3857', 'EPSG:4326'));
+        // Calculate the current Extent of the map
+        var tmpExtent = map.getView().calculateExtent(map.getSize());
+        var extent = ol.proj.transform([tmpExtent[0], tmpExtent[1]], 'EPSG:3857', 'EPSG:4326').concat(ol.proj.transform([tmpExtent[2], tmpExtent[3]], 'EPSG:3857', 'EPSG:4326'));
 
-    var url = '/' + encodeURI(q) + '/' + encodeURI(extent[0]) + '/' + encodeURI(extent[1]) + '/' + encodeURI(extent[2]) + '/' + encodeURI(extent[3]);
-    $.getScript(url).fail(function(jqxhr, settings, exception) {
-        console.log(exception);
+        var url = '/' + encodeURI(q) + '/' + encodeURI(extent[0]) + '/' + encodeURI(extent[1]) + '/' + encodeURI(extent[2]) + '/' + encodeURI(extent[3]);
+        
+        var xhr = $.getScript(url)
+            .fail(function(jqxhr, settings, exception) {
+                console.log(exception);
+                deinitResults();
+            })
+            .done(function(){
+                // We undo the feedback that we created in the beginning
+                $("#results > .wait-for-search").remove();
+                if($("#results").attr("data-status") === "in"){
+                    $("#results").css("max-height", 0);
+                }
+                $("#cancel-search").remove();
+                $("#search-addon #doSearch").removeClass("hidden");
+                $("#search-addon #clear-search").removeClass("hidden");
+                $("#search-addon input[name=q]").attr("readonly", false);
+            });
+        $("#cancel-search").click(function(){
+            xhr.abort();
+
+        });
     });
-    $("#navbar-collapse").off("hidden.bs.collapse");
-    $("#search input[name=q]").blur();
 }
 
 function updateUrl(){
@@ -1845,12 +1890,17 @@ function deinitResults() {
     $("#results").html("");
     $("#result-toggler").addClass("hidden");
     $("#search input[name=q]").val("");
+    $("#cancel-search").remove();
+    $("#search-addon #doSearch").removeClass("hidden");
+    $("#search-addon #clear-search").removeClass("hidden");
+    $("#search-addon input[name=q]").attr("readonly", false);
     clearPOIS();
     q = "";
     updateUrl();
     initStartNavigation();
     map.on("singleclick", mapClickFunction);
     $("#clear-search").remove();
+
 }
 var routeLineStyle = new ol.style.Style({
     stroke: new ol.style.Stroke({

@@ -11,11 +11,12 @@
     overflow: auto;
 }
 
-#clear-search {
+#clear-search, #cancel-search {
     background-color: white;
+    color: red;
 }
 
-#clear-search:hover {
+#clear-search:hover, #cancel-search:hover {
     cursor: pointer;
 }
 
@@ -54,4 +55,13 @@
 
 #result-toggler:hover {
     cursor: pointer;
+}
+
+.wait-for-search {
+    text-align: center;
+    margin: 10px;
+}
+
+.wait-for-search img {
+    margin-left: 10px;
 }
