@@ -1699,6 +1699,11 @@ $(document).ready(function(){
 });
 
 function executeSearch(){
+    q = $("#search input[name=q]").val();
+    if(q === ""){
+        $("#search-addon input[name=q]").focus();
+        return;
+    }
     // we need some Feedback that the search has startet
     // Depending on the search it could last pretty long
     // because our servers aren't that strong so the user
@@ -1727,9 +1732,6 @@ function executeSearch(){
     $("#results").html(loading);
     toggleResults("out");
     $("#loading-search-results").load(function(){
-        q = $("#search input[name=q]").val();
-        $("#clearInput").html("<img src=\"/img/ajax-loader.gif\" />");
-
         // Calculate the current Extent of the map
         var tmpExtent = map.getView().calculateExtent(map.getSize());
         var extent = ol.proj.transform([tmpExtent[0], tmpExtent[1]], 'EPSG:3857', 'EPSG:4326').concat(ol.proj.transform([tmpExtent[2], tmpExtent[3]], 'EPSG:3857', 'EPSG:4326'));
