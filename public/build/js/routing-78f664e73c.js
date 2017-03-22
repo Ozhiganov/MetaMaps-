@@ -2519,7 +2519,11 @@ function startAssistent() {
         initWaypoints();
         prepareInterface();
         initAssistentGraphics();
-        reloadRoute();
+        drivenRoute = {
+            coordinates: [gpsLocation],
+            type: "LineString"
+        };
+        startLocationFollowing();
         $(".ol-abort").click(function() {
             deinitAssistent();
         });
