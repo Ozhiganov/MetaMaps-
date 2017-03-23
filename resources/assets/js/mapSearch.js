@@ -77,7 +77,8 @@ $(document).ready(function(){
                     }, 500); 
                 });
             }else{
-                document.location.href = document.location.href;
+                // Das sieht merkürdig aus und hat ältere Geräte zum Absturz gebracht-
+                //document.location.href = document.location.href;
             }
         });
 
