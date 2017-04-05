@@ -634,6 +634,8 @@ function addSearchEventMobile(element){
                             $("#search-suggestions").html("");
                             $("#search-suggestions").attr("data-status", "");
 
+                            addToHistory(value["name"], value["lon"], value["lat"]);
+
                             var id = $(element).attr("id");
                             waypoints[id] = [parseFloat(value["lon"]), parseFloat(value["lat"])];
                             refreshUrl();
@@ -715,6 +717,8 @@ function addSearchEventMobile(element){
                             $("#search-addon").css("display", "");
                             $("#search-suggestions").html("");
                             $("#search-suggestions").attr("data-status", "");
+
+                            addToHistory(value["display_name"], value["lon"], value["lat"]);
 
                             var id = $(element).attr("id");
                             waypoints[id] = [parseFloat(value["lon"]), parseFloat(value["lat"])];
