@@ -75,7 +75,7 @@ Route::group(['prefix' => 'route'], function () {
         return response(view('map')->with('boundings', 'false')->with('getPosition', 'true')->with('scripts', [elixir('js/findRoute.js')])->with("vars", ["waypoints" => $waypoints, 'vehicle' => $vehicle])->with('css', [elixir('css/routing.css')]))->header('Vary', 'Accept');
     });
     Route::get('search/{search}', function ($search) {
-        $url      = "https://maps.metager.de/nominatim/search.php?q=" . urlencode($search) . "&limit=5&polygon_geojson=0&format=json&extratags=0&addressdetails=0";
+        $url      = "https://maps.metager.de/nominatim/search.php?q=" . urlencode($search) . "&limit=5&polygon_geojson=0&format=json&dedupe=1&extratags=1&addressdetails=1&namedetails=1";
         $content  = file_get_contents($url);
         $response = Response::make($content, 200);
         $response->header('Content-Type', 'application/json');

@@ -538,18 +538,222 @@ function addDragAndDrop() {
     });
     $( "#waypoint-container" ).disableSelection();
 }
-Array.prototype.move = function(from, to) {
-    this.splice(to, 0, this.splice(from, 1)[0]);
-};
+
 /* 
  * This Function adds the Search Event to the input Box to allow searching for any Waypoint
  * @param element{Object} Input-Field that needs the Listeners to be attached
  */
 function addSearchEvent(element) {
+
+    if($(document).outerWidth() > 768){
+        addSearchEventDesktop(element);
+    }else{
+        addSearchEventMobile(element);
+    }
+}
+
+function addSearchEventMobile(element){
+    $(element).focusin(function(){
+        // Create a new Input Field for searches
+        var input = $('\
+            <form accept-charset="UTF-8" class="form-inline" onsubmit="return false;">\
+                <div class="form-group">\
+                    <div class="input-group">\
+                        <div class="input-group-addon" id="exit-suggestions">\
+                            <span class="glyphicon glyphicon-arrow-left">\
+                            </span>\
+                        </div>\
+                        <input class="form-control" name="query" placeholder="Karten durchsuchen..." type="text" autocomplete="off" value="' + $(element).val() + '"/>\
+                        <div class="input-group-addon" id="search-for-suggestions">\
+                            <button type="submit" class="glyphicon glyphicon-search">\
+                            </button>\
+                        </div>\
+                    </div>\
+                </div>\
+            </form>');
+        $("#search-suggestions").append(input);
+        $("#search-addon").css("display", "none");
+
+        if(gps){
+            var suggestion = $('\
+                <div class="container-fluid suggestion">\
+                     <div class="flex-container">\
+                        <div class="item history">\
+                            <img src="/img/marker-icon.png" />\
+                        </div>\
+                        <div class="item">\
+                            Eigene Position\
+                        </div>\
+                    </div>\
+                </div>\
+            ');
+            $("#search-suggestions").append(suggestion);
+            $(suggestion).click(function(){
+                
+                $("#search-suggestions").animate({top: "100vh"}, 500, function(){
+                    $("#search-addon").css("display", "");
+                    $("#search-suggestions").html("");
+                    $("#search-suggestions").attr("data-status", "");
+
+                    var id = $(element).attr("id");
+                    waypoints[id] = 'gps';
+                    refreshUrl();
+                });
+            });
+        }
+
+        var history = getHistory(true);
+
+        if(history.length > 0){
+            $.each(history, function(index, value){
+                if(typeof(value) !== "undefined"){
+                    var distance = "";
+                    if(gps){
+                        // If we have a gps Position we can show the proximate distance to the object:
+                        var pos = [parseFloat(value["lon"]), parseFloat(value["lat"])];
+                        var dist = getDistance(gpsLocation, pos);
+                        distance = "<p class=\"dist\">~" + parseDistance(dist) + "</p>";
+                    }
+                    var suggestion = $('\
+                        <div class="container-fluid suggestion">\
+                            <div class="flex-container">\
+                                <div class="item history">\
+                                    <span class="glyphicon glyphicon-time"></span>\
+                                    ' + distance + '\
+                                </div>\
+                                <div class="item">\
+                                    ' + value["name"] + '\
+                                </div>\
+                            </div>\
+                        </div>\
+                        ');
+                    $("#search-suggestions").append(suggestion);
+                    $(suggestion).click(function(){
+                        $("#search-suggestions").animate({top: "100vh"}, 500, function(){
+                            $("#search-addon").css("display", "");
+                            $("#search-suggestions").html("");
+                            $("#search-suggestions").attr("data-status", "");
+
+                            var id = $(element).attr("id");
+                            waypoints[id] = [parseFloat(value["lon"]), parseFloat(value["lat"])];
+                            refreshUrl();
+                        });
+                    });
+                }
+            });
+        }
+
+        $("#search-suggestions form").submit(function(evt){
+            // The user has probably entered something to search for
+            // Make form readonly and disable additional searches while we execute the search
+            console.log("haha");
+            $("#search-suggestions input[name=query]").attr("readonly", "");
+            $("#search-suggestions input[name=query]").blur();
+            $("#search-suggestions button[type=submit]").attr("disabled", "");
+
+            $("#sr").remove();
+
+            var freeSearchField = function(){
+                $("#search-suggestions input[name=query]").removeAttr("readonly");
+                $("#search-suggestions button[type=submit]").removeAttr("disabled");
+                $("#loading").remove();
+            };
+
+
+            // Fetch the query:
+            var q = $("#search-suggestions input[name=query]").val();
+            if(q === ""){
+                freeSearchField();
+                makeError($("#search-suggestions input[name=query]"), "Bitte Sucheingabe ergänzen!");
+                $("#search-suggestions input[name=query]").focus();
+                return;
+            }
+
+            $(this).after('\
+                <div id="loading" class="container-fluid suggestion">\
+                    <div class="flex-container">\
+                        <div class="item">\
+                            <img src="/img/ajax-loader.gif" alt="loading..." />\
+                            Lade Suchergebnisse vom Server...\
+                        </div>\
+                    </div>\
+                </div>');
+            $(this).after('\
+                <div id="sr">\
+                </div>');
+
+            // Prepare the URL
+            var url = "/route/search/" + encodeURI(q);
+            var xhr = $.get(url, function(data){
+                if(data.length === 0){
+                    makeError($("#search-suggestions input[name=query]"), "Keine Ergebnisse gefunden.");
+                }
+                $.each(data, function(index, value){
+                    var distance = "";
+                    if(gps){
+                        // If we have a gps Position we can show the proximate distance to the object:
+                        var pos = [parseFloat(value["lon"]), parseFloat(value["lat"])];
+                        var dist = getDistance(gpsLocation, pos);
+                        distance = "<p class=\"dist\">~" + parseDistance(dist) + "</p>";
+                        console.log(distance);
+                    }
+                    var res = $('\
+                        <div class="container-fluid suggestion result">\
+                            <div class="flex-container">\
+                                <div class="item history">\
+                                    ' + (index+1) + '\
+                                    ' + distance + '\
+                                </div>\
+                                <div class="item">'
+                                     + buildResultFromData(value).html() + '\
+                                </div>\
+                            </div>\
+                        </div>');
+                    $("#search-suggestions #sr").append(res);
+                    $(res).click(function(){
+                        $("#search-suggestions").animate({top: "100vh"}, 500, function(){
+                            $("#search-addon").css("display", "");
+                            $("#search-suggestions").html("");
+                            $("#search-suggestions").attr("data-status", "");
+
+                            var id = $(element).attr("id");
+                            waypoints[id] = [parseFloat(value["lon"]), parseFloat(value["lat"])];
+                            refreshUrl();
+                        });
+                    });
+                });
+                $("#search-suggestions .result a.btn").remove();
+            })
+            .always(function(){
+                freeSearchField();
+            });
+
+
+        });
+
+        $("#search-suggestions").css("padding-top", "15px");
+        $("#search-suggestions").animate({top: "0vh"}, 500, function(){
+            $("#search-suggestions").attr("data-status", "out");
+            $("#search-suggestions input[name=query]").focus();
+            $("#exit-suggestions").click(function(){
+                $("#search-suggestions").animate({top: "100vh"}, 500, function(){
+                    $("#search-addon").css("display", "");
+                    $("#search-suggestions").html("");
+                    $("#search-suggestions").css("padding-top", "");
+                    $("#search-suggestions").attr("data-status", "");
+                });
+            });
+        });
+        
+    });
+}
+
+function addSearchEventDesktop(element){
     $(element).focusin(function() {
+        
         $(element).css("border", "");
         $(element).tooltip("destroy");
-        var history = getHistory();
+        var history = getHistory(true);
         if (gps || history.length > 0) {
             var sr = $("<div id=\"search-results\"></div>");
             if (gps) {
@@ -663,102 +867,6 @@ function escapeRegExp(str) {
     return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
 }
 
-function getHistory() {
-    var präfix = "place-search:";
-    var result = [];
-    if (localStorage) {
-        var reg = new RegExp("^" + präfix, '');
-        $.each(localStorage, function(key, value) {
-            if (key.match(reg) !== null && value.match(/^\d+;\d+\.\d+,\d+\.\d+$/) !== null) {
-                var match = value.match(/([\d]+?);([\d\.]+),([\d\.]+)/);
-                var count = parseInt(match[1]);
-                var lon = parseFloat(match[2]);
-                var lat = parseFloat(match[3]);
-                var name = atob(key.replace(präfix, ''));
-                result.push({
-                    name: name,
-                    count: count,
-                    lon: lon,
-                    lat: lat
-                });
-            }
-        });
-        result.sort(function(a, b) {
-            return b.count - a.count
-        });
-    }
-    return result;
-}
-
-function saveHistory(history, präfix) {
-    if (localStorage) {
-        // Das abspeichern der neuen History verläuft in 2 Schritten:
-        // 1. Löschen der vorhanden History
-        // 2. Hinzufügen der neuen History
-        // 1. Löschen der vorhandenen History
-        clearHistory(präfix);
-        // 2. Hinzufügen der neuen History
-        $.each(history, function(index, value) {
-            var key = präfix + btoa(value.name);
-            var val = value.count + ";" + value.lon + "," + value.lat;
-            localStorage.setItem(key, val);
-        });
-    }
-}
-
-function clearHistory(präfix) {
-    var oldhistory = getHistory();
-    $.each(oldhistory, function(index, value) {
-        var key = präfix + btoa(value.name);
-        localStorage.removeItem(key);
-    });
-}
-
-function addToHistory(name, lon, lat) {
-    if (localStorage) {
-        var präfix = "place-search:";
-        var key = btoa(name);
-        var historyLimit = 10;
-        // Let's get the sorted List of Results
-        var history = getHistory();
-        // Check if item exists:
-        var item = localStorage.getItem(präfix + key);
-        if (item === null) {
-            // Item ist noch nicht in der History. Es wird an die erste Stelle gesetzt
-            if (history.length >= historyLimit) {
-                // Zuerst das letzte Element entfernen, da unsere History voll ist
-                history.pop();
-            }
-            // Nun fügen wir das neue Element hinzu:
-            history.unshift({
-                name: name,
-                count: 10,
-                lon: lon,
-                lat: lat
-            });
-        } else {
-            // Item ist bereits in der History. Es wird einen Platz nach oben gepackt.
-            var itemIndex = parseInt(item.match(/^\d+/)[0]);
-            // Der angezeigte Index ist eine Zahl zwischen 1 und 10 wobei 10 das erste Element ist und 1 das letzte
-            // Wir konvertieren diese Zahl zum Array-Index
-            itemIndex = Math.abs(itemIndex - 10);
-            // Wir verschieben das Array Element jetzt um einen Platz nach vorne, also z.B: Element an stelle 4 kommt an stelle 3 etc.
-            history.move(itemIndex, itemIndex - 1);
-        }
-        // Jetzt müssen wir noch den Count Parameter für jedes Element aktualisieren:
-        var newHistory = [];
-        $.each(history, function(index, value) {
-            var c = historyLimit - index;
-            newHistory.push({
-                name: value.name,
-                count: c,
-                lon: value.lon,
-                lat: value.lat
-            });
-        });
-        saveHistory(newHistory, präfix);
-    }
-}
 var marker = null;
 function addTemporaryMarker(lon, lat) {
     // So now the Pin

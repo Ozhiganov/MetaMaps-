@@ -1607,6 +1607,16 @@ function toggleResearchButtonMoveEvent(){
         map.on("moveend", showResearchButton);
     }
 }
+
+function getDistance(p1, p2){
+    var wgs84Sphere = new ol.Sphere(6378137);
+    var dist = wgs84Sphere.haversineDistance(p1,p2);
+    return dist;
+}
+
+Array.prototype.move = function(from, to) {
+    this.splice(to, 0, this.splice(from, 1)[0]);
+};
 var shouldUpdate = true;
 $(document).ready(function(){
     
@@ -1642,6 +1652,72 @@ $(document).ready(function(){
             }, 500); 
         });
     }
+
+    $("#search input[name=q]").focusin(function(){
+
+        if($("#search-suggestions").attr("data-status") === "out" || $(document).outerWidth() > 768){
+            return;
+        }
+
+        var history = getHistory();
+
+        if(history.length > 0){
+            $.each(history, function(index, value){
+                if(typeof(value) !== "undefined"){
+                    var suggestion = $('\
+                        <div class="container-fluid suggestion">\
+                            <div class="flex-container">\
+                                <div class="item history">\
+                                    <span class="glyphicon glyphicon-time"></span>\
+                                </div>\
+                                <div class="item">\
+                                    ' + value["name"] + '\
+                                </div>\
+                            </div>\
+                        </div>\
+                        ');
+                    $("#search-suggestions").append(suggestion);
+                    $(suggestion).click(function(){
+                        $("#search input[name=q]").blur();
+                        $("#search input[name=q]").val(value["name"]);
+                        $("#doSearch").click();
+                    });
+                }
+            });
+        }else{
+            return;
+        }
+
+        var resultTogglerVisible = !$("#result-toggler").hasClass("hidden");
+
+        if(resultTogglerVisible){
+            $("#result-toggler").addClass("hidden");
+        }
+
+        if($("#results").attr("data-status") === "out"){
+            toggleResults("in");
+        }
+
+        $("#search-suggestions").animate({top: "0vh"}, 500, function(){
+            $("#search-suggestions").attr("data-status", "out");
+            $("#search-suggestions").css("padding-top", "70px");
+            $("#search input[name=q]").css("border-top-left-radius", 0);
+            $("#exit-suggestions").removeClass("hidden");
+            $("#exit-suggestions").click(function(){
+                $("#exit-suggestions").off();
+                if(resultTogglerVisible){
+                    $("#result-toggler").removeClass("hidden");
+                }
+                $("#search-suggestions").animate({top: "100vh"}, 500, function(){
+                    $("#exit-suggestions").addClass("hidden");
+                    $("#search input[name=q]").css("border-top-left-radius", "8px");
+                    $("#search-suggestions").html("");
+                    $("#search-suggestions").attr("data-status", "");
+                    $("#search-suggestions").css("padding-top", "");
+                });
+            });
+        });
+    });
 
     $("#search input[name=q]").on("keydown", function(event) {
         if (event.which == 13){
@@ -1703,6 +1779,12 @@ $(document).ready(function(){
 });
 
 function executeSearch(){
+
+    // Leave Search suggestions if they are enabled
+    if($("#search-suggestions").attr("data-status") === "out") {
+        $("#exit-suggestions").click();
+    }
+
     q = $("#search input[name=q]").val();
     if(q === ""){
         $("#search-addon input[name=q]").focus();
@@ -1766,6 +1848,15 @@ function executeSearch(){
                 if(typeof searchResults === "undefined" || searchResults.length <= 0){
                     console.log("keine Ergebnisse");
                     makeError($("#search-addon input[name=q]"), "Keine Ergebnisse gefunden :(");
+                }else{
+                    // Füge diesen Suchbegriff zur History hinzu
+                    // Add the first Result to the LocalStorage if it's the only one.
+                    // Otherwise we will add the search query
+                    if(searchResults.length === 1){
+                        addToHistory(searchResults[0]["display_name"], searchResults[0]["lon"], searchResults[0]["lat"]);
+                    }else{
+                        addToHistory(q, "0.0", "0.0");
+                    }
                 }
             });
         $("#cancel-search").click(function(){
@@ -1930,6 +2021,111 @@ function deinitResults() {
     map.on("singleclick", mapClickFunction);
     $("#clear-search").remove();
 
+}
+
+
+function getHistory(withGeoPosition) {
+    if(withGeoPosition === null){
+        withGeoPosition = false;
+    }
+    var präfix = "place-search:";
+    var result = [];
+    if (localStorage) {
+        var reg = new RegExp("^" + präfix, '');
+        $.each(localStorage, function(key, value) {
+            if (key.match(reg) !== null && value.match(/^\d+;\d+\.{0,1}\d*,\d+\.{0,1}\d*$/) !== null) {
+                var match = value.match(/([\d]+?);([\d\.]+),([\d\.]+)/);
+                var count = parseInt(match[1]);
+                var lon = parseFloat(match[2]);
+                var lat = parseFloat(match[3]);
+                var name = atob(key.replace(präfix, ''));
+                if(!withGeoPosition || (lon !== 0 && lat !== 0)){
+                    result.push({
+                        name: name,
+                        count: count,
+                        lon: lon,
+                        lat: lat
+                    });
+                }
+            }
+        });
+        result.sort(function(a, b) {
+            return b.count - a.count
+        });
+    }
+    return result;
+}
+
+function saveHistory(history, präfix) {
+    if (localStorage) {
+        // Das abspeichern der neuen History verläuft in 2 Schritten:
+        // 1. Löschen der vorhanden History
+        // 2. Hinzufügen der neuen History
+        // 1. Löschen der vorhandenen History
+        clearHistory(präfix);
+        // 2. Hinzufügen der neuen History
+        $.each(history, function(index, value) {
+            var key = präfix + btoa(value.name);
+            var val = value.count + ";" + value.lon + "," + value.lat;
+            localStorage.setItem(key, val);
+        });
+    }
+}
+
+function clearHistory(präfix) {
+    var oldhistory = getHistory();
+    $.each(oldhistory, function(index, value) {
+        var key = präfix + btoa(value.name);
+        localStorage.removeItem(key);
+    });
+}
+
+function addToHistory(name, lon, lat) {
+    if (localStorage) {
+        var präfix = "place-search:";
+        var key = btoa(name);
+        var historyLimit = 10;
+        // Let's get the sorted List of Results
+        var history = getHistory();
+        // Check if item exists:
+        var item = localStorage.getItem(präfix + key);
+        if (item === null) {
+            // Item ist noch nicht in der History. Es wird an die erste Stelle gesetzt
+            if (history.length >= historyLimit) {
+                // Zuerst das letzte Element entfernen, da unsere History voll ist
+                history.pop();
+            }
+            // Nun fügen wir das neue Element hinzu:
+            history.unshift({
+                name: name,
+                count: 10,
+                lon: lon,
+                lat: lat
+            });
+        } else {
+            // Item ist bereits in der History. Es wird einen Platz nach oben gepackt.
+            var itemIndex = parseInt(item.match(/^\d+/)[0]);
+            // Der angezeigte Index ist eine Zahl zwischen 1 und 10 wobei 10 das erste Element ist und 1 das letzte
+            // Wir konvertieren diese Zahl zum Array-Index
+            itemIndex = Math.abs(itemIndex - 10);
+            // Wir verschieben das Array Element jetzt um einen Platz nach vorne, also z.B: Element an stelle 4 kommt an stelle 3 etc.
+            if(itemIndex > 0){
+                history.move(itemIndex, itemIndex - 1);
+            }
+        }
+        // Jetzt müssen wir noch den Count Parameter für jedes Element aktualisieren:
+        var newHistory = [];
+        $.each(history, function(index, value) {
+            var c = historyLimit - index;
+            newHistory.push({
+                name: value.name,
+                count: c,
+                lon: value.lon,
+                lat: value.lat
+            });
+        });
+        saveHistory(newHistory, präfix);
+    }
 }
 var routeLineStyle = new ol.style.Style({
     stroke: new ol.style.Stroke({
@@ -3036,12 +3232,6 @@ function toRadians(angle) {
 
 function toDegrees(radians) {
     return radians * 180 / Math.PI;
-}
-
-function getDistance(p1, p2){
-    var wgs84Sphere = new ol.Sphere(6378137);
-    var dist = wgs84Sphere.haversineDistance(p1,p2);
-    return dist;
 }
 
 function getNextPointOnRoute(gpsPoint, accuracy) {

@@ -137,4 +137,3 @@ if(typeof deinitResults === "function"){
     $("#search input[name=q]").after(deleteSearch);
 }
 
-

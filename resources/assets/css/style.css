@@ -355,3 +355,56 @@ html, body, main, #map {
 #start-navigation img {
     width: 40px;
 }
+
+#search-suggestions {
+    top: 100vh;
+    left: 0;
+    position: absolute;
+    width: 100%;
+    height: 100vh;
+    background-color: rgb(250, 250, 250);
+    z-index: 5;
+    overflow-y: auto;
+}
+
+#exit-suggestions, #search-for-suggestions {
+    background-color: white;
+}
+
+.flex-container {
+    display: flex;
+    align-items: center;
+}
+
+.flex-container .item {
+    padding: 10px;
+    flex-shrink: 1;
+}
+
+#search-suggestions .flex-container {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: white;
+    box-shadow: 1px 1px 3px 1px rgba(0, 0, 0, 0.3);
+}
+
+#search-suggestions .flex-container .history {
+    font-size: 20px;
+    color: #777;
+    flex-basis: 70px;
+    flex-shrink: 0;
+    text-align: center;
+}
+
+#search-suggestions .flex-container .history p.dist {
+    font-size: 10px;
+}
+
+#search-suggestions .suggestion {
+    margin-bottom: 10px;
+}
+
+#search-suggestions #search-for-suggestions button {
+    background-color: white;
+    border: 0;
+}

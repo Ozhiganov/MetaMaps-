@@ -587,3 +587,13 @@ function toggleResearchButtonMoveEvent(){
         map.on("moveend", showResearchButton);
     }
 }
+
+function getDistance(p1, p2){
+    var wgs84Sphere = new ol.Sphere(6378137);
+    var dist = wgs84Sphere.haversineDistance(p1,p2);
+    return dist;
+}
+
+Array.prototype.move = function(from, to) {
+    this.splice(to, 0, this.splice(from, 1)[0]);
+};

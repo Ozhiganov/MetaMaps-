@@ -19,6 +19,10 @@
                 <form accept-charset="UTF-8" id="search" class="form-inline" onsubmit="return false;">
                         <div class="form-group">
                             <div class="input-group">
+                                <div class="input-group-addon hidden" id="exit-suggestions">
+                                    <span class="glyphicon glyphicon-arrow-left">
+                                    </span>
+                                </div>
                                 <div class="input-group-addon hidden-xs" id="logo">
                                     <div class="logo">
                                         <h1>
@@ -26,7 +30,7 @@
                                         </h1>
                                     </div>
                                 </div>
-                                <input class="form-control" name="q" placeholder="Karten durchsuchen..." type="text" value="@if(isset($search)){{$search}}@endif"/>
+                                <input class="form-control" name="q" placeholder="Karten durchsuchen..." type="text" autocomplete="off" value="@if(isset($search)){{$search}}@endif"/>
                                 <div class="input-group-addon" id="doSearch">
                                     <span class="glyphicon glyphicon-search">
                                     </span>
@@ -40,6 +44,9 @@
                         Liste anzeigen
                     </div>
             </figure>
+            <div id="search-suggestions" class="visible-xs">
+
+            </div>
             <div class="ol-popup" id="popup">
                 <a class="ol-popup-closer" href="#" id="popup-closer">
                 </a>

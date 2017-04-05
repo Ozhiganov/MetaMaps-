@@ -514,12 +514,6 @@ function toDegrees(radians) {
     return radians * 180 / Math.PI;
 }
 
-function getDistance(p1, p2){
-    var wgs84Sphere = new ol.Sphere(6378137);
-    var dist = wgs84Sphere.haversineDistance(p1,p2);
-    return dist;
-}
-
 function getNextPointOnRoute(gpsPoint, accuracy) {
     var r = route.routes[0];
     var wgs84Sphere = new ol.Sphere(6378137);
