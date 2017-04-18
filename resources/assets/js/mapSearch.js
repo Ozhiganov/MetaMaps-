@@ -315,75 +315,9 @@ function updateUrl(){
 }
 
 function initMap() {
-    popupOverlay = new ol.Overlay( /** @type {olx.OverlayOptions} */ ({
-        element: document.getElementById("popup"),
-        autoPan: true,
-        autoPanAnimation: {
-            duration: 250
-        }
-    }));
-    map = new ol.Map({
-        layers: [
-            new ol.layer.Tile({
-                preload: Infinity,
-                source: new ol.source.OSM({
-                    attributions: [
-                        new ol.Attribution({
-                            html: '&copy; ' + '<a href="https://metager.de/">MetaGer.de</a>'
-                        }),
-                        new ol.Attribution({
-                            html: '| <a href="https://metager.de/impressum">Impressum</a>'
-                        }),
-                        new ol.Attribution({
-                            html: '| &copy; ' + '<a href="http://nominatim.openstreetmap.org/">Nominatim</a>'
-                        }),
-                        ol.source.OSM.ATTRIBUTION,
-                    ],
-                    url: 'https://maps.metager.de/osm_tiles/{z}/{x}/{y}.png'
-                })
-            })
-        ],
-        target: 'map',
-        controls: ol.control.defaults({
-            attributionOptions: /** @type {olx.control.AttributionOptions} */ ({
-                collapsible: false
-            })
-        }).extend([
-            new ol.control.ScaleLine()
-        ]),
-        overlays: [popupOverlay],
-        view: new ol.View({
-            maxZoom: 18,
-            minZoom: 6,
-            center: ol.proj.transform(
-                [10.06897, 51.37247], 'EPSG:4326', 'EPSG:3857'),
-            zoom: 6
-        }),
-        loadTilesWhileAnimating: true,
-        loadTilesWhileInteracting: true
-    });
-    map.addControl(new ol.control.ZoomSlider());
-    $("#popup-closer").click(function() {
-        popupOverlay.setPosition(undefined);
-        $(this).blur();
-        return false;
-    });
+    
 }
-/**
- * This function sends a request to our Nominatim instance and evaluates the given coordinates to an adress
- * @param {Float} lon
- * @param {Float} lat
- * @return {Array} adress
- */
-function getNearest(lon, lat) {
-    var url = "https://maps.metager.de/nominatim/reverse.php?format=json&lat=" + lat + "&lon=" + lon + "&zoom=18&extratags=1&addressdetails=1&namedetails=1";
-    // Send the Request
-    $.get(url, function(data) {
-        var popup = buildResultFromData(data);
-        // And now we can show the Popup where the user clicked
-        createPopup(lon, lat, popup);
-    });
-}
+
 
 function deinitResults() {
     searchResults = undefined;
@@ -403,40 +337,6 @@ function deinitResults() {
     $("#clear-search").remove();
 
 }
-
-
-function getHistory(withGeoPosition) {
-    if(withGeoPosition === null){
-        withGeoPosition = false;
-    }
-    var präfix = "place-search:";
-    var result = [];
-    if (localStorage) {
-        var reg = new RegExp("^" + präfix, '');
-        $.each(localStorage, function(key, value) {
-            if (key.match(reg) !== null && value.match(/^\d+;\d+\.{0,1}\d*,\d+\.{0,1}\d*$/) !== null) {
-                var match = value.match(/([\d]+?);([\d\.]+),([\d\.]+)/);
-                var count = parseInt(match[1]);
-                var lon = parseFloat(match[2]);
-                var lat = parseFloat(match[3]);
-                var name = atob(key.replace(präfix, ''));
-                if(!withGeoPosition || (lon !== 0 && lat !== 0)){
-                    result.push({
-                        name: name,
-                        count: count,
-                        lon: lon,
-                        lat: lat
-                    });
-                }
-            }
-        });
-        result.sort(function(a, b) {
-            return b.count - a.count
-        });
-    }
-    return result;
-}
-
 function saveHistory(history, präfix) {
     if (localStorage) {
         // Das abspeichern der neuen History verläuft in 2 Schritten:
@@ -451,14 +351,6 @@ function saveHistory(history, präfix) {
             localStorage.setItem(key, val);
         });
     }
-}
-
-function clearHistory(präfix) {
-    var oldhistory = getHistory();
-    $.each(oldhistory, function(index, value) {
-        var key = präfix + btoa(value.name);
-        localStorage.removeItem(key);
-    });
 }
 
 function addToHistory(name, lon, lat) {

@@ -17,7 +17,7 @@ Route::get('/', function () {
 
 Route::group(['prefix' => 'map'], function () {
     Route::get('/', function () {
-        return view('map')->with('boundings', 'false')->with('getPosition', 'true')->with('scripts', [elixir('js/mapSearch.js')])->with('css', [elixir('css/mapSearch.css')]);
+        return view('map')->with('scripts', [elixir('js/mapSearch.js')])->with('css', [elixir('css/mapSearch.css')]);
     });
     Route::get('{position}', function ($position) {
         $positionData = explode(",", $position);

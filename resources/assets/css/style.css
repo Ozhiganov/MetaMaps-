@@ -82,25 +82,32 @@ input + .input-group-addon {
 }
 */
 
-#results .result-container {
+#search-addon .results .history-container > div:first-child {
+    padding-top: 10px;
+}
+
+.result {
+    display:flex;
+}
+
+.result > div {
     padding: 10px;
 }
 
-#results .result {
-    border-top: 0;
-    border-radius: 2px;
-    /*background-color: #D9E7F7;*/
-    cursor: pointer;
+.result .result-actions {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
 }
 
 .result p.title {
     font-weight: bold;
-    font-size: 11px;
+    font-size: 15px;
     margin-bottom: 0;
 }
 
 .result p.address, .result p.opening-hours, .result p.population, .result p.city, .result div.geo-position {
-    font-size: 11px;
+    font-size: 13px;
     margin-bottom: 0;
 }
 
@@ -254,7 +261,7 @@ html, body, main, #map {
     color: red;
 }
 
-#results {
+.results {
     z-index: 20001;
 }
 
@@ -381,14 +388,14 @@ html, body, main, #map {
     flex-shrink: 1;
 }
 
-#search-suggestions .flex-container {
+.results .flex-container {
     border: 1px solid #ddd;
     border-radius: 8px;
     background-color: white;
     box-shadow: 1px 1px 3px 1px rgba(0, 0, 0, 0.3);
 }
 
-#search-suggestions .flex-container .history {
+.results .flex-container .history {
     font-size: 20px;
     color: #777;
     flex-basis: 70px;
@@ -396,15 +403,15 @@ html, body, main, #map {
     text-align: center;
 }
 
-#search-suggestions .flex-container .history p.dist {
+.results .flex-container .history p.dist {
     font-size: 10px;
 }
 
-#search-suggestions .suggestion {
+.results .suggestion {
     margin-bottom: 10px;
 }
 
-#search-suggestions #search-for-suggestions button {
+.results #search-for-suggestions button {
     background-color: white;
     border: 0;
 }

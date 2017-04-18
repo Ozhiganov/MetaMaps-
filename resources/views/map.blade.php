@@ -15,7 +15,7 @@
     </head>
     <body>
         <main>
-            <figure id="search-addon" style="position: absolute;">
+            <figure id="search-addon" class="hidden">
                 <form accept-charset="UTF-8" id="search" class="form-inline" onsubmit="return false;">
                         <div class="form-group">
                             <div class="input-group">
@@ -38,7 +38,10 @@
                             </div>
                         </div>
                     </form>
-                    <div data-status="in" id="results">
+                    <div data-status="in" class="results">
+                        <div class="history-container">
+
+                        </div>
                     </div>
                     <div id="result-toggler" class="hidden" title="Ergebnisliste ausklappen">
                         Liste anzeigen
@@ -69,44 +72,7 @@
             <div id="gps-error" class="hidden">
             <span>MetaGer konnte Ihren genauen Standort nicht ermitteln.</span> <a href="/hilfe/gps" target="_blank">Warum?</a>
             </div>
-            @if(isset($vars) && isset($vars["debug"]) && $vars["debug"])
-            <div id="debug-box">
-            </div>
-            @endif
         </main>
-        @if(isset($scripts))
-            @foreach($scripts as $script)
-                <script src="{{$script}}" ></script>
-            @endforeach
-        @endif
-        <script>
-            var boundings = {{$boundings}};
-            @if($boundings === 'true')
-            var minPos = {{$minPos}};
-            var maxPos = {{$maxPos}};
-            @endif
-            var getPosition = {{$getPosition}};
-            @if(isset($route))
-            var route = '{{$route}}';
-            @endif
-            @if(isset($vars) && sizeof($vars) > 0)
-            @foreach($vars as $key => $value)
-            @if(gettype($value) === "string")
-            var {!!$key!!} = '{!! $value !!}';
-            @elseif(gettype($value) === "array" || gettype($value) === "boolean")
-            var {!!$key!!} = {!! json_encode($value) !!};
-            @else
-            var {!!$key!!} = {!! $value !!};
-            @endif
-            @endforeach
-            @endif
-        </script>
-        @if(isset($javascript))
-        <script>
-            $(document).ready(function(){
-                $.getScript('{{$javascript}}');
-            });
-        </script>
-        @endif
+        <script src="{{ elixir('js/map.js') }}" type="text/javascript" defer></script>
     </body>
 </html>

@@ -6887,24 +6887,6 @@ input + .input-group-addon {
 }
 */
 
-#search-addon .results .history-container > div:first-child {
-    padding-top: 10px;
-}
-
-.result {
-    display:flex;
-}
-
-.result > div {
-    padding: 10px;
-}
-
-.result .result-actions {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-around;
-}
-
 .result p.title {
     font-weight: bold;
     font-size: 15px;
