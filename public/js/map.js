@@ -1476,9 +1476,20 @@ SearchModule.prototype.initializeInterface = function(){
 }
 
 SearchModule.prototype.addSearchListeners = function(){
+	// When the searchfield got focussed
+	// Mainly just displays the history
 	$("#search-addon").focusin({caller: this}, function(event){
 		event.data.caller.focusSearchInput();
 	});
+
+	$("#search").submit({caller: this}, function(event){
+		event.data.caller.startSearch(event);
+		return false;
+	});
+}
+
+SearchModule.prototype.startSearch = function(event){
+	console.log(event);
 }
 
 SearchModule.prototype.focusSearchInput = function(){

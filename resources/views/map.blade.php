@@ -16,7 +16,7 @@
     <body>
         <main>
             <figure id="search-addon" class="hidden">
-                <form accept-charset="UTF-8" id="search" class="form-inline" onsubmit="return false;">
+                <form accept-charset="UTF-8" id="search" class="form-inline">
                         <div class="form-group">
                             <div class="input-group">
                                 <div class="input-group-addon hidden" id="exit-suggestions">
@@ -32,8 +32,8 @@
                                 </div>
                                 <input class="form-control" name="q" placeholder="Karten durchsuchen..." type="text" autocomplete="off" value="@if(isset($search)){{$search}}@endif"/>
                                 <div class="input-group-addon" id="doSearch">
-                                    <span class="glyphicon glyphicon-search">
-                                    </span>
+                                    <button type="submit" class="glyphicon glyphicon-search">
+                                    </button>
                                 </div>
                             </div>
                         </div>
