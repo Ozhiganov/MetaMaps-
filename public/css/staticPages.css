@@ -6886,21 +6886,26 @@ input + .input-group-addon {
 }
 */
 
+#search-addon .results .wait-for-search{
+    display: none;
+}
+
 #search-addon .results .history-container > div:first-child {
     padding-top: 10px;
+}
+
+#search-addon .results .results-container {
+    background-color:white;
+    display:none;
 }
 
 .result {
     display:flex;
 }
 
-.result > div {
-    padding: 10px;
-}
-
 .result .result-actions {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     justify-content: space-around;
 }
 
@@ -7190,13 +7195,11 @@ html, body, main, #map {
 .flex-container .item {
     padding: 10px;
     flex-shrink: 1;
+    flex-direction: column;
 }
 
 .results .flex-container {
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    background-color: white;
-    box-shadow: 1px 1px 3px 1px rgba(0, 0, 0, 0.3);
+    border-bottom: 1px solid #ddd;
 }
 
 .results .flex-container .history {
@@ -7209,10 +7212,6 @@ html, body, main, #map {
 
 .results .flex-container .history p.dist {
     font-size: 10px;
-}
-
-.results .suggestion {
-    margin-bottom: 10px;
 }
 
 .results #search-for-suggestions button {

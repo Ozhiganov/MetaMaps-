@@ -51,6 +51,10 @@ class SearchController extends Controller
         // Gibt an, ob die Suche im angezeigten Bereich erfolgreich war:
         $boundingSuccess = true;
 
+        $response = Response::make($results, 200);
+        $response->header("Content-Type", "application/json");
+        return $response;
+
         # Wenn wir keine Ergebnisse haben, müssen wir auch nichts anzeigen:
         if (sizeof($results) === 0) {
             $response = Response::make('', 200);

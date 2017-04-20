@@ -135,7 +135,7 @@ GpsManager.prototype.followLocation = function() {
                 // Fit the Extent of the Map to Fit the new Features Exactly
                 caller.map.getView().fit(caller.userPositionMarker.getSource().getExtent(), {
                     padding: [5, 5, 5, 5],
-                    duration: 1500
+                    duration: 600
                 });
             }
             // Change the color of the Icon so the user knows that the position is tracked:

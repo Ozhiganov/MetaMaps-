@@ -30,7 +30,7 @@
                                         </h1>
                                     </div>
                                 </div>
-                                <input class="form-control" name="q" placeholder="Karten durchsuchen..." type="text" autocomplete="off" value="@if(isset($search)){{$search}}@endif"/>
+                                <input class="form-control" name="q" placeholder="Karten durchsuchen..." type="text" autocomplete="off" value="@if(isset($search)){{$search}}@endif"/ onsubmit="return false;">
                                 <div class="input-group-addon" id="doSearch">
                                     <button type="submit" class="glyphicon glyphicon-search">
                                     </button>
@@ -38,7 +38,10 @@
                             </div>
                         </div>
                     </form>
-                    <div data-status="in" class="results">
+                    <div class="results">
+                        <div class="results-container" data-status="in">
+
+                        </div>
                         <div class="history-container">
 
                         </div>
