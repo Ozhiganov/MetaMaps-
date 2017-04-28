@@ -13,7 +13,7 @@ function ReversePositionManager(interactiveMap){
     // Add the Overlay to the map
     this.interactiveMap.map.addOverlay(this.positionOverlay);
     // Add the Event Handler for the Click
-    this.interactiveMap.map.on('singleclick', this.getNearest, this.interactiveMap);
+    this.setActive(true);
     // Add the close event for the Popup
     $("#popup-closer").click({caller: this}, function(event) {
         event.data.caller.positionOverlay.setPosition(undefined);
@@ -47,4 +47,11 @@ ReversePositionManager.prototype.createPopup = function(pos, html) {
     $("#popup-content").html(html);
 
     this.positionOverlay.setPosition(pos);
+}
+
+ReversePositionManager.prototype.setActive = function(bool){
+    this.interactiveMap.map.un('singleclick', this.getNearest , this.interactiveMap);
+    if(bool){
+        this.interactiveMap.map.on('singleclick', this.getNearest, this.interactiveMap);
+    }
 }

@@ -15,7 +15,7 @@
     </head>
     <body>
         <main>
-            <figure id="search-addon" class="hidden">
+            <figure id="search-addon" class="">
                 <form accept-charset="UTF-8" id="search" class="form-inline">
                         <div class="form-group">
                             <div class="input-group">
@@ -50,9 +50,22 @@
                         Liste anzeigen
                     </div>
             </figure>
-            <div id="search-suggestions" class="visible-xs">
-
-            </div>
+            <figure id="route-finder-addon">
+                <div id="vehicle-chooser">
+                    <label class="radio-inline" title="Fußgänger">
+                      <input type="radio" name="vehicle" value="foot"> <div><img src="/img/silhouette-walk.png" height="20px" /></div>
+                    </label>
+                    <label class="radio-inline" title="Fahrrad">
+                      <input type="radio" name="vehicle" value="bicycle"> <div><img src="/img/bike.png" height="20px" /></div>
+                    </label>
+                    <label class="radio-inline" title="Auto">
+                      <input type="radio" name="vehicle" value="car"> <div><img src="/img/car.png" height="20px" /></div>
+                    </label>
+                    <button type="button" class="close" aria-label="Close" title="Routenplanung abbrechen">
+                      <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+            </figure>
             <div class="ol-popup" id="popup">
                 <a class="ol-popup-closer" href="#" id="popup-closer">
                 </a>

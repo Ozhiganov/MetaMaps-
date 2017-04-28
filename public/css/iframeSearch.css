@@ -6908,6 +6908,9 @@ input + .input-group-addon {
     display: flex;
     flex-direction: row;
     justify-content: space-around;
+    margin-top: 5px;
+    border-top: 1px solid #ddd;
+    padding: 5px 0;
 }
 
 .result p.title {
@@ -6938,6 +6941,7 @@ figure#search-addon {
     margin-right: 15px;
     margin-left: 15px;
     margin-top: 15px;
+    max-width: 100%;
 }
 
 figure#search-addon .form-group {
@@ -7196,6 +7200,7 @@ html, body, main, #map {
 .flex-container .item {
     padding: 10px;
     flex-shrink: 1;
+    flex-grow: 1;
     flex-direction: column;
 }
 
@@ -7208,6 +7213,7 @@ html, body, main, #map {
     color: #777;
     flex-basis: 70px;
     flex-shrink: 0;
+    flex-grow: 0;
     text-align: center;
 }
 

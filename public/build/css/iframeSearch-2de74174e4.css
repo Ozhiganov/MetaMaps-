@@ -6908,6 +6908,9 @@ input + .input-group-addon {
     display: flex;
     flex-direction: row;
     justify-content: space-around;
+    margin-top: 5px;
+    border-top: 1px solid #ddd;
+    padding: 5px 0;
 }
 
 .result p.title {
@@ -6938,6 +6941,7 @@ figure#search-addon {
     margin-right: 15px;
     margin-left: 15px;
     margin-top: 15px;
+    max-width: 100%;
 }
 
 figure#search-addon .form-group {
@@ -7196,6 +7200,7 @@ html, body, main, #map {
 .flex-container .item {
     padding: 10px;
     flex-shrink: 1;
+    flex-grow: 1;
     flex-direction: column;
 }
 
@@ -7208,6 +7213,7 @@ html, body, main, #map {
     color: #777;
     flex-basis: 70px;
     flex-shrink: 0;
+    flex-grow: 0;
     text-align: center;
 }
 
@@ -7219,89 +7225,47 @@ html, body, main, #map {
     background-color: white;
     border: 0;
 }
+body {
+    max-height: 310px;
+    margin-bottom: 10px;
+}
+
+main {
+    max-height: 300px;
+}
+
+#map-container {
+    padding: 0;
+}
+
 #map {
-    height: 100vh;
-}
-
-.results {
-    background-color: rgb(250, 250, 250);
-    border: 1px solid #ccc;
-    border-top: 0;
-    border-radius: 0 0 15px 15px;
-    overflow: auto;
-    max-height:91vh;
-    background-color: transparent;
-}
-
-.mobiles-window {
-    width:100%;
-    height: 175px;
-    background-color: transparent;
-}
-
-#clear-search, #cancel-search, #delete-search {
-    cursor: pointer;
-    background-color: white;
-    color: red;
-}
-
-#clear-search:hover, #cancel-search:hover {
+    height: 300px;
     cursor: pointer;
 }
 
-#beta-info {
-    position: absolute;
-    z-index: 99999;
-    left: 25%;
-    top: 55px;
-    width: 50%;
+#results {
+    height: 300px;
+    overflow-y: auto;
 }
 
-#research-button {
-    position: relative;
-    bottom: 70px;
-    width: 100%;
-    text-align: center;
+.ol-zoomslider.ol-unselectable.ol-control {
+    display: none;
 }
 
-#search {
+#results .result > .col-xs-2 {
     padding: 0;
 }
 
-#doSearch {
+.result-container {
+    padding-left: 0;
+    padding-right: 0;
+}
+
+.result-container > div {
     padding: 0;
 }
 
-#doSearch > button {
-    padding: 6px 12px;
-    border: 0;
-    background-color: inherit;
+.result-container .result {
+    padding-right: 0;
 }
-
-#result-toggler {
-    position: relative;
-    width: 150px;
-    left: calc(50% - 75px);
-    top: 0px;
-    text-align: center;
-    color: white;
-    background-color: rgb(255, 128, 0);
-    border-radius: 0 0 8px 8px;
-    height: 20px;
-    font-size: 12px;
-    line-height: 20px;
-}
-
-#result-toggler:hover {
-    cursor: pointer;
-}
-
-.wait-for-search {
-    text-align: center;
-    margin: 10px;
-}
-
-.wait-for-search img {
-    margin-left: 10px;
-}
-/*# sourceMappingURL=mapSearch.css.map */
+/*# sourceMappingURL=iframeSearch.css.map */

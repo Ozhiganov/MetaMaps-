@@ -1,3 +1,64 @@
+#route-finder-addon {
+    max-width: 450px;
+    overflow: hidden;
+    position: absolute;
+    min-width: 320px;
+    z-index: 20002;
+    right: 0;
+    top: 0;
+    padding: 15px;
+    padding-bottom: 0;
+    display: none;
+}
+
+@media(max-width: 767px){
+    #route-finder-addon {
+        width: 100%;
+    }
+}
+
+#waypoint-list-container #waypoint-list{
+    background-color: white;
+}
+
+#waypoint-list .waypoint {
+    display: flex;
+    justify-content: space-around;
+    align-items:center;
+}
+
+#waypoint-list .waypoint .marker {
+    flex-shrink: 0;
+    flex-grow: 0;
+    margin: 0 20px;
+}
+
+#waypoint-list .waypoint .description {
+    flex-grow: 1;
+    flex-shrink: 0;
+}
+
+#waypoint-list .waypoint .delete-waypoint {
+    flex-grow: 0;
+    flex-shrink: 0;
+    padding: 20px;
+}
+
+#route-finder-addon .new-waypoint-form {
+    background-color:white;
+    margin: 0;
+    padding: 7px;
+}
+
+#route-finder-addon .new-waypoint-form button[data-toggle=popover] {
+    background-color:white;
+    border: 0;
+}
+#route-finder-addon .new-waypoint-form button[type=submit] {
+    border: 0;
+    background-color: inherit;
+}
+
 .drop-target {
     margin: 10px 0;
     border-color: black;

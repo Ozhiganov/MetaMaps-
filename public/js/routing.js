@@ -1024,6 +1024,7 @@ function InteractiveMap() {
     Map.call(this);
     // Initialize the Map With Controls to change the view
     this.map = this.initMap();
+    this.module = null;
     // Initialize the Positions gathering on click on the Map
     this.reversePositionManager = new ReversePositionManager(this); // This is the Overlay that displays informations about a position where the user has clicked.
     // Initialize the GPS Module
@@ -1098,10 +1099,23 @@ InteractiveMap.prototype.initMap = function() {
     map.addControl(new ol.control.ZoomSlider());
     return map;
 }
-InteractiveMap.prototype.switchModule = function(name){
+InteractiveMap.prototype.switchModule = function(name, args){
+
+    // Todo remove when development of Route Finder finished
+    this.module = new RouteFinder(this, [[9.71802887131353, 52.3454087]]);
+    return;
+
+    if(this.module !== null){
+        // Every Module must implement this method for deinitialization
+        this.module.exit();
+        this.module = null;
+    }
     switch(name){
         case "search":
             this.module = new SearchModule(this);
+            break;
+        case "route-finding":
+            this.module = new RouteFinder(this, [[parseFloat(args.lon), parseFloat(args.lat)]]);
             break;
         default:
             return;

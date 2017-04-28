@@ -1,1 +1,0 @@
-### Hier entsteht das Projekt für den MetaGer Kartendienst

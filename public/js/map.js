@@ -1024,6 +1024,7 @@ function InteractiveMap() {
     Map.call(this);
     // Initialize the Map With Controls to change the view
     this.map = this.initMap();
+    this.module = null;
     // Initialize the Positions gathering on click on the Map
     this.reversePositionManager = new ReversePositionManager(this); // This is the Overlay that displays informations about a position where the user has clicked.
     // Initialize the GPS Module
@@ -1098,10 +1099,23 @@ InteractiveMap.prototype.initMap = function() {
     map.addControl(new ol.control.ZoomSlider());
     return map;
 }
-InteractiveMap.prototype.switchModule = function(name){
+InteractiveMap.prototype.switchModule = function(name, args){
+
+    // Todo remove when development of Route Finder finished
+    this.module = new RouteFinder(this, [[9.71802887131353, 52.3454087]]);
+    return;
+
+    if(this.module !== null){
+        // Every Module must implement this method for deinitialization
+        this.module.exit();
+        this.module = null;
+    }
     switch(name){
         case "search":
             this.module = new SearchModule(this);
+            break;
+        case "route-finding":
+            this.module = new RouteFinder(this, [[parseFloat(args.lon), parseFloat(args.lat)]]);
             break;
         default:
             return;
@@ -1157,38 +1171,34 @@ NominatimParser.prototype.getHTMLResult = function() {
             phone = data["extratags"]["phone"];
         }
         if (phone !== "") {
-            html += "<div class=\"opening-hours\"><a href=\"tel:" + phone + "\" target=_blank><span class=\"glyphicon glyphicon-earphone\"></span> " + phone + "</a></div>\n";
+            html += "<div class=\"phone\"><a href=\"tel:" + phone + "\" onclick=\"event.stopPropagation();\" target=_blank><span class=\"glyphicon glyphicon-earphone\"></span> " + phone + "</a></div>\n";
         }
         if (typeof data["extratags"]["website"] !== "undefined") {
             var url = data["extratags"]["website"];
             if (url.lastIndexOf("http", 0) !== 0) {
                 url = "http://" + url;
             }
-            html += "<div class=\"opening-hours\"><a href=\"" + url + "\" target=_blank><span class=\"glyphicon glyphicon-globe\"></span> " + url + "</a></div>\n";
+            html += "<div class=\"website\"><a href=\"" + url + "\" onclick=\"event.stopPropagation();\" target=_blank><span class=\"glyphicon glyphicon-globe\"></span> " + url + "</a></div>\n";
         }
         if (typeof data["extratags"]["wikipedia"] !== "undefined") {
             var url = "https://de.wikipedia.org/wiki/" + data["extratags"]["wikipedia"];
-            html += "<div class=\"opening-hours\"><a href=\"" + url + "\" target=_blank>Wikipedia</a></div>\n";
+            html += "<div class=\"wikipedia\"><a href=\"" + url + "\" onclick=\"event.stopPropagation();\" target=_blank><img src=\"/img/wiki.svg\" alt=\"wikipedia\" width=\"20px\"> Wikipedia</a></div>\n";
         }
         // Add possible Opening Hours:
         if (typeof data["extratags"]["opening_hours"] !== "undefined") {
             html += "<div class=\"opening-hours\">" + data["extratags"]["opening_hours"] + "</div>\n";
         }
         if (typeof data["extratags"]["description"] !== "undefined") {
-            html += "<div class=\"opening-hours\">" + data["extratags"]["description"] + "</div>\n";
+            html += "<div class=\"description\">" + data["extratags"]["description"] + "</div>\n";
         }
         html += "</div><div class=\"result-actions\">";
         // Update Address details
         lon = parseFloat(data["lon"]);
         lat = parseFloat(data["lat"]);
-        //html += "<div class=\"geo-position container-fluid\"><div class=\"row\">\n";
-        //html += "<div class=\"col-xs-6\">Lon: " + lon + "</div>\n";
-        //html += "<div class=\"col-xs-6\">Lat: " + lat + "</div>\n"; 
-        //html += "</div></div>";
         // Now the two Links
         var url = "";
         url = "/route/start/foot/" + lon + "," + lat;
-        html += '<a href=\"' + url + '\">Route berechnen</a>';
+        html += '<a class="start-route-service" data-lon="'+lon+'" data-lat="'+lat+'" href="#" onclick="event.stopPropagation();">Route berechnen</a>';
         // And the Link to the MetaGer Search
         // build the search query
         var query = "";
@@ -1200,12 +1210,47 @@ NominatimParser.prototype.getHTMLResult = function() {
         query = query.trim();
         if (query.length > 0) {
             var url = 'https://metager.de/meta/meta.ger3?focus=web&eingabe=' + encodeURIComponent(query) + '&encoding=utf8&lang=all';
-            html += '<a href=\"' + url + '\" target=_blank>MetaGer Suche</a>';
+            html += '<a href=\"' + url + '\" onclick="event.stopPropagation();" target=_blank>MetaGer Suche</a>';
         }
         html += "</div></div>";
         var popup = $(html);
         return popup;
     } else {
+        return null;
+    }
+}
+
+NominatimParser.prototype.getHTMLAddressDetails = function(){
+    var data = this.nominatimResult;
+    if (typeof data !== "undefined" && typeof data["address"] !== "undefined") {
+        // Success we have an address
+        var address = data["address"];
+        var road = this.getRoad(address);
+        var house_number = this.getHouseNumber(address);
+        var city = this.getCity(address);
+        var id = data["place_id"];
+        var html = "<div class=\"result\">\n";
+        html += "<div class=\"result-information\">";
+        // Wir extrahieren noch einen Namen
+        if (typeof data["namedetails"]["name"] !== "undefined") {
+            html += "<div class=\"title\">" + data["namedetails"]["name"] + "</div>\n";
+        }
+        var road = this.getRoad(address);
+        var house_number = this.getHouseNumber(address);
+        if (road !== "") {
+            html += "<div class=\"address\">" + road;
+            if (house_number !== "") {
+                html += " " + house_number;
+            }
+            html += "</div>\n";
+        }
+        var city = this.getCity(address);
+        if (city !== "") {
+            html += "<div class=\"city\">" + city + "</div>\n";
+        }
+        html += "</div></div>";
+        return html;
+    }else{
         return null;
     }
 }
@@ -1268,7 +1313,7 @@ function ReversePositionManager(interactiveMap){
     // Add the Overlay to the map
     this.interactiveMap.map.addOverlay(this.positionOverlay);
     // Add the Event Handler for the Click
-    this.interactiveMap.map.on('singleclick', this.getNearest, this.interactiveMap);
+    this.setActive(true);
     // Add the close event for the Popup
     $("#popup-closer").click({caller: this}, function(event) {
         event.data.caller.positionOverlay.setPosition(undefined);
@@ -1302,6 +1347,13 @@ ReversePositionManager.prototype.createPopup = function(pos, html) {
     $("#popup-content").html(html);
 
     this.positionOverlay.setPosition(pos);
+}
+
+ReversePositionManager.prototype.setActive = function(bool){
+    this.interactiveMap.map.un('singleclick', this.getNearest , this.interactiveMap);
+    if(bool){
+        this.interactiveMap.map.on('singleclick', this.getNearest, this.interactiveMap);
+    }
 }
 function GpsManager(map) {
     this.map = map;
@@ -1464,10 +1516,7 @@ GpsManager.prototype.followLocation = function() {
     }
 }
 function SearchModule(interactiveMap){
-	this.interactiveMap = interactiveMap;
-	this.resultsMarginTopMobile = 175;
-	this.results = [];
-	this.markerOverlays = [];
+	this.interactiveMap = interactiveMap;	
 	// Initialize the search Interface
 	this.initializeInterface();
 	// Add the Listeners
@@ -1475,7 +1524,7 @@ function SearchModule(interactiveMap){
 }
 
 SearchModule.prototype.initializeInterface = function(){
-	$("#search-addon").removeClass("hidden");
+	$("#search-addon").show('slow');
 }
 
 SearchModule.prototype.addSearchListeners = function(){
@@ -1491,6 +1540,11 @@ SearchModule.prototype.addSearchListeners = function(){
 	});
 }
 
+SearchModule.prototype.removeSearchListeners = function(){
+	$("#search-addon").off();
+	$("#search").off();
+}
+
 SearchModule.prototype.startSearch = function(event){
 	this.query = $("#search input[name=q]").val();
 	var caller = this;
@@ -1499,14 +1553,6 @@ SearchModule.prototype.startSearch = function(event){
 		$("#search input[name=q]").focus();
 		return;
 	}
-	$("#search-addon .results .results-container").html("");
-	if($("#search-addon .results .results-container").attr("data-status") === "out"){
-		$("#search-addon .results .results-container").hide('fast', function(){
-			$("#search-addon .results .results-container").attr("data-status", "in");
-		});
-	}
-	$("#search #delete-search").remove();
-
 
 	var lockSearchFunctions = function(){
 		// Prevent Additional searches until this one finishes
@@ -1555,8 +1601,8 @@ SearchModule.prototype.startSearch = function(event){
 	lockSearchFunctions();	
 	// Query the Search:
 	$.get(url, function(data){
-		caller.results = data;
-		caller.updateInterface();
+		caller.results = new Results(caller.interactiveMap, data, caller.query);
+		//caller.updateInterface();
 	})
 	.always(function(){
 		unlockSearchFunctions();
@@ -1565,7 +1611,7 @@ SearchModule.prototype.startSearch = function(event){
 }
 
 SearchModule.prototype.focusSearchInput = function(){
-
+	return;
 	// Read out the locally stored History
 	var history = (new LocalHistory()).getFullHistory();
 
@@ -1601,150 +1647,12 @@ SearchModule.prototype.focusSearchInput = function(){
 	this.adjustResultBoxHeight(oldHeight, newHeight);
 }
 
-SearchModule.prototype.adjustResultBoxHeight = function(oldHeight, newHeight){
-	$("#search-addon .results").height(oldHeight),
-	$("#search-addon .results").animate({height: newHeight}, 'slow', function(){
-		$("#search-addon .results").height('auto');
-	});
+SearchModule.prototype.exit = function(){
+	this.results.deleteSearch();
+	this.removeSearchListeners();
+	$("#search-addon").hide('slow');
 }
 
-/**
- * Updates the User Interface if there are any Search results saved in this Module
- * It prints all Markers and geometries for the search results and updates the results list
-**/
-SearchModule.prototype.updateInterface = function(){
-	if(this.results.length > 0){
-		// First add those Results to the Results List
-		$("#search-addon .results .results-container").html("");
-		$("#search-addon .results .mobiles-window").remove();
-		// On Mobiles we need a window to look through to the map
-		if($(window).outerWidth() <= 767){
-			$("#search-addon .results .results-container").before("<div class=\"mobiles-window\"></div>");
-			// The Search box got focussed on a mobile Let's get more Space
-			$("#search-addon").animate({"margin": 0}, 'slow');
-			$("#search-addon .results").css("border-radius", 0);
-			$("#search-addon .results").css("max-height", "95vh");
-		}
-
-		$.each(this.results, function(index, value){
-			var res = (new NominatimParser(value)).getHTMLResult().html();
-			var resHtml = $('\
-							<div class="container-fluid suggestion">\
-	                            <div class="flex-container">\
-	                                <div class="item history">\
-	                                    <span class="marker" style="filter: hue-rotate(' + value["huerotate"] + 'deg); font-size: 16px;">' + index + '</span>\
-	                                </div>\
-	                                <div class="item result">\
-	                                    ' + res + '\
-	                                </div>\
-	                            </div>\
-	                        </div>\
-							');
-			$("#search-addon .results .results-container").append(resHtml);
-		});
-		$("#search-addon .results .results-container").show('slow', function(){
-			$("#search-addon .results .results-container").attr("data-status", "out");
-		});
-		// Let's make a new input-group-addon to cancel the search if it takes too long
-	    var cancelSearch = $('\
-	        <div class="input-group-addon" id="delete-search" title="Suche abbrechen">\
-	            X\
-	        </div> \
-	    ');
-	    $("#search input[name=q]").after(cancelSearch);
-	    $(cancelSearch).click({caller: this}, function(event){
-	    	event.data.caller.deleteSearch();
-	    });
-	    this.updateResultMarker();
-	    this.updateMapExtent();
-	}
-}
-
-SearchModule.prototype.deleteSearch = function(){
-	$("#search-addon .results .results-container").hide("slow", function(){
-		$("#search-addon .results .results-container").html("");
-	});
-	$("#search-addon .results .history-container").hide("slow", function(){
-		$("#search-addon .results .history-container").html("");
-	});
-	$("#search-addon #delete-search").remove();
-	$("#search-addon #search input[name=q]").val("");
-}
-
-SearchModule.prototype.updateResultMarker = function(){
-	var caller = this;
-	if(this.markerOverlays.length > 0){
-		$.each(this.markerOverlays, function(index, overlay){
-			caller.interactiveMap.map.removeOverlay(overlay);
-		});
-		this.markerOverlays = [];
-	}
-	
-	$.each(this.results, function(index, value){
-		var el = $('<span id="index" class="marker" style="filter: hue-rotate(' + value["huerotate"] + 'deg)">' + index + '</span>');
-		var overlay = new ol.Overlay({
-			position: caller.interactiveMap.map.transformToMapCoordinates([parseFloat(value.lon), parseFloat(value.lat)]),
-			element: el.get(0),
-			offset: [-12, -45],
-			stopEvent: false,
-		});
-		caller.interactiveMap.map.addOverlay(overlay);
-		caller.markerOverlays.push(overlay);
-	});
-}
-
-SearchModule.prototype.updateMapExtent = function(){
-	if(this.results.length <= 0){
-		return;
-	}
-	var caller = this;
-	var extent = [null, null, null, null];
-	$.each(this.results, function(index, res){
-		// We just focus on those results that have all the terms in the search query in it
-		var valid = true;
-		var words = caller.query.split(/\W+/);
-		$.each(words, function(index, value){
-			if(res.display_name.indexOf(value) === -1){
-				valid = false;
-			}
-		});
-		if(!valid) return true;
-		var lon = parseFloat(res.lon);
-		var lat = parseFloat(res.lat);
-		if(extent[0] === null || extent[0] > lon){
-			extent[0] = lon;
-		}
-		if(extent[1] === null || extent[1] > lat){
-			extent[1] = lat;
-		}
-		if(extent[2] === null || extent[2] < lon){
-			extent[2] = lon;
-		}
-		if(extent[3] === null || extent[3] < lat){
-			extent[3] = lat;
-		}
-	});
-	extent = caller.interactiveMap.map.transformToMapCoordinates([extent[0], extent[1]]).concat(caller.interactiveMap.map.transformToMapCoordinates([extent[2], extent[3]]));
-
-	// Let's find out in what space of the map we need to fit this in:
-	// If Screen is not mobile the search results are 
-	var padding = [25,25,25,25];
-	if($(window).outerWidth() <= 767){
-		// Padding Top:
-		padding[0] = $("#search").outerHeight(true) + 15;
-		// Padding Bottom:
-		padding[2] = $(window).outerHeight() - this.resultsMarginTopMobile - padding[0];
-		console.log($(window).outerHeight(), this.resultsMarginTopMobile, padding[0]);
-	}else{
-		var paddingRight = 0;
-		paddingRight += $("#search-addon").outerWidth(true);
-		console.log(paddingRight);
-		padding[1] = paddingRight;
-	}
-	
-	caller.interactiveMap.map.getView().fit(extent, {duration: 600, padding: padding});
-	
-}
 function LocalHistory(){
     this.präfix = "place-search:";
 	this.history = this.readHistory();
@@ -1801,6 +1709,452 @@ LocalHistory.prototype.b64DecodeUnicode = function(str) {
     return decodeURIComponent(Array.prototype.map.call(atob(str), function(c) {
         return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
     }).join(''));
+}
+
+function Results(map, data, query){
+	this.interactiveMap = map;
+	this.results = data;
+	this.query = query;
+	this.markerOverlays = [];
+	this.updateInterface();
+}
+
+Results.prototype.deleteSearch = function(animationSpeed){
+	// Activate Reverse Geocoding
+	this.interactiveMap.reversePositionManager.setActive(true);
+	if(animationSpeed === null){
+		animationSpeed = "slow";
+	}
+	$("#search-addon .results .results-container").hide(animationSpeed, function(){
+		$("#search-addon .results .results-container").html("");
+	});
+	$("#search-addon .results .history-container").hide(animationSpeed, function(){
+		$("#search-addon .results .history-container").html("");
+	});
+	$("#search-addon #delete-search").remove();
+	$("#search-addon #search input[name=q]").val("");
+	
+	if($(window).outerWidth() <= 767){
+			$("#search-addon .results .mobiles-window").remove();
+			$("#search-addon #show-list").remove();
+			// The Search box got focussed on a mobile Let's get more Space
+			$("#search-addon").animate({"margin": "15px 15px 0 15px"}, 'slow');
+			$("#search-addon .results").css("border-radius", "0 0 15px 15px");
+			$("#search-addon .results").css("max-height", "91vh");
+			$("#search-addon .results").css("background-color", "white");
+			// Show Zoombar on mobiles in results view
+			$(".ol-zoom, .ol-zoomslider").show();
+	}
+	this.removeResultMarker();
+}
+
+Results.prototype.removeResultMarker = function(){
+	var map = this.interactiveMap.map;
+	$.each(this.markerOverlays, function(index, value){
+		map.removeOverlay(value);
+	});
+	this.markerOverlays = [];
+}
+
+/**
+ * Updates the User Interface if there are any Search results saved in this Module
+ * It prints all Markers and geometries for the search results and updates the results list
+**/
+Results.prototype.updateInterface = function(){
+	if(this.results.length > 0){
+		this.deleteSearch(0);
+		$("#search input[name=q]").val(this.query);
+		// Disable Reverse Geocoding on click
+		this.interactiveMap.reversePositionManager.setActive(false);
+		// First add those Results to the Results List
+		$("#search-addon .results .results-container").html("");
+		$("#search-addon .results .mobiles-window").remove();
+		var caller = this;
+		$.each(this.results, function(index, value){
+			var res = (new NominatimParser(value)).getHTMLResult().html();
+			var resHtml = $('\
+							<div class="container-fluid suggestion" data-resultNumber="'+index+'">\
+	                            <div class="flex-container">\
+	                                <div class="item history">\
+	                                    <span class="marker" style="filter: hue-rotate(' + value["huerotate"] + 'deg); font-size: 16px;">' + (index+1) + '</span>\
+	                                </div>\
+	                                <div class="item result">\
+	                                    ' + res + '\
+	                                </div>\
+	                            </div>\
+	                        </div>\
+							');
+			$("#search-addon .results .results-container").append(resHtml);
+			if(caller.results.length > 1){
+				$(resHtml).click({caller: caller}, function(event){
+					event.data.caller.focusResult($(this).attr("data-resultNumber"));
+				});
+			}
+		});
+		$("#search-addon .results .results-container .start-route-service").click({caller: caller}, function(){
+			caller.interactiveMap.switchModule("route-finding", {lat: $(this).attr("data-lat"), lon: $(this).attr("data-lon")});
+		});
+		
+		$("#search-addon .results .results-container").show('slow', function(){
+			$("#search-addon .results .results-container").attr("data-status", "out");
+			if($(window).outerWidth() <= 767){
+				// On Mobiles we need a window to look through to the map
+				$("#search-addon .results .results-container").before("<div class=\"mobiles-window\"></div>");
+				$("#search-addon .results .mobiles-window").click({caller: caller}, function(event){
+					event.data.caller.mobilesWindowClick();
+				});
+				// The Search box got focussed on a mobile Let's get more Space
+				$("#search-addon").animate({"margin": 0}, 'slow');
+				$("#search-addon .results").css("border-radius", 0);
+				$("#search-addon .results").css("max-height", "95vh");
+				$("#search-addon .results").css("background-color", "transparent");
+
+				// Hide Zoombar on mobiles in results view
+				$(".ol-zoom, .ol-zoomslider").hide();
+
+				var height = $(window).outerHeight() - $(".results").outerHeight() - $("#search").outerHeight();
+				height = Math.max(height, 175);
+				$(".results .mobiles-window").css("height", height + "px");
+			}
+			// Let's make a new input-group-addon to cancel the search if it takes too long
+			var cancelSearch = $('\
+			    <div class="input-group-addon" id="delete-search" title="Suche abbrechen">\
+			        X\
+			    </div> \
+			');
+			$("#search input[name=q]").after(cancelSearch);
+			$(cancelSearch).click({caller: caller}, function(event){
+				event.data.caller.deleteSearch();
+			});
+			caller.updateResultMarker();
+			caller.updateMapExtent();
+		});
+	}
+}
+
+Results.prototype.focusResult = function(index){
+	var results = this.results;
+	if(typeof results[index] !== "undefined"){
+		var newResults = results[index];
+		this.results = [newResults];
+		this.updateInterface();
+	}
+}
+
+Results.prototype.updateResultMarker = function(){
+	var caller = this;
+	if(this.markerOverlays.length > 0){
+		$.each(this.markerOverlays, function(index, overlay){
+			caller.interactiveMap.map.removeOverlay(overlay);
+		});
+		this.markerOverlays = [];
+	}
+	
+	$.each(this.results, function(index, value){
+		var el = $('<span id="index" class="marker" data-resultNumber="'+index+'" style="filter: hue-rotate(' + value["huerotate"] + 'deg)">' + (index+1) + '</span>');
+		if(caller.results.length > 1){
+			$(el).click({caller: caller}, function(event){
+				event.data.caller.focusResult($(this).attr("data-resultNumber"));
+			});
+		}
+		var overlay = new ol.Overlay({
+			position: caller.interactiveMap.map.transformToMapCoordinates([parseFloat(value.lon), parseFloat(value.lat)]),
+			element: el.get(0),
+			offset: [-12, -45],
+			stopEvent: false,
+		});
+		caller.interactiveMap.map.addOverlay(overlay);
+		caller.markerOverlays.push(overlay);
+	});
+}
+
+
+
+Results.prototype.mobilesWindowClick = function(){
+	// Hide the Results Panel
+	$(".results .results-container, .results .history-container").hide("fast");
+	var caller = this;
+	$(".results .mobiles-window").hide("fast", function(){
+		// Add the Possibility to come back to the list
+		var showList = $('\
+			<div id="show-list" class="container">\
+				Liste anzeigen\
+			</div>');
+		$("#search-addon .results").append(showList);
+		$(showList).click({caller: caller}, function(event){
+			$("#show-list").hide('fast', function(){
+				$("#show-list").remove();
+			});
+			$(".results .results-container").show("fast");
+			$(".results .mobiles-window").show("fast", function(){
+				event.data.caller.updateMapExtent();
+			});
+		});
+		var padding = [
+			$("#search-addon").outerHeight(true) + 25,
+			25,
+			25,
+			25
+		];
+		caller.updateMapExtent(padding);
+	});
+}
+
+Results.prototype.updateMapExtent = function(initPadding){
+	if(this.results.length <= 0){
+		return;
+	}
+	var caller = this;
+	var extent = [null, null, null, null];
+	$.each(this.results, function(index, res){
+		// We just focus on those results that have all the terms in the search query in it
+		var valid = true;
+		var words = caller.query.split(/\W+/);
+		$.each(words, function(index, value){
+			if(res.display_name.toLowerCase().indexOf(value.toLowerCase()) === -1){
+				valid = false;
+			}
+		});
+		if(!valid) return true;
+		var lon = parseFloat(res.lon);
+		var lat = parseFloat(res.lat);
+		if(extent[0] === null || extent[0] > lon){
+			extent[0] = lon;
+		}
+		if(extent[1] === null || extent[1] > lat){
+			extent[1] = lat;
+		}
+		if(extent[2] === null || extent[2] < lon){
+			extent[2] = lon;
+		}
+		if(extent[3] === null || extent[3] < lat){
+			extent[3] = lat;
+		}
+	});
+
+	extent = caller.interactiveMap.map.transformToMapCoordinates([extent[0], extent[1]]).concat(caller.interactiveMap.map.transformToMapCoordinates([extent[2], extent[3]]));
+
+	// Let's find out in what space of the map we need to fit this in:
+	// If Screen is not mobile the search results are 
+	var padding = [25,25,25,25];
+	if(initPadding !== undefined){
+		padding = initPadding;
+	}else if($(window).outerWidth() <= 767){
+		// Padding Top:
+		padding[0] = $("#search").outerHeight(true) + 15;
+		// Padding Bottom:
+		padding[2] = $(window).outerHeight(true) - $("#search").outerHeight(true) - $(".results .mobiles-window").outerHeight(true);
+	}else{
+		var paddingRight = 0;
+		paddingRight += $("#search-addon").outerWidth(true);
+		padding[1] = paddingRight;
+	}
+	caller.interactiveMap.map.getView().fit(extent, {duration: 600, padding: padding});
+	
+}
+/**
+ * Class RouteFinder
+ * This is a module that enables the map to create a Route with multiple Waypoints and chose the desired vehicle
+ * @param interactiveMap - an instance of the current interactiveMap Object
+ * @param waypoints - An Array of waypoints [[lon,lat], ...] to start of with
+**/
+function RouteFinder(interactiveMap, waypoints){
+	this.interactiveMap = interactiveMap;
+	this.waypoints = [];
+	this.waypointsLength = waypoints.length;
+
+	this.initInterface();
+
+	var caller = this;
+	$.each(waypoints, function(index, value){
+		caller.waypoints.push(new Waypoint(value[0], value[1], index, interactiveMap.map, function(waypoint){
+			caller.addWaypoint(waypoint);
+		}));
+	});
+
+	// Show the interface
+	$("#route-finder-addon").show('slow');
+
+	// Disable The Click Event for the map
+	this.interactiveMap.reversePositionManager.setActive(false);
+
+}
+
+RouteFinder.prototype.addWaypoint = function(waypoint){
+	var wpHtml = waypoint.getHtml();
+	// Let's add the waypoint
+	var waypointHtml = $('\
+		<li data-index="' + waypoint.index + '">\
+			' + wpHtml + '\
+		</li>\
+		');
+	$("#route-finder-addon #waypoint-list").append(waypointHtml);
+	console.log($(waypointHtml).find(".delete-waypoint"));
+	$(waypointHtml).find(".delete-waypoint").click({caller: this}, function(event){
+		event.data.caller.removeWaypoint(parseInt($(this).attr("data-index")));
+	});	
+	this.interactiveMap.map.addOverlay(waypoint.marker);
+}
+
+RouteFinder.prototype.removeWaypoint = function(index){
+	var waypoint = this.waypoints[index];
+	// Remove The Marker from the map
+	this.interactiveMap.map.removeOverlay(waypoint.marker);
+	// Remove The Waypoint from the Waypoint List (Interface)
+	$("#waypoint-list li[data-index=" + index + "]").remove();
+	// Remove the Waypoint from the internal list
+	this.waypoints.splice(index, 1);
+}
+
+RouteFinder.prototype.initInterface = function(){
+	var waypointList = $('\
+		<div id="waypoint-list-container" >\
+			<ul id="waypoint-list" class="list-unstyled">\
+			</ul>\
+		</div>\
+		');
+	$("#route-finder-addon").append(waypointList);
+
+	// If there is only one waypoint yet we will make the user define a start point
+	if(this.waypointsLength === 1){
+		$("#route-finder-addon #vehicle-chooser").after(this.generateNewWaypointForm("Startpunkt angeben:"));
+	}
+}
+
+RouteFinder.prototype.generateNewWaypointForm = function(text){
+	if(text === undefined){
+		text = "Neuen Wegpunkt angeben:";
+	}
+	var startPointHtml = $('\
+			<form>\
+			<div class="form-group new-waypoint-form">\
+				<label for="start-point">' + text + '<button type="button" \
+                        data-html="true"\
+                        data-trigger="hover"\
+                        data-toggle="popover"\
+                        data-placement="bottom"\
+                        data-container="body"\
+                        title="Wegpunkt definieren" \
+                        data-content="Sie können neue Wegpunkte auf 2 Arten definieren:<ol><li>Klicken Sie einfach auf der Karte auf den Punkt, den Sie einfügen möchten.</li><li>Sie können nach Orten Suchen indem Sie ihre Suchworte in das Eingabefeld eintragen und entweder Enter drücken, oder auf das kleine Lupensymbol klicken. Wählen Sie dann einfach das passende Ergebnis durch Klick aus.</li></ol>">\
+                        <span class="glyphicon glyphicon-question-sign"></span>\
+                    </button></label>\
+                <div class="input-group">\
+					<input type="text" class="form-control" id="start-point">\
+					<span class="input-group-addon"><button type="submit"><span class="glyphicon glyphicon-search"></span></button></span>\
+				</div>\
+			</div>\
+			</form>\
+			');
+		// Enable the Popover
+		$(startPointHtml).find("button[data-toggle=popover]").popover();
+		// Make it execute Searches:
+		$(startPointHtml).find("input[type=text]").focusin({caller: this}, function(event){
+			event.data.caller.enterSearch();
+		})
+	return startPointHtml;
+		
+}
+
+RouteFinder.prototype.enterSearch = function(){
+	$("#route-finder-addon #vehicle-chooser").hide("slow");
+	$("#route-finder-addon #waypoint-list-container").hide("slow");
+	var caller = this;
+
+	if($(window).outerWidth() <= 767){
+		$("#route-finder-addon").animate({padding: 0}, 'slow');
+	}
+
+	var cancelSearch = $('\
+			<span class="input-group-addon" id="cancel-search" title="Suche abbrechen">X</span>\
+		');
+		$("#route-finder-addon #cancel-search").remove();
+		$("#route-finder-addon input[type=text]").before(cancelSearch);
+		$(cancelSearch).click({caller: caller}, function(event){
+			event.data.caller.exitSearch();
+		});
+
+}
+
+RouteFinder.prototype.exitSearch = function(){
+	$("#route-finder-addon #vehicle-chooser").show("slow");
+	$("#route-finder-addon #waypoint-list-container").show("slow");
+	$("#route-finder-addon").animate({padding: "15px 15px 0 15px"}, 'slow', function(){
+		$("#route-finder-addon #cancel-search").remove();
+	});
+}
+
+RouteFinder.prototype.exit = function(){
+	$("#route-finder-addon").hide('slow', function(){
+		$("#route-finder-addon #waypoint-list-container").remove();
+	});
+	this.interactiveMap.reversePositionManager.setActive(true);
+}
+
+
+/**
+ * This Class takes a GeoPosition and a callback in it's constructor
+ * It will then evaluate the Position into an Object with a name etc which will require an Ajax call
+ * If a callback is given this Class will call it when the Position is evaluated with an Instance of this object as first argument 
+**/
+function Waypoint(lon, lat, index, map, callback){
+	this.lon = parseFloat(lon);
+	this.lat = parseFloat(lat);
+	this.index = index;
+	this.charCode = String.fromCharCode(97 + index).toUpperCase();
+	this.marker = new ol.Overlay({
+			position: map.transformToMapCoordinates([this.lon, this.lat]),
+			element: $('<span class="marker" data-resultNumber="'+index+'">' + this.charCode + '</span>').get(0),
+			offset: [-12, -45],
+			stopEvent: false,
+	});
+	this.callback = callback;
+	this.evaluated = false;
+	if(this.callback === undefined){
+		this.callback = null;
+	}
+
+	this.positionToAdress();
+}
+
+Waypoint.prototype.positionToAdress = function() {
+	var pos = [this.lon, this.lat];
+    if (pos === 'gps') {
+        //obj.html('Eigener Standort');
+        //obj.attr('title', 'Eigener Standort');
+    } else {
+    	var url = "/reverse/" + pos[0] + "/" + pos[1];
+        //var url = "https://maps.metager.de/nominatim/reverse.php?format=json&lat=" + pos[1] + "&lon=" + pos[0] + "&zoom=18";
+        var caller = this;
+        $.get(url, function(data) {
+        	caller.data = new NominatimParser(data);
+        	caller.evaluated = true;
+
+        	if(typeof caller.callback === "function"){
+        		caller.callback(caller);
+        	}
+        });
+    }
+}
+
+Waypoint.prototype.getHtml = function() {
+	if(this.evaluated){
+		var res = '\
+		<div class="waypoint">\
+				<div class="marker">\
+					' + this.charCode + '\
+				</div>\
+				<div class="description">\
+					' + this.data.getHTMLAddressDetails() + '\
+				</div>\
+				<div class="delete-waypoint" data-index="' + this.index + '">\
+					<span class="glyphicon glyphicon-trash"></span>\
+				</div>\
+			</div>\
+			';
+		return res;
+	}else{
+		return "Not Ready Yet";
+	}
 }
 $(document).ready(function() {
     var map = new InteractiveMap();

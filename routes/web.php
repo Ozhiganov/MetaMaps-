@@ -17,7 +17,7 @@ Route::get('/', function () {
 
 Route::group(['prefix' => 'map'], function () {
     Route::get('/', function () {
-        return view('map')->with('scripts', [elixir('js/mapSearch.js')])->with('css', [elixir('css/mapSearch.css')]);
+        return view('map')->with('scripts', [elixir('js/mapSearch.js')])->with('css', [elixir('css/general.css'), elixir('css/mapSearch.css'), elixir('css/routing.css')]);
     });
     Route::get('{position}', function ($position) {
         $positionData = explode(",", $position);
@@ -38,6 +38,16 @@ Route::group(['prefix' => 'map'], function () {
         } else {
             return redirect('/');
         }
+    });
+});
+
+Route::group(['prefix' => 'reverse'], function () {
+    Route::get('{lon}/{lat}', function ($lon, $lat) {
+        $link = "https://maps.metager.de/nominatim/reverse.php?format=json&lat=$lat&lon=$lon&zoom=18&extratags=1&addressdetails=1&namedetails=1";
+        $resContent = file_get_contents($link);
+        $response = Response::make($resContent, 200);
+        $response->header("Content-Type", "application/json");
+        return $response;
     });
 });
 

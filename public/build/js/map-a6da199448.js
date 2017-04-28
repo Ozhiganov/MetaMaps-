@@ -1024,6 +1024,7 @@ function InteractiveMap() {
     Map.call(this);
     // Initialize the Map With Controls to change the view
     this.map = this.initMap();
+    this.module = null;
     // Initialize the Positions gathering on click on the Map
     this.reversePositionManager = new ReversePositionManager(this); // This is the Overlay that displays informations about a position where the user has clicked.
     // Initialize the GPS Module
@@ -1098,10 +1099,23 @@ InteractiveMap.prototype.initMap = function() {
     map.addControl(new ol.control.ZoomSlider());
     return map;
 }
-InteractiveMap.prototype.switchModule = function(name){
+InteractiveMap.prototype.switchModule = function(name, args){
+
+    // Todo remove when development of Route Finder finished
+    this.module = new RouteFinder(this, [[9.71802887131353, 52.3454087]]);
+    return;
+
+    if(this.module !== null){
+        // Every Module must implement this method for deinitialization
+        this.module.exit();
+        this.module = null;
+    }
     switch(name){
         case "search":
             this.module = new SearchModule(this);
+            break;
+        case "route-finding":
+            this.module = new RouteFinder(this, [[parseFloat(args.lon), parseFloat(args.lat)]]);
             break;
         default:
             return;
@@ -1111,1774 +1125,1038 @@ InteractiveMap.prototype.switchModule = function(name){
 function StaticMap() {
     Map.call(this);
 }
-var shouldUpdate = true;
-$(document).ready(function(){
-    
-    if(typeof vehicle === "undefined"){
-        map.on("moveend", updateUrl);
-        initStartNavigation();
+/**
+ * This Class provides Methods to evaluate the Results that Nominatim gives us
+ * 
+ **/
+function NominatimParser(nominatimResult) {
+    this.nominatimResult = nominatimResult;
+}
+/**
+ * This function creates a HTML Object with the most important Informations of the Result
+ * @param gps - Boolean whether gps in enabled or not (creates)
+ **/
+NominatimParser.prototype.getHTMLResult = function() {
+    var data = this.nominatimResult;
+    if (typeof data !== "undefined" && typeof data["address"] !== "undefined") {
+        // Success we have an address
+        var address = data["address"];
+        var road = this.getRoad(address);
+        var house_number = this.getHouseNumber(address);
+        var city = this.getCity(address);
+        var id = data["place_id"];
+        var html = "<div class=\"result\">\n";
+        html += "<div class=\"result-information\">";
+        // Wir extrahieren noch einen Namen
+        if (typeof data["namedetails"]["name"] !== "undefined") {
+            html += "<div class=\"title\">" + data["namedetails"]["name"] + "</div>\n";
+        }
+        var road = this.getRoad(address);
+        var house_number = this.getHouseNumber(address);
+        if (road !== "") {
+            html += "<div class=\"address\">" + road;
+            if (house_number !== "") {
+                html += " " + house_number;
+            }
+            html += "</div>\n";
+        }
+        var city = this.getCity(address);
+        if (city !== "") {
+            html += "<div class=\"city\">" + city + "</div>\n";
+        }
+        var phone = "";
+        if (typeof data["extratags"]["contact:phone"] !== "undefined") {
+            phone = data["extratags"]["contact:phone"];
+        } else if (typeof data["extratags"]["phone"] !== "undefined") {
+            phone = data["extratags"]["phone"];
+        }
+        if (phone !== "") {
+            html += "<div class=\"phone\"><a href=\"tel:" + phone + "\" onclick=\"event.stopPropagation();\" target=_blank><span class=\"glyphicon glyphicon-earphone\"></span> " + phone + "</a></div>\n";
+        }
+        if (typeof data["extratags"]["website"] !== "undefined") {
+            var url = data["extratags"]["website"];
+            if (url.lastIndexOf("http", 0) !== 0) {
+                url = "http://" + url;
+            }
+            html += "<div class=\"website\"><a href=\"" + url + "\" onclick=\"event.stopPropagation();\" target=_blank><span class=\"glyphicon glyphicon-globe\"></span> " + url + "</a></div>\n";
+        }
+        if (typeof data["extratags"]["wikipedia"] !== "undefined") {
+            var url = "https://de.wikipedia.org/wiki/" + data["extratags"]["wikipedia"];
+            html += "<div class=\"wikipedia\"><a href=\"" + url + "\" onclick=\"event.stopPropagation();\" target=_blank><img src=\"/img/wiki.svg\" alt=\"wikipedia\" width=\"20px\"> Wikipedia</a></div>\n";
+        }
+        // Add possible Opening Hours:
+        if (typeof data["extratags"]["opening_hours"] !== "undefined") {
+            html += "<div class=\"opening-hours\">" + data["extratags"]["opening_hours"] + "</div>\n";
+        }
+        if (typeof data["extratags"]["description"] !== "undefined") {
+            html += "<div class=\"description\">" + data["extratags"]["description"] + "</div>\n";
+        }
+        html += "</div><div class=\"result-actions\">";
+        // Update Address details
+        lon = parseFloat(data["lon"]);
+        lat = parseFloat(data["lat"]);
+        // Now the two Links
+        var url = "";
+        url = "/route/start/foot/" + lon + "," + lat;
+        html += '<a class="start-route-service" data-lon="'+lon+'" data-lat="'+lat+'" href="#" onclick="event.stopPropagation();">Route berechnen</a>';
+        // And the Link to the MetaGer Search
+        // build the search query
+        var query = "";
+        if (typeof data["namedetails"]["name"] !== "undefined") {
+            query += data["namedetails"]["name"];
+        }
+        query += " " + road;
+        query += " " + city;
+        query = query.trim();
+        if (query.length > 0) {
+            var url = 'https://metager.de/meta/meta.ger3?focus=web&eingabe=' + encodeURIComponent(query) + '&encoding=utf8&lang=all';
+            html += '<a href=\"' + url + '\" onclick="event.stopPropagation();" target=_blank>MetaGer Suche</a>';
+        }
+        html += "</div></div>";
+        var popup = $(html);
+        return popup;
+    } else {
+        return null;
     }
+}
 
-    // Initialize research Button
-    var research = $("<div id=\"research-button\" class=\"hidden\"><button type=\"button\" class=\"btn btn-default\">In diesem Bereich erneut Suchen</button></div>")
-    $("#map").append(research);
-    $(research).find("button").off();
-    $(research).find("button").click(function(){
-        $("#doSearch").click();
+NominatimParser.prototype.getHTMLAddressDetails = function(){
+    var data = this.nominatimResult;
+    if (typeof data !== "undefined" && typeof data["address"] !== "undefined") {
+        // Success we have an address
+        var address = data["address"];
+        var road = this.getRoad(address);
+        var house_number = this.getHouseNumber(address);
+        var city = this.getCity(address);
+        var id = data["place_id"];
+        var html = "<div class=\"result\">\n";
+        html += "<div class=\"result-information\">";
+        // Wir extrahieren noch einen Namen
+        if (typeof data["namedetails"]["name"] !== "undefined") {
+            html += "<div class=\"title\">" + data["namedetails"]["name"] + "</div>\n";
+        }
+        var road = this.getRoad(address);
+        var house_number = this.getHouseNumber(address);
+        if (road !== "") {
+            html += "<div class=\"address\">" + road;
+            if (house_number !== "") {
+                html += " " + house_number;
+            }
+            html += "</div>\n";
+        }
+        var city = this.getCity(address);
+        if (city !== "") {
+            html += "<div class=\"city\">" + city + "</div>\n";
+        }
+        html += "</div></div>";
+        return html;
+    }else{
+        return null;
+    }
+}
+
+/**
+ * Parsesan OSM-Address-Object for the Road-Name
+ * @param {Array} address
+ * @return {String} roadname
+ */
+NominatimParser.prototype.getRoad = function(address) {
+    var road = "";
+    if (typeof address["road"] !== 'undefined') {
+        road = address["road"];
+    } else if (typeof address["pedestrian"] !== 'undefined') {
+        road = address["pedestrian"];
+    } else if (typeof address["path"] !== 'undefined') {
+        road = address["path"];
+    } else if (typeof address["footway"] !== 'undefined') {
+        road = address["footway"];
+    }
+    return road;
+}
+/**
+ * Parse an OSM-Address-Object for the House Number
+ * @param {Array} address
+ * @return {String} Housenumber
+ */
+NominatimParser.prototype.getHouseNumber = function(address) {
+    var house_number = typeof address["house_number"] !== 'undefined' ? address["house_number"] : "";
+    return house_number;
+}
+/**
+ * Parse an OSM-Address-Object for the City (including Zip-Code)
+ * @param {Array} address
+ * @return {String} City
+ */
+NominatimParser.prototype.getCity = function(address) {
+    var city = typeof address["postcode"] !== 'undefined' ? address["postcode"] + " " : "";
+    if (typeof address["city"] !== "undefined") {
+        city += address["city"];
+    } else if (typeof address["town"] !== "undefined") {
+        city += address["town"];
+    } else if (typeof address["village"] !== "undefined") {
+        city += address["village"];
+    }
+    return city;
+}
+function ReversePositionManager(interactiveMap){
+    // Save the Reference to the map Object
+    this.interactiveMap = interactiveMap;
+
+    // Create the overlay for the map
+    this.positionOverlay = new ol.Overlay( /** @type {olx.OverlayOptions} */ ({
+        element: document.getElementById("popup"),
+        autoPan: true,
+        autoPanAnimation: {
+            duration: 250
+        }
+    }));
+    // Add the Overlay to the map
+    this.interactiveMap.map.addOverlay(this.positionOverlay);
+    // Add the Event Handler for the Click
+    this.setActive(true);
+    // Add the close event for the Popup
+    $("#popup-closer").click({caller: this}, function(event) {
+        event.data.caller.positionOverlay.setPosition(undefined);
+        $(this).blur();
+        return false;
     });
 
-    if(typeof center !== "undefined" && typeof zoom !== "undefined" && typeof vehicle === "undefined"){
-        if(typeof query !== "undefined"){
-            $("#search input[name=q]").val(query);
-        }
-        map.un("moveend", updateUrl);
-        map.getView().animate({
-            zoom: parseInt(zoom),
-            center: center,
-            duration: 1500
-        }, function(){
-            setTimeout(function(){
-                map.un("moveend", updateUrl);
-                map.on("moveend", updateUrl);
-                if($("#search input[name=q]").val() !== ""){
-                    $("#doSearch").click();
-                }
-            }, 500); 
-        });
+}
+ReversePositionManager.prototype = Object.create(ReversePositionManager.prototype);
+ReversePositionManager.prototype.constructor = ReversePositionManager;
+
+
+/**
+ * This function sends a request to our Nominatim instance and evaluates the given coordinates to an adress
+ * @param {Float} lon
+ * @param {Float} lat
+ * @return {Array} adress
+ */
+ReversePositionManager.prototype.getNearest = function(evt){
+    var pos = this.map.transformToWorldCoordinates(evt["coordinate"]);
+    var url = "https://maps.metager.de/nominatim/reverse.php?format=json&lat=" + pos[1] + "&lon=" + pos[0] + "&zoom=18&extratags=1&addressdetails=1&namedetails=1";
+    var interactiveMap = this;
+    // Send the Request
+    $.get(url, function(data) {
+        var popup = new NominatimParser(data).getHTMLResult();
+        interactiveMap.reversePositionManager.createPopup(interactiveMap.map.transformToMapCoordinates([parseFloat(data["lon"]), parseFloat(data["lat"])]), popup);
+    });
+}
+
+ReversePositionManager.prototype.createPopup = function(pos, html) {
+    $("#popup-content").html(html);
+
+    this.positionOverlay.setPosition(pos);
+}
+
+ReversePositionManager.prototype.setActive = function(bool){
+    this.interactiveMap.map.un('singleclick', this.getNearest , this.interactiveMap);
+    if(bool){
+        this.interactiveMap.map.on('singleclick', this.getNearest, this.interactiveMap);
     }
-
-    $("#search input[name=q]").focusin(function(){
-
-        if($("#search-suggestions").attr("data-status") === "out" || $(document).outerWidth() > 768){
-            return;
+}
+function GpsManager(map) {
+    this.map = map;
+    this.gps = false // Boolean which declares whether gps is available or not so we don't have to check against the API everytime
+    this.location = null; // Array with Position data of the Last Position we retrieved
+    this.lockViewToPosition = true; // Whether the view should be locked when the current Location is shown.
+    this.id = null; // ID of the process that follow the Location
+    this.userPositionMarker = null; // Marker that displays the user Position
+    this.point_geom = null; // Geomatry of the exact Point of the user
+    this.circle = null; // Geometry of the accuracy of the user position
+    this.options = {
+        enableHighAccuracy: true,
+        maximumAge: 0
+    };
+    this.checkGps(); // This function will set the value of "this.gps" it check gps availability asynchronious
+    // Add the Event Listeners to enable Location Following on the map
+    this.addLocationEventListeners();
+    // Be carefull we will not know if we have GPS or not directly after this constructor
+    // because the validation is done asynchroniously.
+}
+GpsManager.prototype.checkGps = function() {
+    if (navigator.geolocation) {
+        var caller = this;
+        navigator.geolocation.getCurrentPosition(function(position) {
+            caller.toggleGpsLocator(true);
+            caller.location = [position.coords.longitude, position.coords.latitude];
+            if (caller.location !== null) {
+                caller.map.getView().setCenter(caller.map.transformToMapCoordinates(caller.location));
+                caller.map.getView().setZoom(12);
+            }
+            if (position.coords.accuracy > 1500) {
+                caller.gps = false;
+                caller.disableGpsFeatures();
+            } else {
+                caller.gps = true;
+                caller.enableGpsFeatures();
+            }
+        }, function(error) {
+            caller.gps = false;
+            caller.toggleGpsLocator(false);
+            caller.toggleGpsWarning();
+            caller.disableGpsFeatures();
+        }, {
+            enableHighAccuracy: true,
+            maximumAge: 0
+        });
+    } else {
+        this.gps = false;
+        this.toggleGpsLocator(false);
+        this.toggleGpsWarning();
+        this.disableGpsFeatures();
+    }
+}
+GpsManager.prototype.enableGpsFeatures = function() {}
+GpsManager.prototype.disableGpsFeatures = function() {}
+/**
+ * Toggles the Map Feature (GpsLocation)
+ * It's a button on the map to display your own Position
+ * @param visible - Boolean whether GPS is available or not
+ **/
+GpsManager.prototype.toggleGpsLocator = function(visible) {
+    if (visible) {
+        $("#location-tool").removeClass("hidden");
+        $("#start-navigation > a").attr("href", "/route/start/foot/gps;");
+    } else {
+        $("#location-tool").addClass("hidden");
+        $("#start-navigation > a").attr("href", "/route/start/foot");
+    }
+}
+/**
+ * If the retrieval of GPS Position fails on mobile devices we will show a small warning for a 
+ * period of time.
+ **/
+GpsManager.prototype.toggleGpsWarning = function() {
+    $("#gps-error").addClass("visible-xs");
+    $("#gps-error").removeClass("hidden");
+    setTimeout(function() {
+        $("#gps-error").addClass("hidden");
+        $("#gps-error").removeClass("visible-xs");
+    }, 5000);
+}
+GpsManager.prototype.addLocationEventListeners = function() {
+    $("#follow-location > span.button").click({
+        caller: this
+    }, function(event) {
+        event.data.caller.followLocation();
+    });
+    $("#lock-location > span.button").click({
+        caller: this
+    }, function(event) {
+        var current = event.data.caller.lockViewToPosition;
+        if (current) {
+            $("#location-tool #lock-location").removeClass("active");
+        } else {
+            $("#location-tool #lock-location").addClass("active");
         }
+        event.data.caller.lockViewToPosition = !event.data.caller.lockViewToPosition;
+    });
+}
+GpsManager.prototype.followLocation = function() {
+    // Element to be displayed at the user-location
+    var el = $('<span id="user-position" class="glyphicon glyphicon-record" style="color: #2881cc;"></span>');
+    if (this.lockViewToPosition) $("#lock-location").addClass("active");
+    else $("#lock-location").removeClass("active");
+    if (this.id === null) {
+        var caller = this;
+        this.id = navigator.geolocation.watchPosition(function(position) {
+            var center = caller.map.transformToMapCoordinates([parseFloat(position.coords.longitude), parseFloat(position.coords.latitude)]);
+            var accuracy = parseFloat(position.coords.accuracy);
+            console.log(accuracy);
+            if (caller.userPositionMarker === null) {
+                // Create User Position
+                caller.point_geom = new ol.geom.Point(center);
+                point_feature = new ol.Feature({
+                    name: "Position",
+                    geometry: caller.point_geom
+                });
+                // Create the accuracy Circle:
+                caller.circle = new ol.geom.Circle(center, accuracy);
+                accuracy_feature = new ol.Feature({
+                    name: "Accuracy",
+                    geometry: caller.circle
+                });
+                caller.userPositionMarker = new ol.layer.Vector({
+                    source: new ol.source.Vector({
+                        features: [point_feature, accuracy_feature]
+                    })
+                });
+                caller.map.addLayer(caller.userPositionMarker);
+            } else {
+                caller.point_geom.setCoordinates(center);
+                caller.circle.setCenter(center);
+                caller.circle.setRadius(accuracy);
+            }
+            if (caller.lockViewToPosition) {
+                // Fit the Extent of the Map to Fit the new Features Exactly
+                caller.map.getView().fit(caller.userPositionMarker.getSource().getExtent(), {
+                    padding: [5, 5, 5, 5],
+                    duration: 600
+                });
+            }
+            // Change the color of the Icon so the user knows that the position is tracked:
+            $("#follow-location").addClass("active");
+        }, function(error) {}, this.options);
+        // Show the Lock View to Position Button
+        $("#lock-location").removeClass("hidden");
+        $("#lock-location > span.info").fadeOut(2000);
+    } else {
+        this.map.removeLayer(this.userPositionMarker);
+        this.userPositionMarker = null;
+        this.point_geom = null;
+        this.circle = null;
+        navigator.geolocation.clearWatch(this.id);
+        this.id = null;
+        // Clear the color of the Icon so the user knows that the position is no longer tracked
+        $("#follow-location").removeClass("active");
+        // Hide the lock View to Position Button
+        $("#lock-location").addClass("hidden");
+        $("#lock-location > span.info").css("display", "");
+    }
+}
+function SearchModule(interactiveMap){
+	this.interactiveMap = interactiveMap;	
+	// Initialize the search Interface
+	this.initializeInterface();
+	// Add the Listeners
+	this.addSearchListeners();
+}
 
-        var history = getHistory();
+SearchModule.prototype.initializeInterface = function(){
+	$("#search-addon").show('slow');
+}
 
-        if(history.length > 0){
-            $.each(history, function(index, value){
-                if(typeof(value) !== "undefined"){
-                    var suggestion = $('\
+SearchModule.prototype.addSearchListeners = function(){
+	// When the searchfield got focussed
+	// Mainly just displays the history
+	$("#search-addon").focusin({caller: this}, function(event){
+		event.data.caller.focusSearchInput();
+	});
+
+	$("#search").submit({caller: this}, function(event){
+		event.data.caller.startSearch(event);
+		return false;
+	});
+}
+
+SearchModule.prototype.removeSearchListeners = function(){
+	$("#search-addon").off();
+	$("#search").off();
+}
+
+SearchModule.prototype.startSearch = function(event){
+	this.query = $("#search input[name=q]").val();
+	var caller = this;
+	// Conditions for not executing the search
+	if(this.query === ""){
+		$("#search input[name=q]").focus();
+		return;
+	}
+
+	var lockSearchFunctions = function(){
+		// Prevent Additional searches until this one finishes
+		$("#search button[type=submit]").attr("disabled", true);
+		$("#search input[name=q]").attr("readonly", true);
+
+	    // Let's add a Loading animation:
+	    var loading = $('\
+	        <div class="container-fluid wait-for-search">\
+	            <p>\
+	                Ergebnisse werden geladen \
+	                <img src="/img/ajax-loader.gif" alt="loading..." id="loading-search-results" />\
+	            </p>\
+	        </div>\
+	        ');
+	    $(".results .results-container").before(loading);
+	    $(".results .wait-for-search").show('fast');
+
+	    // Let's make a new input-group-addon to cancel the search if it takes too long
+	    var cancelSearch = $('\
+	        <div class="input-group-addon" id="cancel-search" title="Suche abbrechen">\
+	            X\
+	        </div> \
+	    ');
+	    $("#search input[name=q]").after(cancelSearch);
+
+	};
+	var unlockSearchFunctions = function(){
+		// Prevent Additional searches until this one finishes
+		$("#search button[type=submit]").attr("disabled", false);
+		$("#search input[name=q]").attr("readonly", false);
+
+	    // Let's add a Loading animation:
+	    $(".results .wait-for-search").hide('fast', function(){
+	    	$(".results .wait-for-search").remove();
+	    });
+
+	    $("#search #cancel-search").remove();
+	};
+
+	// Generate the Url for the Search Results
+	var map = this.interactiveMap.map;
+	var tmpExtent = map.getView().calculateExtent(map.getSize());
+	var extent = map.transformToWorldCoordinates([tmpExtent[0], tmpExtent[1]]).concat(map.transformToWorldCoordinates([tmpExtent[2], tmpExtent[3]]));
+	var url = '/' + encodeURI(this.query) + '/' + encodeURI(String(extent[0])) + '/' + encodeURI(String(extent[1])) + '/' + encodeURI(String(extent[2])) + '/' + encodeURI(String(extent[3]));
+	lockSearchFunctions();	
+	// Query the Search:
+	$.get(url, function(data){
+		caller.results = new Results(caller.interactiveMap, data, caller.query);
+		//caller.updateInterface();
+	})
+	.always(function(){
+		unlockSearchFunctions();
+	});	
+
+}
+
+SearchModule.prototype.focusSearchInput = function(){
+	return;
+	// Read out the locally stored History
+	var history = (new LocalHistory()).getFullHistory();
+
+	var caller = this;
+	// Add the History entries to the search suggestions:
+	var oldHeight = $("#search-addon .results").height();
+	// Clear the History Container
+	$("#search-addon .results .history-container").html("");
+	$.each(history, function(index, value){
+		
+		var res = "";
+		if(typeof value === "object"){
+			res =(new NominatimParser(value)).getHTMLResult().html();
+		}else if(typeof value === "string"){
+			res = value;
+		}
+		var resHtml = $('\
                         <div class="container-fluid suggestion">\
                             <div class="flex-container">\
                                 <div class="item history">\
                                     <span class="glyphicon glyphicon-time"></span>\
                                 </div>\
-                                <div class="item">\
-                                    ' + value["name"] + '\
+                                <div class="item result">\
+                                    ' + res + '\
                                 </div>\
                             </div>\
                         </div>\
                         ');
-                    $("#search-suggestions").append(suggestion);
-                    $(suggestion).click(function(){
-                        $("#search input[name=q]").blur();
-                        $("#search input[name=q]").val(value["name"]);
-                        $("#doSearch").click();
-                    });
-                }
-            });
-        }else{
-            return;
-        }
+		$("#search-addon .results .history-container").append(resHtml);
+	});
+	var newHeight = $("#search-addon .results").height();
 
-        var resultTogglerVisible = !$("#result-toggler").hasClass("hidden");
-
-        if(resultTogglerVisible){
-            $("#result-toggler").addClass("hidden");
-        }
-
-        if($("#results").attr("data-status") === "out"){
-            toggleResults("in");
-        }
-
-        $("#search-suggestions").animate({top: "0vh"}, 500, function(){
-            $("#search-suggestions").attr("data-status", "out");
-            $("#search-suggestions").css("padding-top", "70px");
-            $("#search input[name=q]").css("border-top-left-radius", 0);
-            $("#exit-suggestions").removeClass("hidden");
-            $("#exit-suggestions").click(function(){
-                $("#exit-suggestions").off();
-                if(resultTogglerVisible){
-                    $("#result-toggler").removeClass("hidden");
-                }
-                $("#search-suggestions").animate({top: "100vh"}, 500, function(){
-                    $("#exit-suggestions").addClass("hidden");
-                    $("#search input[name=q]").css("border-top-left-radius", "8px");
-                    $("#search-suggestions").html("");
-                    $("#search-suggestions").attr("data-status", "");
-                    $("#search-suggestions").css("padding-top", "");
-                });
-            });
-        });
-    });
-
-    $("#search input[name=q]").on("keydown", function(event) {
-        if (event.which == 13){
-            $("#search-addon input[name=q]").blur();
-            $("#doSearch").click();
-        }
-    });
-
-    
-    if(typeof vehicle === "undefined"){
-        // Put the Popstate Event:
-        $(window).unbind('popstate');
-        $(window).bind('popstate', function(event) {
-            var state = event.originalEvent.state;
-            if (state !== null && state["center"] !== undefined && state["zoom"] !== undefined) {
-                center = state["center"].split(",");
-                zoom = state["zoom"];
-                q = state["q"];
-                var shouldSearch = false;
-                var shouldClear = false;
-                if($("#search input[name=q]").val() !== state["q"] && state["q"] !== ""){
-                    shouldSearch = true;
-                }
-                $("#search input[name=q]").val(state["q"]);
-                if(typeof searchResults !== "undefined" && $("#search input[name=q]").val() === ""){
-                    shouldClear = true;
-                }
-                
-                map.un("moveend", updateUrl);
-                map.getView().animate({
-                    zoom: parseInt(zoom),
-                    center: center,
-                    duration: 1500
-                }, function(){
-                    setTimeout(function(){
-                        map.on("moveend", updateUrl);
-                        if(shouldSearch){
-                            $("#doSearch").click();
-                        }else if(shouldClear){
-                            deinitResults();
-                        }
-                    }, 500); 
-                });
-            }else{
-                // Das sieht merkürdig aus und hat ältere Geräte zum Absturz gebracht-
-                //document.location.href = document.location.href;
-            }
-        });
-
-        $("#doSearch").click(function() {
-            deinitStartNavigation();
-            executeSearch();
-        });
-    }
-
-    $("#result-toggler").click(function(){
-        toggleResults();
-    })
-});
-
-function executeSearch(){
-
-    // Leave Search suggestions if they are enabled
-    if($("#search-suggestions").attr("data-status") === "out") {
-        $("#exit-suggestions").click();
-    }
-
-    q = $("#search input[name=q]").val();
-    if(q === ""){
-        $("#search-addon input[name=q]").focus();
-        return;
-    }
-    // we need some Feedback that the search has startet
-    // Depending on the search it could last pretty long
-    // because our servers aren't that strong so the user
-    // has to know what's going on.
-    // Let's make the Input Field readonly
-    $("#search-addon input[name=q]").attr("readonly", true);
-    // Let's hide the search Button and the clear-search button
-    $("#search-addon #doSearch").addClass("hidden");
-    $("#search-addon #clear-search").addClass("hidden");
-    // Let's make a new input-group-addon to cancel the search if it takes too long
-    var cancelSearch = $('\
-        <div class="input-group-addon" id="cancel-search" title="Suche abbrechen">\
-            X\
-        </div> \
-    ');
-    $("#search input[name=q]").after(cancelSearch);
-    // Let's add a Loading animation:
-    var loading = $('\
-        <div class="container-fluid wait-for-search">\
-            <p>\
-                Ergebnisse werden geladen \
-                <img src="/img/ajax-loader.gif" alt="loading..." id="loading-search-results" />\
-            </p>\
-        </div>\
-        ');
-    $("#results").html(loading);
-    toggleResults("out");
-    $("#loading-search-results").load(function(){
-        // Calculate the current Extent of the map
-        var tmpExtent = map.getView().calculateExtent(map.getSize());
-        var extent = ol.proj.transform([tmpExtent[0], tmpExtent[1]], 'EPSG:3857', 'EPSG:4326').concat(ol.proj.transform([tmpExtent[2], tmpExtent[3]], 'EPSG:3857', 'EPSG:4326'));
-
-        var url = '/' + encodeURI(q) + '/' + encodeURI(extent[0]) + '/' + encodeURI(extent[1]) + '/' + encodeURI(extent[2]) + '/' + encodeURI(extent[3]);
-        
-        // Before we go on -> let's remove the current results
-        searchResults = undefined;
-        clearPOIS();
-        $("#clear-search").remove();
-        var markers = [];
-
-        var xhr = $.getScript(url)
-            .fail(function(jqxhr, settings, exception) {
-                console.log(exception);
-                deinitResults();
-            })
-            .done(function(){
-                // We undo the feedback that we created in the beginning
-                $("#results > .wait-for-search").remove();
-                if($("#results").attr("data-status") === "in"){
-                    $("#results").css("max-height", 0);
-                }
-                $("#cancel-search").remove();
-                $("#search-addon #doSearch").removeClass("hidden");
-                $("#search-addon #clear-search").removeClass("hidden");
-                $("#search-addon input[name=q]").attr("readonly", false);
-                if(typeof searchResults === "undefined" || searchResults.length <= 0){
-                    console.log("keine Ergebnisse");
-                    makeError($("#search-addon input[name=q]"), "Keine Ergebnisse gefunden :(");
-                }else{
-                    // Füge diesen Suchbegriff zur History hinzu
-                    // Add the first Result to the LocalStorage if it's the only one.
-                    // Otherwise we will add the search query
-                    if(searchResults.length === 1){
-                        addToHistory(searchResults[0]["display_name"], searchResults[0]["lon"], searchResults[0]["lat"]);
-                    }else{
-                        addToHistory(q, "0.0", "0.0");
-                    }
-                }
-            });
-        $("#cancel-search").click(function(){
-            xhr.abort();
-        });
-    });
+	this.adjustResultBoxHeight(oldHeight, newHeight);
 }
 
-function makeError(element, message){
-    $(element).css("border", "3px solid red");
-    $(element).tooltip({
-        placement: 'auto',
-        title: message
-    }).tooltip('show');
-
-    setTimeout(function(){
-        $(element).css("border", "");
-        $(element).tooltip('destroy');
-    }, 5000);
+SearchModule.prototype.exit = function(){
+	this.results.deleteSearch();
+	this.removeSearchListeners();
+	$("#search-addon").hide('slow');
 }
 
-function updateUrl(){
-
-    if(typeof map.getView().getZoom() === "undefined"){
-        // If the Zoom is undefined for this resolution, we will round it so it is valid again.
-        var resolution = map.getView().getResolution() * 10;    // We'll round to one digit
-        resolution = Math.round(resolution) / 10;
-
-        map.getView().setResolution(resolution);
-
-        if(typeof map.getView().getZoom() === "undefined"){
-            // If the zoom is undefined again I can't help
-            return;
-        }     
-    }
-    if(typeof zoom === "undefined"){
-        zoom = map.getView().getZoom();
-    }
-
-    if(typeof center === "undefined"){
-        center = map.getView().getCenter();
-    }
-
-    if(typeof q === "undefined"){
-        q = $("#search input[name=q]").val();
-    }
-
-    if(map.getView().getCenter() === center && zoom === parseInt(map.getView().getZoom()) && $("#search input[name=q]").val() === q){
-        return;
-    }
-
-    center = map.getView().getCenter();
-    if(parseInt(map.getView().getZoom()) !== "NaN"){
-        zoom = parseInt(map.getView().getZoom());
-    }
-    q = $("#search input[name=q]").val();
-
-    var uri = '/map/';
-
-    var query = "";
-    if(typeof q !== "undefined" && q !== ""){
-        query = q;
-        uri += query + "/";
-    }
-
-    uri += center.toString() + "," + zoom;
-
-    var stateObj = {
-        center: center.toString(),
-        zoom: zoom,
-        q: query
-    };
-    // Change URL
-    window.history.pushState(stateObj, '', uri);
+function LocalHistory(){
+    this.präfix = "place-search:";
+	this.history = this.readHistory();
 }
 
-function initMap() {
-    
-}
-
-
-function deinitResults() {
-    searchResults = undefined;
-    toggleResults("in");
-    $("#results").html("");
-    $("#result-toggler").addClass("hidden");
-    $("#search input[name=q]").val("");
-    $("#cancel-search").remove();
-    $("#search-addon #doSearch").removeClass("hidden");
-    $("#search-addon #clear-search").removeClass("hidden");
-    $("#search-addon input[name=q]").attr("readonly", false);
-    clearPOIS();
-    q = "";
-    updateUrl();
-    initStartNavigation();
-    map.on("singleclick", mapClickFunction);
-    $("#clear-search").remove();
-
-}
-function saveHistory(history, präfix) {
+LocalHistory.prototype.readHistory = function(){
+    var präfix = this.präfix;
+    var result = [];
     if (localStorage) {
-        // Das abspeichern der neuen History verläuft in 2 Schritten:
-        // 1. Löschen der vorhanden History
-        // 2. Hinzufügen der neuen History
-        // 1. Löschen der vorhandenen History
-        clearHistory(präfix);
-        // 2. Hinzufügen der neuen History
-        $.each(history, function(index, value) {
-            var key = präfix + btoa(value.name);
-            var val = value.count + ";" + value.lon + "," + value.lat;
-            localStorage.setItem(key, val);
+        var reg = new RegExp("^" + präfix, '');
+        var caller = this;
+        $.each(localStorage, function(key, value) {
+            if (key.match(reg) !== null) {
+                // Search Results are stored in Base64 encoded Strings
+                var match = key.match(/:([\d]+?)/);
+                var count = parseInt(match[1]);
+                var res = caller.b64DecodeUnicode(value);
+                res = JSON.parse(res);
+                res.count = count;
+                result.push(res);
+            }
         });
-    }
-}
-
-function addToHistory(name, lon, lat) {
-    if (localStorage) {
-        var präfix = "place-search:";
-        var key = btoa(name);
-        var historyLimit = 10;
-        // Let's get the sorted List of Results
-        var history = getHistory();
-        // Check if item exists:
-        var item = localStorage.getItem(präfix + key);
-        if (item === null) {
-            // Item ist noch nicht in der History. Es wird an die erste Stelle gesetzt
-            if (history.length >= historyLimit) {
-                // Zuerst das letzte Element entfernen, da unsere History voll ist
-                history.pop();
-            }
-            // Nun fügen wir das neue Element hinzu:
-            history.unshift({
-                name: name,
-                count: 10,
-                lon: lon,
-                lat: lat
-            });
-        } else {
-            // Item ist bereits in der History. Es wird einen Platz nach oben gepackt.
-            var itemIndex = parseInt(item.match(/^\d+/)[0]);
-            // Der angezeigte Index ist eine Zahl zwischen 1 und 10 wobei 10 das erste Element ist und 1 das letzte
-            // Wir konvertieren diese Zahl zum Array-Index
-            itemIndex = Math.abs(itemIndex - 10);
-            // Wir verschieben das Array Element jetzt um einen Platz nach vorne, also z.B: Element an stelle 4 kommt an stelle 3 etc.
-            if(itemIndex > 0){
-                history.move(itemIndex, itemIndex - 1);
-            }
-        }
-        // Jetzt müssen wir noch den Count Parameter für jedes Element aktualisieren:
-        var newHistory = [];
-        $.each(history, function(index, value) {
-            var c = historyLimit - index;
-            newHistory.push({
-                name: value.name,
-                count: c,
-                lon: value.lon,
-                lat: value.lat
-            });
+        result.sort(function(a, b) {
+            return b.count - a.count
         });
-        saveHistory(newHistory, präfix);
-    }
-}
-var routeLineStyle = new ol.style.Style({
-    stroke: new ol.style.Stroke({
-        color: 'rgb(255,0,0)',
-        width: 5
-    }),
-    fill: new ol.style.Fill({
-        color: 'rgba(255,0,0,.03)'
-    })
-});
-var route = {};
-var routeLayer = null;
-var routeMarkers = [];
-var routeInit = false;
-function start(){
-    
-    var pointString = points;
-    if(points.match(/gps/) !== null){
-        if(!gps){
-            // If this is the case we will simply return here.
-            // If the geolocation API got triggered, then another call to this function will
-            // happen, when the gpsLocation is available
-            return;
-        }
-        var pos = gpsLocation;
-        pointString = points;
-        if(pos !== null){
-            pointString = pointString.replace(/gps/, pos.toString());
-        }else{
-            pointString = pointString.replace(/;{0,1}gps;{0,1}/, ';');
-        }
-    }
-    if(routeInit){
-        return;
-    }
-    routeInit = true;
-    
-    var url = '/route/find/' + vehicle + '/' + pointString;
-    $.getJSON(url, function(response) {
-        route = response;
-    }).success(function() {
-        // If the Route could be loaded and there is a route between the points we can show it:
-        if (typeof route["code"] !== 'undefined' && route["code"] === "Ok" && route["routes"].length >= 1) {
-            deinitSearchBox();
-            addResults();
-            toggleResults("out");
-            addGraphics();
-            
-        }
-    });
-};
-
-function addResults() {
-    // To be consistent for multiple calls we need to remove eventually existing interfaces
-    $("#vehicle-chooser").remove();
-    $("#route-content").remove();
-    $("#results").html("");
-    var vehicleChooser = $("<div id=\"vehicle-chooser\">\
-            <label id=\"back-to-edit\" class=\"radio-inline\">\
-                <input type=\"radio\" name=\"vehicle\" value=\""+vehicle+"\"><div><span class=\"glyphicon glyphicon-arrow-left\"></span></div>\
-            </label>\
-            <label class=\"radio-inline\">\
-              <input type=\"radio\" name=\"vehicle\" value=\"foot\"> <div><img src=\"/img/silhouette-walk.png\" height=\"20px\" /></div>\
-            </label>\
-            <label class=\"radio-inline\" >\
-              <input type=\"radio\" name=\"vehicle\" value=\"bicycle\"> <div><img src=\"/img/bike.png\" height=\"20px\" /></div>\
-            </label>\
-            <label class=\"radio-inline\">\
-              <input type=\"radio\" name=\"vehicle\" value=\"car\"> <div><img src=\"/img/car.png\" height=\"20px\" /></div>\
-            </label>\
-        </div>\
-        ");
-    $("#search-addon").prepend(vehicleChooser);
-    var routeContent = $("<div id=\"route-content\" class=\"container-fluid\"></div>");
-    $("#results").append(routeContent);
-    $(vehicleChooser).find("input[value=" + vehicle + "]").prop("checked", true);
-    // Add the changed Listener to the vehicle Chooser:
-    $(vehicleChooser).find("input[type=radio]").change(function() {
-        vehicle = $(vehicleChooser).find("input[type=radio]:checked").val();
-        var url = '/route/start/' + vehicle + '/' + points;
-        url = url.replace(/;+$/, '');
-        document.location.href = url;
-    });
-    // We should add a Place to display Informations About the Route
-    var routeInformation = $('<div id="route-information" class="row"><div id="length" class="col-xs-6"></div><div id="duration" class="col-xs-6"></div></div>')
-    $("#route-content").prepend(routeInformation);
-    // Add Button for starting the route assistent
-    if(points.match(/^gps/) !== null){
-        var routeAssistent = $('\
-            <btn class="btn btn-success" id="route-assistent">Starten <span class="glyphicon glyphicon-play"></span></a>\
-        ');
-        $(routeAssistent).click(function(){
-            updateCurrentLocation(startAssistent);
-        });
-        $("#route-content").prepend(routeAssistent);
-    }
-    addRouteMetaData();
-    insertSteps();
-}
-
-function insertSteps() {
-    var takenRoute = route["routes"][0];
-    var stepList = $("<table id=\"routing-steps\" class=\"table\"></table>");
-    // Parse Each Leg
-    $.each(takenRoute["legs"], function(legIndex, leg) {
-        // Parse all steps for the Leg
-        $.each(leg["steps"], function(stepIndex, step) {
-            var lon = step["maneuver"]["location"][0];
-            var lat = step["maneuver"]["location"][1];
-            var maneuver = $("<tr class=\"step\" data-lon=\"" + lon + "\" data-lat=\"" + lat + "\"></tr>");
-            var directionImg = $("<td class=\"step-image\"></td>");
-            var img = parseImg(step);
-            if (img !== "") {
-                $(directionImg).append("<img height=\"35px\" src=\"" + img + "\" />");
-            }
-            $(maneuver).append(directionImg);
-            var stepString = parseManeuver(step["maneuver"], takenRoute, legIndex, stepIndex);
-            //$(maneuver).append($("<div class=\"col-xs-8\">" + stepString + "</p>"));
-            $(maneuver).append($("<td>" + stepString + "</td>"));
-            var distance = parseFloat(step["distance"]);
-            distance = Math.ceil(distance);
-            if (distance > 1000) {
-                distance /= 1000;
-                distance = Math.round(distance * 10) / 10;
-                distance = distance + " km";
-            } else {
-                distance = distance + " m";
-            }
-            if (step["maneuver"]["type"] === "arrive") {
-                distance = "";
-            }
-            $(maneuver).append($("<td>" + distance + "</td>"));
-            $(maneuver).mouseover(function() {
-                var lon = parseFloat($(this).attr("data-lon"));
-                var lat = parseFloat($(this).attr("data-lat"));
-                var layer = addPoint(lon, lat);
-                $(maneuver).mouseout(function() {
-                    map.removeLayer(layer);
-                });
-                $(maneuver).click(function() {
-                    var point = ol.proj.transform([lon, lat], 'EPSG:4326', 'EPSG:3857');
-                    map.getView().setCenter(point);
-                    map.getView().setZoom(16);
-                });
-            });
-            $(stepList).append(maneuver);
-        });
-    });
-    $("#route-content").append(stepList);
-}
-
-function parseImg(step) {
-    switch (step["maneuver"]["type"]) {
-        case "depart":
-        case "new name":
-            return "/img/straight.png";
-        case "roundabout turn":
-        case "continue":
-        case "end of road":
-        case "turn":
-            switch (step["maneuver"]["modifier"]) {
-                case "left":
-                    return "/img/turn-left.png";
-                case "sharp left":
-                    return "/img/turn-sharp-left.png";
-                case "right":
-                    return "/img/turn-right.png";
-                case "sharp right":
-                    return "/img/turn-sharp-right.png";
-                case "uturn":
-                    return "/img/uturn.png";
-                case "slight right":
-                    return "/img/fork-slight-right.png";
-                case "slight left":
-                    return "/img/fork-slight-left.png";
-                case "straight":
-                    return "/img/straight.png";
-                default:
-            }
-            break;
-        case "roundabout":
-        case "rotary":
-            return "/img/roundabout.png";
-        case "on ramp":
-            return "/img/auffahren.png";
-        case "merge":
-        case "off ramp":
-        case "fork":
-            switch (step["maneuver"]["modifier"]) {
-                case "left":
-                    return "/img/fork-left.png";
-                case "right":
-                    return "/img/fork-right.png";
-                case "slight right":
-                    return "/img/fork-slight-right.png";
-                case "slight left":
-                    return "/img/fork-slight-left.png";
-                case "straight":
-                    return "/img/straight.png";
-                default:
-            }
-        default:
-    }
-    return "";
-}
-
-function addPoint(lon, lat) {
-    var layer = new ol.layer.Vector({
-        source: new ol.source.Vector({
-            features: [new ol.Feature({
-                geometry: new ol.geom.Point(ol.proj.transform([lon, lat], 'EPSG:4326', 'EPSG:3857'))
-            })]
-        })
-    });
-    map.addLayer(layer);
-    return layer;
-}
-
-function addRouteMetaData() {
-    var distance = route["routes"][0]["distance"];
-    var duration = route["routes"][0]["duration"];
-    $("#route-information #length").html(parseDistance(distance));
-    $("#route-information #duration").html(parseDuration(duration));
-}
-
-function parseManeuver(maneuver, takenRoute, legIndex, stepIndex) {
-    var stepString = "";
-    var type = maneuver["type"];
-    var modifier = maneuver["modifier"];
-
-    var targetStreet = "";
-    if(typeof takenRoute["legs"][legIndex]["steps"][stepIndex]["name"] !== "undefined" && typeof takenRoute["legs"][legIndex]["steps"][stepIndex]["ref"] !== "undefined"){
-        targetStreet = makeTrafficSigns(takenRoute["legs"][legIndex]["steps"][stepIndex]["ref"] + ":" + takenRoute["legs"][legIndex]["steps"][stepIndex]["name"]);
-    }else if(typeof takenRoute["legs"][legIndex]["steps"][stepIndex]["ref"] !== "undefined" && typeof takenRoute["legs"][legIndex]["steps"][stepIndex]["name"] === "undefined"){
-        targetStreet = makeTrafficSigns(takenRoute["legs"][legIndex]["steps"][stepIndex]["ref"] + ":");
-    }else if(typeof takenRoute["legs"][legIndex]["steps"][stepIndex]["ref"] === "undefined" && typeof takenRoute["legs"][legIndex]["steps"][stepIndex]["name"] !== "undefined"){
-        targetStreet = takenRoute["legs"][legIndex]["steps"][stepIndex]["name"];
-    }
-    if(typeof targetStreet === "undefined"){
-        targetStreet = "";
-    }
-
-    var destinations = takenRoute["legs"][legIndex]["steps"][stepIndex]["destinations"];
-    if(typeof destinations !== "undefined"){
-        destinations = destinations.trim();
-        destinations = makeTrafficSigns(destinations);
-    }else{
-        destinations = "";
-    }
-    
-    switch (type) {
-        case "depart":
-            var direction = parseBearing(maneuver["bearing_after"]);
-            var start = takenRoute["legs"][legIndex]["steps"][stepIndex]["name"];
-
-            if(typeof start !== "undefined"){
-                stepString = "Auf " + start + " nach " + direction;
-            }else{
-                stepString = "Starte Richtung " + direction;
-            }
-
-            var nextStreet = takenRoute["legs"][legIndex]["steps"][stepIndex + 1]["name"];
-            if (typeof nextStreet !== "undefined" && nextStreet !== start) {
-                stepString += " Richtung " + nextStreet;
-            }
-            break;
-        case "continue":
-            var mod = parseModifier(maneuver["modifier"]);
-            stepString = mod + " einordnen.";
-            break;
-        case "roundabout turn":
-        case "end of road":
-        case "turn":
-            var direction = "";
-            if (maneuver["modifier"] === "uturn") {
-                stepString = "Bei " + targetStreet + " wenden";
-            } else {
-                var modifier = parseModifier(maneuver["modifier"]);
-                if (modifier !== "Weiter") {
-                    modifier += " abbiegen";
-                }
-                stepString = modifier;
-            }
-            break;
-        case "roundabout":
-        case "rotary":
-            stepString = "Im Kreisverkehr ";
-            if (maneuver["exit"] !== null) {
-                stepString += "die ";
-                switch (parseInt(maneuver["exit"])) {
-                    case 1:
-                        stepString += "erste ";
-                        break;
-                    case 2:
-                        stepString += "zweite ";
-                        break;
-                    case 3:
-                        stepString += "dritte ";
-                        break;
-                    case 4:
-                        stepString += "vierte ";
-                        break;
-                    case 5:
-                        stepString += "fünfte ";
-                        break;
-                    case 6:
-                        stepString += "sechste ";
-                        break;
-                    case 7:
-                        stepString += "siebte ";
-                        break;
-                    case 8:
-                        stepString += "achte ";
-                        break;
-                    case 9:
-                        stepString += "neunte ";
-                        break;
-                }
-                stepString += "Ausfahrt nehmen."
-            }
-            break;
-        case "arrive":
-            var mod = parseModifier(modifier);
-            if (mod === undefined) {
-                stepString = "Sie haben das Ziel erreicht.";
-            } else {
-                stepString = "Das Ziel befindet sich " + mod;
-            }
-            break;
-        case "new name":
-            stepString = "Weiter auf ";
-            break;
-        case "merge":
-            var mod = parseModifier(modifier);
-            stepString = mod + " auffahren.";
-            break;
-        case "off ramp":
-        case "fork":
-            var mod = parseModifier(modifier);
-            stepString = mod + " halten.";
-            break;
-        case "on ramp":
-            var mod = parseModifier(modifier);
-            stepString = mod + " auffahren.";
-            break;
-        case "use lane":
-            switch(modifier){
-                case "left":
-                    stepString = "Linke ";
-                    break;
-                case "right":
-                    stepString = "Rechte ";
-                    break;
-                case "middle":
-                case "center":
-                    stepString = "Mittlere ";
-                    break;
-                default:
-            }
-            if(stepString !== ""){
-                stepString += "Spur verwenden.";
-            }
-            break;
-        default:
-            console.log(takenRoute["legs"][legIndex]["steps"][stepIndex]);
-            stepString = "Konnte diesen Schritt nicht zu einem String auswerten";
-    }
-
-    // Die Anweisung kann nun noch erweitert werden, um eine Straße auf der weiter gefahren wird, oder um eine Richtung
-    if(typeof destinations !== "undefined" && typeof targetStreet !== "undefined"){
-        stepString += "<ul class=\"list-unstyled\"><li>" + targetStreet + "</li><li>" + destinations + "</li></ul>";
-    }else{
-        stepString += " <span class=\"destination\">" + targetStreet + destinations + "</span>";
-    }
-
-    return stepString;
-}
-
-function makeTrafficSigns(destinations){
-    var tmp = "";
-        while(destinations.length > 0){
-            // Let's check what kind of destination we have:
-            if(destinations.match(/^[^,]+?:/)){
-                var track = destinations.substring(0, destinations.indexOf(":")).trim();
-                track = track.split(/;/g);
-                destinations = destinations.substr(destinations.indexOf(":") + 1);
-                // No we get the destinations of this track an make them to a traffic sign
-                var tmpDests = [];
-                while(destinations.match(/^[^,]+/) !== null){
-                    if(destinations.indexOf(",") !== -1){
-                        tmpDests.push(destinations.substring(0, destinations.indexOf(",")));
-                        destinations = destinations.substring(destinations.indexOf(",")+1);
-                    }else{
-                        tmpDests.push(destinations);
-                        destinations = "";
-                    }
-                }
-                // Generate Output from the generated data
-                var tmpClass = "";
-                if(track[0].indexOf("A ") === 0){
-                    tmpClass = "autobahn";
-                }else if(track[0].trim().match(/^\w{0,3}\s*\d/) !== null 
-                    || track[0].trim().match(/^Ring\s\d+/) !== null)
-                    {
-                    tmpClass = "landstrasse";
-                }
-                tmp += "<span class=\"" + tmpClass + " schild\">";
-                $.each(track, function(index, value){
-                    tmp += "<span class=\"highway-number\">" + value + "</span>";
-                });
-                tmp += " " + tmpDests + "</span>";
-            }else{
-                if(destinations.match(/^\w+?,/)){
-                    tmp += destinations.substring(0, destinations.indexOf(","));
-                    destinations = destinations.substring(destinations.indexOf(",")+1);
-                }else if(destinations.match(/^\w+?;/)){
-                    tmp += destinations.substring(0, destinations.indexOf(";"));
-                    destinations = destinations.substring(destinations.indexOf(";")+1);
-                }else{
-                    tmp += destinations;
-                    destinations = "";
-                }
-            }
-        }
-        return tmp;
-}
-
-function parseModifier(modifier) {
-    var direction = "";
-    switch (modifier) {
-        case undefined:
-            direction = undefined;
-            break;
-        case "sharp right":
-            direction = "Scharf rechts";
-            break;
-        case "right":
-            direction = "Rechts";
-            break;
-        case "slight right":
-            direction = "Leicht rechts";
-            break;
-        case "straight":
-            direction = "Weiter";
-            break;
-        case "slight left":
-            direction = "Leicht links";
-            break;
-        case "left":
-            direction = "Links";
-            break;
-        case "sharp left":
-            direction = "Scharf links";
-            break;
-        default:
-            direction = "Konnte Richtungs-Modifizierer nicht auswerten: " + modifier;
-    }
-    return direction;
-}
-
-function parseBearing(bearing) {
-    bearing = parseFloat(bearing);
-    if ((bearing >= 0 && bearing < 22.5) || bearing >= 337.5) {
-        return "Norden";
-    } else if (bearing >= 22.5 && bearing < 67.5) {
-        return "Nordosten";
-    } else if (bearing >= 67.5 && bearing < 112.5) {
-        return "Osten";
-    } else if (bearing >= 112.5 && bearing < 157.5) {
-        return "Südosten";
-    } else if (bearing >= 157.5 && bearing < 202.5) {
-        return "Süden";
-    } else if (bearing >= 202.5 && bearing < 247.5) {
-        return "Südwesten";
-    } else if (bearing >= 247.5 && bearing < 292.5) {
-        return "Westen";
-    } else if (bearing >= 292.5 && bearing < 337.5) {
-        return "Nordwesten";
-    }
-}
-
-function parseDistance(distance) {
-    distance = parseFloat(distance);
-    if(distance >= 1000){
-        distance /= 1000;
-        var km = Math.round(distance * 10) / 10;
-        return km + " km";
-    }else if(distance >= 50){
-        var mod = distance % 50;
-        var m = 0;
-        if(mod >= 25){
-            m = distance + (50-mod);
-        }else{
-            m = distance - mod;
-        }
-        return m + " m";
-    }else{
-        var m = Math.round(distance / 10) * 10;
-        return m + " m";
-    }
-}
-
-function parseDuration(duration) {
-    duration = Math.floor(parseFloat(duration));
-    var hours = 0;
-    if (duration > 3600) {
-        hours = Math.floor(duration / 3600);
-        duration = duration % 3600;
-    }
-    var minute = 0;
-    if (duration > 60) {
-        minute = Math.round(duration / 60);
-        duration = duration % 60;
-    }
-    var result = "";
-    if (hours > 0) {
-        result += hours + " Std.";
-    }
-    if (minute > 0) {
-        result += " " + minute + " Min.";
-    }
-    if(hours === 0 && minute === 0){
-        result = "< 1 Min.";
     }
     return result;
 }
 
-function addGraphics() { // We collect the minimal Position and the maximum Position within the route so we can Adjust the View:
-    var minPos = [];
-    var maxPos = [];
-    var vectorS = new ol.source.Vector();
-    // We will show the first Route:
-    $.each(route["routes"][0]["legs"], function(index, value) {
-        // For each leg we collect all the steps:
-        $.each(value["steps"], function(index, value) {
-            var geojson = value["geometry"];
-            // Let's look through the Points to find the minimal
-            $.each(geojson["coordinates"], function(index, value) {
-                if (typeof minPos[0] === "undefined" || parseFloat(value[0]) < minPos[0]) {
-                    minPos[0] = value[0];
-                } else if (typeof maxPos[0] === "undefined" || parseFloat(value[0]) > maxPos[0]) {
-                    maxPos[0] = value[0];
-                }
-                if (typeof minPos[1] === "undefined" || parseFloat(value[1]) < minPos[1]) {
-                    minPos[1] = value[1];
-                } else if (typeof maxPos[1] === "undefined" || parseFloat(value[1]) > maxPos[1]) {
-                    maxPos[1] = value[1];
-                }
-            });
-            var geom = (new ol.format.GeoJSON()).readGeometry(geojson, {
-                'dataProjection': 'EPSG:4326',
-                'featureProjection': 'EPSG:3857'
-            });
-            var feature = new ol.Feature({
-                'geometry': geom
-            });
-            feature.setStyle(routeLineStyle);
-            // feature.setId(index);
-            vectorS.addFeature(feature);
+LocalHistory.prototype.getFullHistory = function(){
+	return this.history;
+}
+
+LocalHistory.prototype.clearHistory = function() {
+    if(localStorage){
+        var präfix = this.präfix;
+        $.each(this.history, function(index, value){
+            var key = präfix + btoa(value.name);
+            localStorage.removeItem(key);
         });
-    });
-    // We give adjust the view so the route is not under the result list
-    var paddingRight = 0;
-    if(parseInt( $(document).outerWidth()) > 768 && $("#results").attr("data-status") === "out" ){
-        paddingRight = $("#search-addon").outerWidth();
-    }
-    adjustViewBoundingBox(minPos, maxPos, [5,paddingRight,5,5]);
-    if(routeLayer !== null){
-        // Remove old Features
-        map.removeLayer(routeLayer);
-    }
-    // Remove old Markers
-    $.each(routeMarkers, function(index, value){
-        map.removeOverlay(value);
-    });
-    // add Features
-
-    routeLayer = new ol.layer.Vector({
-        source: vectorS
-    });
-    map.addLayer(routeLayer);
-    // We should add some Pins to the Waypoint Locations
-    $.each(route["waypoints"], function(index, value) {
-        // This will work upto an index of 25
-        // Caharacter Representation of the index:
-        var chr = String.fromCharCode(65 + index);
-        // So now the Pin
-        var el = $('<span id="' + chr + '" class="marker">' + chr + '</span>');
-        var pos = ol.proj.transform([parseFloat(value["location"][0]), parseFloat(value["location"][1])], 'EPSG:4326', 'EPSG:3857');
-        routeMarkers.push(addMarker(el, pos));
-    });
-}
-var followingId = null;
-var positions = [];
-var routeAssistentVectorSource = new ol.source.Vector();
-var waypoints = [];
-var drivenRoute = null;
-var userPosOverlay = null;
-var currentGeometry = null;
-var durations = null;
-var distances = null;
-var distanceToNextPoint = null;
-
-function startAssistent() {
-    if (gps && points.match(/^gps;/) !== null) {
-        var text = "Bitte beachten Sie auf Ihrem Weg stets die geltenden Verkehrsregeln und fahren nur so, wie es die aktuelle Verkehrssituation zulässt.";
-        map.un("moveend", updateUrl)
-        if(typeof android === "undefined"){
-            alert(text);
-        }else{
-            android.showToast(text);
-        }
-        positions = [];
-        initWaypoints();
-        prepareInterface();
-        initAssistentGraphics();
-        drivenRoute = {
-            coordinates: [gpsLocation],
-            type: "LineString"
-        };
-        startLocationFollowing();
-        $(".ol-abort").click(function() {
-            deinitAssistent();
-        });
-    }
-}
-
-function initWaypoints() {
-    var result = points.split(';');
-    $.each(result, function(index, value) {
-        if (value === 'gps') {
-            waypoints.push('gps');
-        } else {
-            waypoints.push({
-                hint: '',
-                lon: parseFloat(value.split(',')[0]),
-                lat: parseFloat(value.split(',')[1])
-            });
-        }
-    });
-}
-
-function initAssistentGraphics() {
-    // We need to disable the display timeout to prevent the telephone screen from locking
-    // While Navigating
-    // We only can do this, if we are within the Android App
-    // We have defined an JavaScript Interface within the App to allow this kind of Communication
-    if(typeof android !== "undefined"){
-        android.disableDisplayTimeout();
-        android.showToast("Bildschirm Timeout abgeschaltet.");
-    }
-    // Set The Route Layer to the new one:
-    routeLayer.setSource(routeAssistentVectorSource);
-    // Remove the first Map Marker (The User Position is gonna replace it)
-    map.removeOverlay(routeMarkers[0]);
-    routeMarkers.splice(0,1);
-}
-
-function prepareInterface() {
-    // Change Navigation-Bar to make it show the next Steps
-    // Hide Navigation Bar
-    $("figure#search-addon").html("");
-    $("figure#search-addon").css("width", "100%");
-    $("figure#search-addon").css("margin", "0");
-    $("figure#search-addon").css("background-color", "white");
-    // Create the Layout for the next Step:
-    var nextStep = $('\
-        <div id="route-content">\
-            <div id="route-information" class="row">\
-                <div id="length" class="col-xs-6"></div>\
-                <div id="duration" class="col-xs-6"></div>\
-            </div>\
-            <table id="routing-steps" class="table">\
-                <tbody>\
-                    <tr class="step">\
-                        <td class="step-image"><img height="35px" src=""></td>\
-                        <td class="step-string"></td>\
-                        <td class="step-length"></td>\
-                    </tr>\
-                </tbody>\
-            </table>\
-        </div>\
-  ');
-    $("figure#search-addon").html(nextStep);
-    var dialog = $('\
-        <div id="continue-dialog" class="container-fluid hidden">\
-            <div class="row heading">Sie haben ihr Zwischenziel erreicht.</div>\
-            <div class="row options">\
-                <div id="next-waypoint" class="col-xs-6 first"><a href="#">Weiter zum nächsten Wegpunkt</a></div>\
-                <div id="new-route" class="col-xs-6 first hidden"><a href="#">Neues Ziel eingeben</a></div>\
-                <div id="abort-routing" class="col-xs-6"><a href="#">Fertig</a></div>\
-            </div>\
-        </div>\
-    ');
-    $("main").append(dialog);
-    // Remove Zoom Bar
-    $(".ol-zoom, .ol-zoomslider, #location-tool").addClass("hidden");
-    var abort = $('\
-        <span class="glyphicon glyphicon-remove"></span>\
-        ');
-    $(".ol-attribution").html("");
-    $(".ol-attribution").addClass("ol-abort");
-    $(".ol-attribution").removeClass("ol-attribution");
-    $(".ol-abort").html(abort);
-    //Update Map Size
-}
-
-function deinitAssistent() {
-
-    if(typeof android !== "undefined"){
-        android.enableDisplayTimeout();
-        android.showToast("Bildschirm Timeout eingeschaltet.");
-    }
-
-    if (followingId !== null) {
-        navigator.geolocation.clearWatch(followingId);
-        followingId = null;
-    }
-    if(route.waypoints.length === 0){
-        // If just one waypoint is left then we finished the route and we redirect to the startpage
-        window.location.href = "/";
-    } else if (route.waypoints.length === 1) {
-        var pos = route.waypoints[0].location;
-        // Transform Position
-        pos = ol.proj.transform(pos, 'EPSG:4326', 'EPSG:3857');
-        var url = "/map/" + pos.toString() + ",18";
-        window.location.href = url;
-    }else {
-        // We redirect to the route Overview at the current state
-        var pointString = "";
-        $.each(route.waypoints, function(index, value) {
-            if (index === 0) {
-                // The first Index always is the GPS Location
-                pointString += "gps;";
-            } else {
-                pointString += value.location.toString() + ";";
-            }
-        });
-        pointString = pointString.replace(/;$/, '');
-        var url = "/route/" + vehicle + "/" + pointString;
-        window.location.href = url;
-    }
-}
-var currentPosition = null;
-var calculating = false;
-
-var lastUpdate = null;
-var frequency = 3000;   // Frequency in ms in which the Route-Assistent should Update itself
-function startLocationFollowing() {
-    if (followingId === null) {
-        if (currentPosition === null) {
-            currentPosition = {
-                timestamp: Math.floor(Date.now() / 1000),
-                lon: gpsLocation[0],
-                lat: gpsLocation[1],
-                accuracy: 1.5
-            };
-        }
-        options = {
-            enableHighAccuracy: true,
-            maximumAge: 3000
-        };
-        followingId = navigator.geolocation.watchPosition(function(position) {
-            // We will define an update Interval manually since the maximumAge Paramter doesn't seem to work
-            if(lastUpdate !== null && (Date.now()-lastUpdate) < frequency){
-                return;
-            }
-            lastUpdate = Date.now();
-            var timestamp = Math.floor(position.timestamp / 1000);
-            var lon = parseFloat(position.coords.longitude);
-            var lat = parseFloat(position.coords.latitude);
-            var accuracy = parseFloat(position.coords.accuracy);
-            gpsLocation = [lon, lat];
-            currentPosition = {
-                timestamp: Math.floor(timestamp / 1000),
-                lon: lon,
-                lat: lat,
-                accuracy: accuracy
-            };
-            if(debug){
-                var time = new Date();
-                $("#debug-box").html(time.getHours() + ":" + time.getMinutes() + ":" + time.getSeconds() + "<br />" + currentPosition.lon + "<br />" + currentPosition.lat + "<br />" + currentPosition.accuracy);
-            }
-            // We have to decide whether we will retrieve two exact Routes (driven and upcoming)
-            // or whether we want to derive a new User Position on the Route of the new GPS Location
-            // The latter one would use some mobile Data to make a new HTTP Request
-            // The first one could save that data taking the risk that the user could've left the route
-            // We calculate the risk in the following way:
-            // We derive the perpendicular distance of the GPS Coordinate to the current Route Step (straight line)
-            // We get a possible Position of the User on the Route. There could be some possible situations the user is in:
-            // 1. The distance of the Point to the Route is higher than the GPS accuracy
-            //  => The user has left the route and we need to recalculate
-            // 2. The point is beyond the Point where the next step would begin
-            //  => The user either has left the route or passed the next waypoint and we need to recalculate
-            // 3. The distance of the Point to the Route is less or equal the gps Accuracy AND the Point on the route is before the next waypoitn
-            //  => The user is on the route and hasn't passed the next waypoint so no recalculation is needed
-            // First thing we do is to check whether the point is the beginning or ending of the Line
-            // In that case we would have to recalculate anyways because of 2.
-            // 3. is standard and we check for recalc
-            var recalc = false;
-            var pointOnRoute = getNextPointOnRoute(ol.proj.transform([currentPosition.lon, currentPosition.lat], 'EPSG:4326', 'EPSG:3857'), currentPosition.accuracy);
-            if (pointOnRoute !== null) {
-                // If Leg Index or stepIndex is not 0 Then we need to change the Route Object
-                var i = pointOnRoute.legIndex;
-                while (i > 0) {
-                    console.log("Entferne leg");
-                    removeLeg();
-                    i--;
-                }
-                i = pointOnRoute.stepIndex;
-                while (i > 0) {
-                    console.log("Entferne Step");
-                    if(removeStep()){
-                        i = 0;
-                    }else{
-                        i--;
-                    }
-                }
-                // Now we for sure have the current step at position 0
-                // Every step has a geometry Object describing the line we need to take.
-                // If we can find out at which point of that line we are we can adjust the bearing of the map to
-                // follow the bearing of the User
-                // In Addition we can then adjust the distance and duration to be at the current state
-                // Tolerance how much the bearings may differ to be the same
-                var tolerance = 0.03;
-                var bearingGps = getBearing(ol.proj.transform(pointOnRoute.point, 'EPSG:3857', 'EPSG:4326'), route.routes[0].legs[0].steps[0].geometry.coordinates[1]);
-                var bearingRoute = getBearing(route.routes[0].legs[0].steps[0].geometry.coordinates[0], route.routes[0].legs[0].steps[0].geometry.coordinates[1]);
-                while ((bearingGps < (bearingRoute - tolerance) || (bearingRoute + tolerance) < bearingGps) && route.routes[0].legs[0].steps[0].geometry.coordinates.length > 2) {
-                    // The Bearings differ too much
-                    // Seems like we passed another Point
-                    // Delete it from route and add it to drivenRoute
-                    var dist = route.routes[0].legs[0].annotation.distance.shift();
-                    var dur = route.routes[0].legs[0].annotation.duration.shift();
-                    route.routes[0].distance -= dist;
-                    route.routes[0].duration -= dur;
-                    route.routes[0].legs[0].distance -= dist;
-                    route.routes[0].legs[0].duration -= dur;
-                    route.routes[0].legs[0].steps[0].distance -= dist;
-                    route.routes[0].legs[0].steps[0].duration -= dur;
-                    route.routes[0].geometry.coordinates.shift();
-                    var coord = route.routes[0].legs[0].steps[0].geometry.coordinates.shift();
-                    drivenRoute.coordinates.push(coord);
-                    bearingGps = getBearing(ol.proj.transform(pointOnRoute.point, 'EPSG:3857', 'EPSG:4326'), route.routes[0].legs[0].steps[0].geometry.coordinates[1]);
-                    bearingRoute = getBearing(route.routes[0].legs[0].steps[0].geometry.coordinates[0], route.routes[0].legs[0].steps[0].geometry.coordinates[1]);
-                }
-
-                // Calculate the distance we traveled on this step to give more accurate Updates
-                var distTraveled = getDistance(ol.proj.transform(pointOnRoute.point, 'EPSG:3857', 'EPSG:4326'), route.routes[0].legs[0].steps[0].geometry.coordinates[0]);
-                // The distTraveled can only be as accurate as the accuracy of the gps Position so we gonna substract the accuracy from the distance just to be sure for the worst case
-                distTraveled = Math.max(0, (distTraveled-currentPosition.accuracy));
-
-                if((route.routes[0].legs[0].distance - distTraveled) <= 20){
-                    removeLeg();
-                    // If this was the last leg we can return at this point
-                    if(typeof route.routes[0].legs[0] === "undefined"){
-                        return;
-                    }
-                }
-
-                var durTraveled = 0;
-                if(route.routes[0].legs[0].steps[0].distance !== 0){
-                    durTraveled = (route.routes[0].legs[0].steps[0].duration / route.routes[0].legs[0].steps[0].distance) * distTraveled;
-                }
-                // Update the Frequency when we are calculating the next Map Update
-                frequency = calcFrequency(durTraveled);
-                // We check for finish here too
-                updateNextStep(pointOnRoute.point, bearingGps, distTraveled, durTraveled);
-                redrawRoute(pointOnRoute.point);
-            } else {
-                // We need to recalculate
-                // If we are still folling the location we stop that until we have our new route:
-                if (followingId !== null) {
-                    navigator.geolocation.clearWatch(followingId);
-                    followingId = null;
-                }
-                var pos = gpsLocation;
-                drivenRoute.coordinates.push(pos);
-                var pointString = "";
-                $.each(route.waypoints, function(index, value) {
-                    if (index === 0) {
-                        // The first waypoint always is the gpsLocation
-                        pointString += pos.toString() + ";";
-                    } else {
-                        pointString += value.location.toString() + ";";
-                    }
-                });
-                pointString = pointString.replace(/;$/, '');
-
-                var url = '/route/find/' + vehicle + '/' + pointString;
-
-                // Let's check if we can submit a bearing for the starting point to generate a better route
-                if(drivenRoute.coordinates.length >= 2){
-                    // We can calculate the current bearing. Let's do so:
-                    var bearing = getBearing(drivenRoute.coordinates[drivenRoute.coordinates.length-2], drivenRoute.coordinates[drivenRoute.coordinates.length-1]);
-                    bearing = Math.round(bearing);
-                    url += "/" + bearing;
-                }
-
-                
-                $.getJSON(url, function(response) {
-                    route = response;
-                    startLocationFollowing();
-                });
-            }
-        }, function(error) {
-            // Follow Location couldn't be started. Abort now
-            deinitAssistent();
-        }, options);
-    }
-}
-
-function calcFrequency(durTraveled){
-    // We decide in which Frequency we gonna update the Map.
-    // It depends of the duration the current step will take to Finish:
-    // 1s   =>  The Last 15 Seconds of a step will be updated the most frequent
-    // 2s   =>  Between 15-19 Seconds
-    // 3s   =>  Between 19 and 24 Seconds
-    // 4s   =>  Between 24 and 30 Seconds
-    // 5s   =>  > 30 Seconds
-    var duration = route.routes[0].legs[0].steps[0].duration;
-    duration -= durTraveled;
-    if(duration < 15){
-        return 1000;
-    }else if(duration < 19){
-        return 2000;
-    }else if(duration < 24){
-        return 3000;
-    }else if(duration < 30){
-        return 4000;
-    }else{
-        return 5000;
-    }
-}
-
-function removeStep() {
-    // Update Route Distance
-    route.routes[0].distance -= route.routes[0].legs[0].steps[0].distance;
-    route.routes[0].duration -= route.routes[0].legs[0].steps[0].duration;
-    route.routes[0].legs[0].distance -= route.routes[0].legs[0].steps[0].distance;
-    route.routes[0].legs[0].duration -= route.routes[0].legs[0].steps[0].duration;
-    if (route.routes[0].legs[0].steps[0].distance > 0) {
-        route.routes[0].legs[0].annotation.distance = route.routes[0].legs[0].annotation.distance.slice(route.routes[0].legs[0].steps[0].geometry.coordinates.length - 1);
-    }
-    if (route.routes[0].legs[0].steps[0].duration > 0) {
-        route.routes[0].legs[0].annotation.duration = route.routes[0].legs[0].annotation.duration.slice(route.routes[0].legs[0].steps[0].geometry.coordinates.length - 1);
-    }
-    route.routes[0].geometry.coordinates = route.routes[0].geometry.coordinates.slice(route.routes[0].legs[0].steps[0].geometry.length - 1);
-    var step = route.routes[0].legs[0].steps.shift();
-    while (step.geometry.coordinates.length > 0) {
-        // The Last Coordinate of this step is gonna be the first coordinate of the next one
-        // That's why we add until just one coordinate is left
-        drivenRoute.coordinates.push(step.geometry.coordinates.shift());
-    }
-    // If the distance of the Leg is < 10 we remove it too
-    if (route.routes[0].legs[0].distance < 10) {
-        removeLeg();
         return true;
     }else{
         return false;
     }
 }
 
-function removeLeg() {
-    // Update Route Distance
-    route.routes[0].distance -= route.routes[0].legs[0].distance;
-    route.routes[0].duration -= route.routes[0].legs[0].duration;
-    route.routes[0].legs.shift();
-    initFinish();
+LocalHistory.prototype.b64EncodeUnicode = function(str){
+    return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, function(match, p1) {
+        return String.fromCharCode('0x' + p1);
+    }));
 }
 
-function initFinish() {
-    cancleFollowing();
-    // If a leg get's removed it means that we have passed a waypoint
-    if (route.waypoints.length >= 2) {
-        route.waypoints.splice(0, 1);
-        waypoints.splice(1,1);
-    }
-    if (route.waypoints.length >= 2) {
-        // We have our targeted Rotation Value
-        // Problem is, that we need to rotate the map in the shortest way. (Turn Right or Left)
-        // We can calculate that if we calculate the delta angle of the shortest Way:
-        // (targetAngle - sourceAngle + 180) % 360 - 180
-        // The result is gonna be positive or negative so we are gonna add that value to our current angle
-        var fullRotation = 2 * Math.PI;
-        var halfRotation = Math.PI;
-        var a = 0 - map.getView().getRotation() + halfRotation;
-        var mod = (a % fullRotation + fullRotation) % fullRotation - halfRotation;
-        var targetRotation = map.getView().getRotation() + mod;
-        map.getView().animate({
-            center: ol.proj.transform(route.waypoints[0].location, 'EPSG:4326', 'EPSG:3857'),
-            rotation: targetRotation,
-            zoom: 18,
-            duration: 2000
-        }, function(){
-            map.getView().setRotation(0);
-        });
-        // First Point is the GPS Location
-        // At least 2 additional Waypoints are to go
-        // So when we removed one now we aren't finished
-        openNextWaypointDialog();
+LocalHistory.prototype.b64DecodeUnicode = function(str) {
+    return decodeURIComponent(Array.prototype.map.call(atob(str), function(c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
+}
+
+function Results(map, data, query){
+	this.interactiveMap = map;
+	this.results = data;
+	this.query = query;
+	this.markerOverlays = [];
+	this.updateInterface();
+}
+
+Results.prototype.deleteSearch = function(animationSpeed){
+	// Activate Reverse Geocoding
+	this.interactiveMap.reversePositionManager.setActive(true);
+	if(animationSpeed === null){
+		animationSpeed = "slow";
+	}
+	$("#search-addon .results .results-container").hide(animationSpeed, function(){
+		$("#search-addon .results .results-container").html("");
+	});
+	$("#search-addon .results .history-container").hide(animationSpeed, function(){
+		$("#search-addon .results .history-container").html("");
+	});
+	$("#search-addon #delete-search").remove();
+	$("#search-addon #search input[name=q]").val("");
+	
+	if($(window).outerWidth() <= 767){
+			$("#search-addon .results .mobiles-window").remove();
+			$("#search-addon #show-list").remove();
+			// The Search box got focussed on a mobile Let's get more Space
+			$("#search-addon").animate({"margin": "15px 15px 0 15px"}, 'slow');
+			$("#search-addon .results").css("border-radius", "0 0 15px 15px");
+			$("#search-addon .results").css("max-height", "91vh");
+			$("#search-addon .results").css("background-color", "white");
+			// Show Zoombar on mobiles in results view
+			$(".ol-zoom, .ol-zoomslider").show();
+	}
+	this.removeResultMarker();
+}
+
+Results.prototype.removeResultMarker = function(){
+	var map = this.interactiveMap.map;
+	$.each(this.markerOverlays, function(index, value){
+		map.removeOverlay(value);
+	});
+	this.markerOverlays = [];
+}
+
+/**
+ * Updates the User Interface if there are any Search results saved in this Module
+ * It prints all Markers and geometries for the search results and updates the results list
+**/
+Results.prototype.updateInterface = function(){
+	if(this.results.length > 0){
+		this.deleteSearch(0);
+		$("#search input[name=q]").val(this.query);
+		// Disable Reverse Geocoding on click
+		this.interactiveMap.reversePositionManager.setActive(false);
+		// First add those Results to the Results List
+		$("#search-addon .results .results-container").html("");
+		$("#search-addon .results .mobiles-window").remove();
+		var caller = this;
+		$.each(this.results, function(index, value){
+			var res = (new NominatimParser(value)).getHTMLResult().html();
+			var resHtml = $('\
+							<div class="container-fluid suggestion" data-resultNumber="'+index+'">\
+	                            <div class="flex-container">\
+	                                <div class="item history">\
+	                                    <span class="marker" style="filter: hue-rotate(' + value["huerotate"] + 'deg); font-size: 16px;">' + (index+1) + '</span>\
+	                                </div>\
+	                                <div class="item result">\
+	                                    ' + res + '\
+	                                </div>\
+	                            </div>\
+	                        </div>\
+							');
+			$("#search-addon .results .results-container").append(resHtml);
+			if(caller.results.length > 1){
+				$(resHtml).click({caller: caller}, function(event){
+					event.data.caller.focusResult($(this).attr("data-resultNumber"));
+				});
+			}
+		});
+		$("#search-addon .results .results-container .start-route-service").click({caller: caller}, function(){
+			caller.interactiveMap.switchModule("route-finding", {lat: $(this).attr("data-lat"), lon: $(this).attr("data-lon")});
+		});
+		
+		$("#search-addon .results .results-container").show('slow', function(){
+			$("#search-addon .results .results-container").attr("data-status", "out");
+			if($(window).outerWidth() <= 767){
+				// On Mobiles we need a window to look through to the map
+				$("#search-addon .results .results-container").before("<div class=\"mobiles-window\"></div>");
+				$("#search-addon .results .mobiles-window").click({caller: caller}, function(event){
+					event.data.caller.mobilesWindowClick();
+				});
+				// The Search box got focussed on a mobile Let's get more Space
+				$("#search-addon").animate({"margin": 0}, 'slow');
+				$("#search-addon .results").css("border-radius", 0);
+				$("#search-addon .results").css("max-height", "95vh");
+				$("#search-addon .results").css("background-color", "transparent");
+
+				// Hide Zoombar on mobiles in results view
+				$(".ol-zoom, .ol-zoomslider").hide();
+
+				var height = $(window).outerHeight() - $(".results").outerHeight() - $("#search").outerHeight();
+				height = Math.max(height, 175);
+				$(".results .mobiles-window").css("height", height + "px");
+			}
+			// Let's make a new input-group-addon to cancel the search if it takes too long
+			var cancelSearch = $('\
+			    <div class="input-group-addon" id="delete-search" title="Suche abbrechen">\
+			        X\
+			    </div> \
+			');
+			$("#search input[name=q]").after(cancelSearch);
+			$(cancelSearch).click({caller: caller}, function(event){
+				event.data.caller.deleteSearch();
+			});
+			caller.updateResultMarker();
+			caller.updateMapExtent();
+		});
+	}
+}
+
+Results.prototype.focusResult = function(index){
+	var results = this.results;
+	if(typeof results[index] !== "undefined"){
+		var newResults = results[index];
+		this.results = [newResults];
+		this.updateInterface();
+	}
+}
+
+Results.prototype.updateResultMarker = function(){
+	var caller = this;
+	if(this.markerOverlays.length > 0){
+		$.each(this.markerOverlays, function(index, overlay){
+			caller.interactiveMap.map.removeOverlay(overlay);
+		});
+		this.markerOverlays = [];
+	}
+	
+	$.each(this.results, function(index, value){
+		var el = $('<span id="index" class="marker" data-resultNumber="'+index+'" style="filter: hue-rotate(' + value["huerotate"] + 'deg)">' + (index+1) + '</span>');
+		if(caller.results.length > 1){
+			$(el).click({caller: caller}, function(event){
+				event.data.caller.focusResult($(this).attr("data-resultNumber"));
+			});
+		}
+		var overlay = new ol.Overlay({
+			position: caller.interactiveMap.map.transformToMapCoordinates([parseFloat(value.lon), parseFloat(value.lat)]),
+			element: el.get(0),
+			offset: [-12, -45],
+			stopEvent: false,
+		});
+		caller.interactiveMap.map.addOverlay(overlay);
+		caller.markerOverlays.push(overlay);
+	});
+}
+
+
+
+Results.prototype.mobilesWindowClick = function(){
+	// Hide the Results Panel
+	$(".results .results-container, .results .history-container").hide("fast");
+	var caller = this;
+	$(".results .mobiles-window").hide("fast", function(){
+		// Add the Possibility to come back to the list
+		var showList = $('\
+			<div id="show-list" class="container">\
+				Liste anzeigen\
+			</div>');
+		$("#search-addon .results").append(showList);
+		$(showList).click({caller: caller}, function(event){
+			$("#show-list").hide('fast', function(){
+				$("#show-list").remove();
+			});
+			$(".results .results-container").show("fast");
+			$(".results .mobiles-window").show("fast", function(){
+				event.data.caller.updateMapExtent();
+			});
+		});
+		var padding = [
+			$("#search-addon").outerHeight(true) + 25,
+			25,
+			25,
+			25
+		];
+		caller.updateMapExtent(padding);
+	});
+}
+
+Results.prototype.updateMapExtent = function(initPadding){
+	if(this.results.length <= 0){
+		return;
+	}
+	var caller = this;
+	var extent = [null, null, null, null];
+	$.each(this.results, function(index, res){
+		// We just focus on those results that have all the terms in the search query in it
+		var valid = true;
+		var words = caller.query.split(/\W+/);
+		$.each(words, function(index, value){
+			if(res.display_name.toLowerCase().indexOf(value.toLowerCase()) === -1){
+				valid = false;
+			}
+		});
+		if(!valid) return true;
+		var lon = parseFloat(res.lon);
+		var lat = parseFloat(res.lat);
+		if(extent[0] === null || extent[0] > lon){
+			extent[0] = lon;
+		}
+		if(extent[1] === null || extent[1] > lat){
+			extent[1] = lat;
+		}
+		if(extent[2] === null || extent[2] < lon){
+			extent[2] = lon;
+		}
+		if(extent[3] === null || extent[3] < lat){
+			extent[3] = lat;
+		}
+	});
+
+	extent = caller.interactiveMap.map.transformToMapCoordinates([extent[0], extent[1]]).concat(caller.interactiveMap.map.transformToMapCoordinates([extent[2], extent[3]]));
+
+	// Let's find out in what space of the map we need to fit this in:
+	// If Screen is not mobile the search results are 
+	var padding = [25,25,25,25];
+	if(initPadding !== undefined){
+		padding = initPadding;
+	}else if($(window).outerWidth() <= 767){
+		// Padding Top:
+		padding[0] = $("#search").outerHeight(true) + 15;
+		// Padding Bottom:
+		padding[2] = $(window).outerHeight(true) - $("#search").outerHeight(true) - $(".results .mobiles-window").outerHeight(true);
+	}else{
+		var paddingRight = 0;
+		paddingRight += $("#search-addon").outerWidth(true);
+		padding[1] = paddingRight;
+	}
+	caller.interactiveMap.map.getView().fit(extent, {duration: 600, padding: padding});
+	
+}
+/**
+ * Class RouteFinder
+ * This is a module that enables the map to create a Route with multiple Waypoints and chose the desired vehicle
+ * @param interactiveMap - an instance of the current interactiveMap Object
+ * @param waypoints - An Array of waypoints [[lon,lat], ...] to start of with
+**/
+function RouteFinder(interactiveMap, waypoints){
+	this.interactiveMap = interactiveMap;
+	this.waypoints = [];
+	this.waypointsLength = waypoints.length;
+
+	this.initInterface();
+
+	var caller = this;
+	$.each(waypoints, function(index, value){
+		caller.waypoints.push(new Waypoint(value[0], value[1], index, interactiveMap.map, function(waypoint){
+			caller.addWaypoint(waypoint);
+		}));
+	});
+
+	// Show the interface
+	$("#route-finder-addon").show('slow');
+
+	// Disable The Click Event for the map
+	this.interactiveMap.reversePositionManager.setActive(false);
+
+}
+
+RouteFinder.prototype.addWaypoint = function(waypoint){
+	var wpHtml = waypoint.getHtml();
+	// Let's add the waypoint
+	var waypointHtml = $('\
+		<li data-index="' + waypoint.index + '">\
+			' + wpHtml + '\
+		</li>\
+		');
+	$("#route-finder-addon #waypoint-list").append(waypointHtml);
+	console.log($(waypointHtml).find(".delete-waypoint"));
+	$(waypointHtml).find(".delete-waypoint").click({caller: this}, function(event){
+		event.data.caller.removeWaypoint(parseInt($(this).attr("data-index")));
+	});	
+	this.interactiveMap.map.addOverlay(waypoint.marker);
+}
+
+RouteFinder.prototype.removeWaypoint = function(index){
+	var waypoint = this.waypoints[index];
+	// Remove The Marker from the map
+	this.interactiveMap.map.removeOverlay(waypoint.marker);
+	// Remove The Waypoint from the Waypoint List (Interface)
+	$("#waypoint-list li[data-index=" + index + "]").remove();
+	// Remove the Waypoint from the internal list
+	this.waypoints.splice(index, 1);
+}
+
+RouteFinder.prototype.initInterface = function(){
+	var waypointList = $('\
+		<div id="waypoint-list-container" >\
+			<ul id="waypoint-list" class="list-unstyled">\
+			</ul>\
+		</div>\
+		');
+	$("#route-finder-addon").append(waypointList);
+
+	// If there is only one waypoint yet we will make the user define a start point
+	if(this.waypointsLength === 1){
+		$("#route-finder-addon #vehicle-chooser").after(this.generateNewWaypointForm("Startpunkt angeben:"));
+	}
+}
+
+RouteFinder.prototype.generateNewWaypointForm = function(text){
+	if(text === undefined){
+		text = "Neuen Wegpunkt angeben:";
+	}
+	var startPointHtml = $('\
+			<form>\
+			<div class="form-group new-waypoint-form">\
+				<label for="start-point">' + text + '<button type="button" \
+                        data-html="true"\
+                        data-trigger="hover"\
+                        data-toggle="popover"\
+                        data-placement="bottom"\
+                        data-container="body"\
+                        title="Wegpunkt definieren" \
+                        data-content="Sie können neue Wegpunkte auf 2 Arten definieren:<ol><li>Klicken Sie einfach auf der Karte auf den Punkt, den Sie einfügen möchten.</li><li>Sie können nach Orten Suchen indem Sie ihre Suchworte in das Eingabefeld eintragen und entweder Enter drücken, oder auf das kleine Lupensymbol klicken. Wählen Sie dann einfach das passende Ergebnis durch Klick aus.</li></ol>">\
+                        <span class="glyphicon glyphicon-question-sign"></span>\
+                    </button></label>\
+                <div class="input-group">\
+					<input type="text" class="form-control" id="start-point">\
+					<span class="input-group-addon"><button type="submit"><span class="glyphicon glyphicon-search"></span></button></span>\
+				</div>\
+			</div>\
+			</form>\
+			');
+		// Enable the Popover
+		$(startPointHtml).find("button[data-toggle=popover]").popover();
+		// Make it execute Searches:
+		$(startPointHtml).find("input[type=text]").focusin({caller: this}, function(event){
+			event.data.caller.enterSearch();
+		})
+	return startPointHtml;
+		
+}
+
+RouteFinder.prototype.enterSearch = function(){
+	$("#route-finder-addon #vehicle-chooser").hide("slow");
+	$("#route-finder-addon #waypoint-list-container").hide("slow");
+	var caller = this;
+
+	if($(window).outerWidth() <= 767){
+		$("#route-finder-addon").animate({padding: 0}, 'slow');
+	}
+
+	var cancelSearch = $('\
+			<span class="input-group-addon" id="cancel-search" title="Suche abbrechen">X</span>\
+		');
+		$("#route-finder-addon #cancel-search").remove();
+		$("#route-finder-addon input[type=text]").before(cancelSearch);
+		$(cancelSearch).click({caller: caller}, function(event){
+			event.data.caller.exitSearch();
+		});
+
+}
+
+RouteFinder.prototype.exitSearch = function(){
+	$("#route-finder-addon #vehicle-chooser").show("slow");
+	$("#route-finder-addon #waypoint-list-container").show("slow");
+	$("#route-finder-addon").animate({padding: "15px 15px 0 15px"}, 'slow', function(){
+		$("#route-finder-addon #cancel-search").remove();
+	});
+}
+
+RouteFinder.prototype.exit = function(){
+	$("#route-finder-addon").hide('slow', function(){
+		$("#route-finder-addon #waypoint-list-container").remove();
+	});
+	this.interactiveMap.reversePositionManager.setActive(true);
+}
+
+
+/**
+ * This Class takes a GeoPosition and a callback in it's constructor
+ * It will then evaluate the Position into an Object with a name etc which will require an Ajax call
+ * If a callback is given this Class will call it when the Position is evaluated with an Instance of this object as first argument 
+**/
+function Waypoint(lon, lat, index, map, callback){
+	this.lon = parseFloat(lon);
+	this.lat = parseFloat(lat);
+	this.index = index;
+	this.charCode = String.fromCharCode(97 + index).toUpperCase();
+	this.marker = new ol.Overlay({
+			position: map.transformToMapCoordinates([this.lon, this.lat]),
+			element: $('<span class="marker" data-resultNumber="'+index+'">' + this.charCode + '</span>').get(0),
+			offset: [-12, -45],
+			stopEvent: false,
+	});
+	this.callback = callback;
+	this.evaluated = false;
+	if(this.callback === undefined){
+		this.callback = null;
+	}
+
+	this.positionToAdress();
+}
+
+Waypoint.prototype.positionToAdress = function() {
+	var pos = [this.lon, this.lat];
+    if (pos === 'gps') {
+        //obj.html('Eigener Standort');
+        //obj.attr('title', 'Eigener Standort');
     } else {
-        // We have a maximum of two waypoints left
-        // One of these is the GPS Location so when we removed it we finished routing
-        openNextWaypointDialog();
-    }
-}
+    	var url = "/reverse/" + pos[0] + "/" + pos[1];
+        //var url = "https://maps.metager.de/nominatim/reverse.php?format=json&lat=" + pos[1] + "&lon=" + pos[0] + "&zoom=18";
+        var caller = this;
+        $.get(url, function(data) {
+        	caller.data = new NominatimParser(data);
+        	caller.evaluated = true;
 
-function openNextWaypointDialog() {
-    // At this point the passed waypoint already got removed
-    // We need to check whether there are more waypoints to navigate to
-    // We are gonna show a slight different version in either case.
-    // If there is only one Waypoint left, we're finished with the navigation
-    if(route.waypoints.length <= 1){
-        $("#continue-dialog > .heading").html("Sie haben Ihr Ziel erreicht!");
-        $("#next-waypoint").addClass("hidden");
-        $("#new-route").removeClass("hidden");
-    }else{
-        // Otherwise there are more waypoints to navigate to
-        $("#continue-dialog > .heading").html("Sie haben Ihr Zwischenziel erreicht!");
-        $("#new-route").addClass("hidden");
-        $("#next-waypoint").removeClass("hidden");
-    }
-    $("#search-addon").addClass("hidden");
-    $("#continue-dialog #next-waypoint").off();
-    $("#continue-dialog #next-waypoint").click(function() {
-        $("#search-addon").removeClass("hidden");
-        $("#continue-dialog").addClass("hidden");
-        map.removeOverlay(routeMarkers[0]);
-        routeMarkers.splice(0,1);
-        startLocationFollowing();
-    });
-    $("#continue-dialog #new-route").off();
-    $("#continue-dialog #new-route").click(function(){
-        document.location.href = "/route/start/" + vehicle + "/gps;";
-    });
-    $("#continue-dialog #abort-routing").off();
-    $("#continue-dialog #abort-routing").click(function() {
-        deinitAssistent();
-    });
-    $("#continue-dialog").removeClass("hidden");
-}
-
-function cancleFollowing() {
-    if (followingId !== null) {
-        navigator.geolocation.clearWatch(followingId);
-        followingId = null;
-    }
-}
-
-function redrawRoute(gpsLocation) {
-    // Clear the shown Route
-    routeAssistentVectorSource.clear();
-    $.each(route.routes[0].legs, function(legIndex, leg) {
-        $.each(leg.steps, function(stepIndex, step) {
-            var geom = {
-                coordinates: step.geometry.coordinates.slice(),
-                type: step.geometry.type
-            };
-            if (legIndex === 0 && stepIndex === 0 && gpsLocation !== null) {
-                // Beim verfolgen der Route soll der Erste Punkt IMMER die GPS Position auf der Route sein
-                geom.coordinates[0] = ol.proj.transform(gpsLocation, 'EPSG:3857', 'EPSG:4326');
-            }
-            drawGeojson(geom, 'red');
+        	if(typeof caller.callback === "function"){
+        		caller.callback(caller);
+        	}
         });
-    });
-
-    var drivenGeom = {
-        coordinates: drivenRoute.coordinates.slice(),
-        type: "LineString"
-    };
-    // Wir müssen noch einen Punkt zur gefahrenen Route temporär hinzufügen.
-    // Wir wollen von dem letzten Punkt der gefahrenen Route nicht direkt zur GPS Position zeichnen.
-    // Wenn sich nämlich die Richtung der Straße geändert hat, ohne dass ein Step abgeschlossen wurde,
-    // fehlt uns der Erste Punkt des nächsten Steps, damit die gezeichnete Route auch wirklich stimmt.
-    drivenGeom.coordinates.push(route.routes[0].legs[0].steps[0].geometry.coordinates[0]);
-    if (gpsLocation !== null) {
-        // Beim verfolgen der Route soll der Erste Punkt IMMER die GPS Position auf der Route sein
-        drivenGeom.coordinates.push(ol.proj.transform(gpsLocation, 'EPSG:3857', 'EPSG:4326'));
-    }
-    drawGeojson(drivenGeom, 'grey');
-}
-/*
- * Calculates the bearing between two given lat/lon Points
- * @param p1 {Array} Array [lon,lat]
- * @param p2 {Array} Array [lon,lat]
- * @return bearing in degrees
- */
-function getBearing(p1, p2) {
-    var p1r = [toRadians(p1[0]), toRadians(p1[1])];
-    var p2r = [toRadians(p2[0]), toRadians(p2[1])];
-    var x = Math.cos(p2r[1]) * Math.sin(p2r[0] - p1r[0]);
-    var y = Math.cos(p1r[1]) * Math.sin(p2r[1]) - Math.sin(p1r[1]) * Math.cos(p2r[1]) * Math.cos(p2r[0] - p1r[0]);
-    var bearing = Math.atan2(x, y);
-    bearing = toDegrees(bearing);
-    if(bearing < 0){
-        bearing += 360;
-    }
-    return bearing;
-}
-
-function toRadians(angle) {
-    return angle * (Math.PI / 180);
-}
-
-function toDegrees(radians) {
-    return radians * 180 / Math.PI;
-}
-
-function getNextPointOnRoute(gpsPoint, accuracy) {
-    var r = route.routes[0];
-    var wgs84Sphere = new ol.Sphere(6378137);
-    // Wir Ziehen einen Punkt auf den nächsten 4 Schritten in betracht
-    // Wenn der Punkt dort nicht zu finden ist, müssen wir neu berechnen
-    var stepCounter = 1;
-    var result = null;
-    $.each(r.legs, function(legIndex, leg) {
-        if (stepCounter >= 5) {
-            return;
-        }
-        $.each(leg.steps, function(stepIndex, step) {
-            var stepGeom = (new ol.format.GeoJSON()).readGeometry(step.geometry, {
-                'dataProjection': 'EPSG:4326',
-                'featureProjection': 'EPSG:3857'
-            });
-            var pointOnStep = stepGeom.getClosestPoint(gpsPoint);
-            // We need to calculate the distance between the GPS-Point and the Point on the Route:
-            var c1 = ol.proj.transform(gpsPoint, 'EPSG:3857', 'EPSG:4326');
-            var c2 = ol.proj.transform(pointOnStep, 'EPSG:3857', 'EPSG:4326');
-            var distance = wgs84Sphere.haversineDistance(c1, c2);
-            if (distance > Math.max(accuracy, 30)) {
-                // The Distance of the Point is too high to be on this route step
-                stepCounter++;
-                return;
-            } else {
-                // The Point is on this Route Step
-                if(result === null || (result !== null && result.distance > distance)){
-                    result = {
-                        legIndex: legIndex,
-                        stepIndex: stepIndex,
-                        point: pointOnStep,
-                        distance: distance
-                    };
-                }
-
-                // We need to know the distance to the end of the step to decide whether we check the next step, too
-                var d = getDistance(c1, route.routes[0].legs[legIndex].steps[stepIndex].geometry.coordinates[route.routes[0].legs[legIndex].steps[stepIndex].geometry.coordinates.length-1]);
-
-                // It could possibly be at the end of this step in that case we will see if we can go on to the next step
-                if (d < Math.max(accuracy, 30)) {
-                    stepCounter++;
-                    return;
-                } else {
-                    // Otherwise we take that point and return
-                    stepCounter = 5;
-                    return false;
-                }
-            }
-            stepCounter++;
-        });
-    });
-    return result;
-}
-
-function updateUserPosition(pos, rot) {
-    if(typeof userPosOverlay === "undefined" || userPosOverlay === null){
-        var el = $('<img src="/img/navigation-arrow.svg" width="30px" />');
-        userPosOverlay = new ol.Overlay({
-            position: pos,
-            element: el.get(0),
-            offset: [-15, -15],
-            stopEvent: false,
-        });
-        map.addOverlay(userPosOverlay);
-    }
-    /*if (userPosOverlay !== null) {
-        map.removeOverlay(userPosOverlay);
-        userPosOverlay = null;
-    }
-    var el = $('<img src="/img/navigation-arrow.svg" width="30px" />');
-    userPosOverlay = new ol.Overlay({
-        position: pos,
-        element: el.get(0),
-        offset: [-15, -15],
-        stopEvent: false,
-    });
-*/
-
-    //map.getView().on("change:center", eventUserPositionUpdate);
-
-    // We will display the Route until the next step.
-    // We don't wanna hide something behind the route Text, so we calc the height of it:
-    var height = $("figure#search-addon").outerHeight() + 50;
-    // Get the Geom of the next Step to adjust the view
-    var geojson = route.routes[0].legs[0].steps[0].geometry;
-
-
-
-    // When we are on the highway we don't want to show the whole i.e. 80km of road until the next step
-    // Let's limit this to let's say 3km?
-    var limit = 3000;
-    // Check whether the step is longer
-    if(route.routes[0].legs[0].steps[0].distance > limit){
-        // Darn we need to remove some of the step-points 
-        // Let's find out at which point we exceed the limit
-        var tmpDistance = 0;
-        var lastIndex = 1;
-        $.each(route.routes[0].legs[0].annotation.distance, function(index, value){
-            if( (tmpDistance + value) < limit){
-                tmpDistance += value;
-            }else{
-                lastIndex = (index + 1);
-                return false;
-            }
-        });
-        geojson = {
-            coordinates : geojson.coordinates.slice(0,lastIndex),
-            type: "LineString"
-        }
-        console.log(lastIndex, geojson);
-    }
-
-    geojson.coordinates[0] = ol.proj.transform(pos, 'EPSG:3857', 'EPSG:4326');
-
-    var geom = (new ol.format.GeoJSON()).readGeometry(geojson, {
-        'dataProjection' : 'EPSG:4326',
-        'featureProjection' : 'EPSG:3857'
-    });
-    // We have our targeted Rotation Value
-    // Problem is, that we need to rotate the map in the shortest way. (Turn Right or Left)
-    // We can calculate that if we calculate the delta angle of the shortest Way:
-    // (targetAngle - sourceAngle + 180) % 360 - 180
-    // The result is gonna be positive or negative so we are gonna add that value to our current angle
-    var fullRotation = 2 * Math.PI;
-    var halfRotation = Math.PI;
-    var a = rot - map.getView().getRotation() + halfRotation;
-    var mod = (a % fullRotation + fullRotation) % fullRotation - halfRotation;
-    var targetRotation = map.getView().getRotation() + mod;
-    map.getView().animate({rotation: targetRotation, duration: 200}, function(){
-        setTimeout(function(){
-            map.getView().setRotation(((2* Math.PI) + (map.getView().getRotation() % (2*Math.PI))) % (2 * Math.PI));
-            map.getView().fit(geom, {duration: 600, padding: [height, 0, 30, 0]});
-        }, 200);
-
-    });
-    userPosOverlay.setPosition(pos);
-    
-/*
-    map.getView().animate({
-        center: pos,
-        rotation: rot,
-        zoom: 18,
-        duration: 500
-    }, function(){
-        map.getView().un("change:center", eventUserPositionUpdate);
-        //map.addOverlay(userPosOverlay);
-    });
-    */
-/*
-    map.getView().centerOn(pos, map.getSize(), [$("#map").width()/2,$("#map").height() - 150]);
-    map.getView().setRotation(rot);
-    map.getView().setZoom(18);*/
-    
-}
-
-function eventUserPositionUpdate(){
-    var center = map.getView().getCenter();
-    userPosOverlay.setPosition(center);
-}
-
-function arraysEqual(a1, a2) {
-    /* WARNING: arrays must not contain {objects} or behavior may be undefined */
-    return JSON.stringify(a1) == JSON.stringify(a2);
-}
-
-function updateNextStep(gpsPos, bearing, distTraveled, durTraveled) {
-    var data = route;
-    // This Function goes through the current Route Object and evaluates the next step:
-    // Add the information for the next steps and route meta data
-    // Route Metadata
-    var duration = parseFloat(data.routes[0].duration) - durTraveled;
-    duration = parseDuration(duration);
-    $("#search-addon #route-information #duration").html(duration);
-    distance = parseFloat(data.routes[0].distance) - distTraveled;
-    distance = parseDistance(distance);
-    $("#search-addon #route-information #length").html(distance);
-    // Next Step
-    var step = data.routes[0].legs[0].steps[1];
-    var stepString = parseManeuver(step["maneuver"], data.routes[0], 0, 1);
-    $("#search-addon #routing-steps .step-string").html(stepString);
-    var img = parseImg(step);
-    $("#search-addon #routing-steps .step-image img").attr('src', img);
-    var stepDistance = parseDistance(parseFloat(data.routes[0].legs[0].steps[0].distance) - distTraveled);
-    $("#search-addon #routing-steps .step-length").html(stepDistance);
-    // So now that everything is Drawn we adjust the Map View
-    // The new Rotation is The bearing of the first step of the route:
-    var rotation = parseInt(data.routes[0].legs[0].steps[0].maneuver.bearing_after);
-    if (bearing !== null) {
-        rotation = bearing;
-    }
-    rotation = 360 - rotation;
-    // The Value needs to be in Radians
-    rotation *= Math.PI;
-    rotation /= 180;
-    if (gpsPos !== null) {
-        updateUserPosition(gpsPos, rotation);
-    } else {
-        updateUserPosition(ol.proj.transform([data.waypoints[0].location[0], data.waypoints[0].location[1]], 'EPSG:4326', 'EPSG:3857'), rotation);
     }
 }
 
-function removeRoute() {
-    if (routeLayer !== null) {
-        // Remove old Features
-        map.removeLayer(routeLayer);
-    }
-    // Remove old Markers
-    $.each(routeMarkers, function(index, value) {
-        map.removeOverlay(value);
-    });
-    vectorS = new ol.source.Vector();
+Waypoint.prototype.getHtml = function() {
+	if(this.evaluated){
+		var res = '\
+		<div class="waypoint">\
+				<div class="marker">\
+					' + this.charCode + '\
+				</div>\
+				<div class="description">\
+					' + this.data.getHTMLAddressDetails() + '\
+				</div>\
+				<div class="delete-waypoint" data-index="' + this.index + '">\
+					<span class="glyphicon glyphicon-trash"></span>\
+				</div>\
+			</div>\
+			';
+		return res;
+	}else{
+		return "Not Ready Yet";
+	}
 }
-
-function drawGeojson(geojson, lineColor) {
-    var geom = (new ol.format.GeoJSON()).readGeometry(geojson, {
-        'dataProjection': 'EPSG:4326',
-        'featureProjection': 'EPSG:3857'
-    });
-    var feature = new ol.Feature({
-        'geometry': geom
-    });
-    if (lineColor !== null) {
-        var drivenRouteLineStyle = new ol.style.Style({
-            stroke: new ol.style.Stroke({
-                color: lineColor,
-                width: 5
-            }),
-            fill: new ol.style.Fill({
-                color: lineColor
-            })
-        });
-        feature.setStyle(drivenRouteLineStyle);
-    }
-    routeAssistentVectorSource.addFeature(feature);
-}
-
-function reloadRoute() {
-    var pos = gpsLocation;
-    var pointString = "";
-    $.each(route.waypoints, function(index, value) {
-        if (index === 0) {
-            // The first waypoint always is the gpsLocation
-            pointString += pos.toString() + ";";
-        } else {
-            pointString += value.location.toString() + ";";
-        }
-    });
-    pointString = pointString.replace(/;$/, '');
-    var url = '/route/find/' + vehicle + '/' + pointString;
-    $.getJSON(url, function(response) {
-        route = response;
-        drivenRoute = {
-            coordinates: [pos],
-            type: "LineString"
-        };
-        startLocationFollowing();
-    }).error(function() {
-        deinitAssistent();
-    });
-}
-//# sourceMappingURL=routing.js.map
+$(document).ready(function() {
+    var map = new InteractiveMap();
+});
+//# sourceMappingURL=map.js.map

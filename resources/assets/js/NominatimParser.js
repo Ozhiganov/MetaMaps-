@@ -44,38 +44,34 @@ NominatimParser.prototype.getHTMLResult = function() {
             phone = data["extratags"]["phone"];
         }
         if (phone !== "") {
-            html += "<div class=\"opening-hours\"><a href=\"tel:" + phone + "\" target=_blank><span class=\"glyphicon glyphicon-earphone\"></span> " + phone + "</a></div>\n";
+            html += "<div class=\"phone\"><a href=\"tel:" + phone + "\" onclick=\"event.stopPropagation();\" target=_blank><span class=\"glyphicon glyphicon-earphone\"></span> " + phone + "</a></div>\n";
         }
         if (typeof data["extratags"]["website"] !== "undefined") {
             var url = data["extratags"]["website"];
             if (url.lastIndexOf("http", 0) !== 0) {
                 url = "http://" + url;
             }
-            html += "<div class=\"opening-hours\"><a href=\"" + url + "\" target=_blank><span class=\"glyphicon glyphicon-globe\"></span> " + url + "</a></div>\n";
+            html += "<div class=\"website\"><a href=\"" + url + "\" onclick=\"event.stopPropagation();\" target=_blank><span class=\"glyphicon glyphicon-globe\"></span> " + url + "</a></div>\n";
         }
         if (typeof data["extratags"]["wikipedia"] !== "undefined") {
             var url = "https://de.wikipedia.org/wiki/" + data["extratags"]["wikipedia"];
-            html += "<div class=\"opening-hours\"><a href=\"" + url + "\" target=_blank>Wikipedia</a></div>\n";
+            html += "<div class=\"wikipedia\"><a href=\"" + url + "\" onclick=\"event.stopPropagation();\" target=_blank><img src=\"/img/wiki.svg\" alt=\"wikipedia\" width=\"20px\"> Wikipedia</a></div>\n";
         }
         // Add possible Opening Hours:
         if (typeof data["extratags"]["opening_hours"] !== "undefined") {
             html += "<div class=\"opening-hours\">" + data["extratags"]["opening_hours"] + "</div>\n";
         }
         if (typeof data["extratags"]["description"] !== "undefined") {
-            html += "<div class=\"opening-hours\">" + data["extratags"]["description"] + "</div>\n";
+            html += "<div class=\"description\">" + data["extratags"]["description"] + "</div>\n";
         }
         html += "</div><div class=\"result-actions\">";
         // Update Address details
         lon = parseFloat(data["lon"]);
         lat = parseFloat(data["lat"]);
-        //html += "<div class=\"geo-position container-fluid\"><div class=\"row\">\n";
-        //html += "<div class=\"col-xs-6\">Lon: " + lon + "</div>\n";
-        //html += "<div class=\"col-xs-6\">Lat: " + lat + "</div>\n"; 
-        //html += "</div></div>";
         // Now the two Links
         var url = "";
         url = "/route/start/foot/" + lon + "," + lat;
-        html += '<a href=\"' + url + '\">Route berechnen</a>';
+        html += '<a class="start-route-service" data-lon="'+lon+'" data-lat="'+lat+'" href="#" onclick="event.stopPropagation();">Route berechnen</a>';
         // And the Link to the MetaGer Search
         // build the search query
         var query = "";
@@ -87,12 +83,47 @@ NominatimParser.prototype.getHTMLResult = function() {
         query = query.trim();
         if (query.length > 0) {
             var url = 'https://metager.de/meta/meta.ger3?focus=web&eingabe=' + encodeURIComponent(query) + '&encoding=utf8&lang=all';
-            html += '<a href=\"' + url + '\" target=_blank>MetaGer Suche</a>';
+            html += '<a href=\"' + url + '\" onclick="event.stopPropagation();" target=_blank>MetaGer Suche</a>';
         }
         html += "</div></div>";
         var popup = $(html);
         return popup;
     } else {
+        return null;
+    }
+}
+
+NominatimParser.prototype.getHTMLAddressDetails = function(){
+    var data = this.nominatimResult;
+    if (typeof data !== "undefined" && typeof data["address"] !== "undefined") {
+        // Success we have an address
+        var address = data["address"];
+        var road = this.getRoad(address);
+        var house_number = this.getHouseNumber(address);
+        var city = this.getCity(address);
+        var id = data["place_id"];
+        var html = "<div class=\"result\">\n";
+        html += "<div class=\"result-information\">";
+        // Wir extrahieren noch einen Namen
+        if (typeof data["namedetails"]["name"] !== "undefined") {
+            html += "<div class=\"title\">" + data["namedetails"]["name"] + "</div>\n";
+        }
+        var road = this.getRoad(address);
+        var house_number = this.getHouseNumber(address);
+        if (road !== "") {
+            html += "<div class=\"address\">" + road;
+            if (house_number !== "") {
+                html += " " + house_number;
+            }
+            html += "</div>\n";
+        }
+        var city = this.getCity(address);
+        if (city !== "") {
+            html += "<div class=\"city\">" + city + "</div>\n";
+        }
+        html += "</div></div>";
+        return html;
+    }else{
         return null;
     }
 }
