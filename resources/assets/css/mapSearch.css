@@ -12,7 +12,7 @@
     border-top: 0;
     border-radius: 0 0 15px 15px;
     overflow: auto;
-    max-height:91vh;
+    max-height:94vh;
     background-color: white;
 }
 
@@ -77,15 +77,6 @@
 
 #result-toggler:hover {
     cursor: pointer;
-}
-
-.wait-for-search {
-    text-align: center;
-    margin: 10px;
-}
-
-.wait-for-search img {
-    margin-left: 10px;
 }
 
 .result-information .website, .result-information .wikipedia {

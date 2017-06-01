@@ -33,13 +33,17 @@ ReversePositionManager.prototype.constructor = ReversePositionManager;
  * @return {Array} adress
  */
 ReversePositionManager.prototype.getNearest = function(evt){
-    var pos = this.map.transformToWorldCoordinates(evt["coordinate"]);
+    var pos = this.interactiveMap.map.transformToWorldCoordinates(evt["coordinate"]);
     var url = "https://maps.metager.de/nominatim/reverse.php?format=json&lat=" + pos[1] + "&lon=" + pos[0] + "&zoom=18&extratags=1&addressdetails=1&namedetails=1";
-    var interactiveMap = this;
+    var interactiveMap = this.interactiveMap;
+    var caller = this;
     // Send the Request
     $.get(url, function(data) {
         var popup = new NominatimParser(data).getHTMLResult();
-        interactiveMap.reversePositionManager.createPopup(interactiveMap.map.transformToMapCoordinates([parseFloat(data["lon"]), parseFloat(data["lat"])]), popup);
+        $(popup).find("a.start-route-service").click({caller: caller}, function(event){
+            event.data.caller.interactiveMap.switchModule("route-finding", {lon: data["lon"], lat: data["lat"]});
+        });
+        caller.createPopup(interactiveMap.map.transformToMapCoordinates([parseFloat(data["lon"]), parseFloat(data["lat"])]), popup);
     });
 }
 
@@ -50,8 +54,8 @@ ReversePositionManager.prototype.createPopup = function(pos, html) {
 }
 
 ReversePositionManager.prototype.setActive = function(bool){
-    this.interactiveMap.map.un('singleclick', this.getNearest , this.interactiveMap);
+    this.interactiveMap.map.un('singleclick', this.getNearest , this);
     if(bool){
-        this.interactiveMap.map.on('singleclick', this.getNearest, this.interactiveMap);
+        this.interactiveMap.map.on('singleclick', this.getNearest, this);
     }
 }

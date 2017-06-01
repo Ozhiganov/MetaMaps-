@@ -89,7 +89,7 @@ class RoutingController extends Controller
             default:
                 $port = 5000;
         }
-        $url = "http://maps.metager.de:$port/route/v1/$vehicle/$points?steps=true&geometries=geojson&overview=full&annotations=true";
+        $url = "http://maps.metager.de:$port/route/v1/$vehicle/$points?steps=true&alternatives=true&geometries=geojson&overview=full&annotations=true";
 
         # Maybe we need to add Bearings:
         if ($bearingStartPoint !== "") {

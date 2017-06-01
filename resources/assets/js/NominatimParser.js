@@ -93,6 +93,46 @@ NominatimParser.prototype.getHTMLResult = function() {
     }
 }
 
+NominatimParser.prototype.getRouteFinderHtml = function(){
+    var data = this.nominatimResult;
+    if (typeof data !== "undefined" && typeof data["address"] !== "undefined") {
+        // Success we have an address
+        var address = data["address"];
+        var road = this.getRoad(address);
+        var house_number = this.getHouseNumber(address);
+        var city = this.getCity(address);
+        var id = data["place_id"];
+        var html = "<div class=\"result\">\n";
+        html += "<div class=\"result-information\">";
+        // Wir extrahieren noch einen Namen
+        if (typeof data["namedetails"]["name"] !== "undefined") {
+            html += "<div class=\"title\">" + data["namedetails"]["name"] + "</div>\n";
+        }
+        var road = this.getRoad(address);
+        var house_number = this.getHouseNumber(address);
+        if (road !== "") {
+            html += "<div class=\"address\">" + road;
+            if (house_number !== "") {
+                html += " " + house_number;
+            }
+            html += "</div>\n";
+        }
+        var city = this.getCity(address);
+        if (city !== "") {
+            html += "<div class=\"city\">" + city + "</div>\n";
+        }
+
+        if (typeof data["extratags"]["description"] !== "undefined") {
+            html += "<div class=\"description\">" + data["extratags"]["description"] + "</div>\n";
+        }
+        html += "</div></div>";
+        var popup = $(html);
+        return popup;
+    } else {
+        return null;
+    }
+}
+
 NominatimParser.prototype.getHTMLAddressDetails = function(){
     var data = this.nominatimResult;
     if (typeof data !== "undefined" && typeof data["address"] !== "undefined") {

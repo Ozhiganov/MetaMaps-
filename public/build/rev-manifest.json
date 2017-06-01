@@ -1,12 +1,8 @@
 {
-  "css/general.css": "css/general-bbc86c5a9d.css",
-  "css/iframeSearch.css": "css/iframeSearch-45003a8521.css",
-  "css/mapSearch.css": "css/mapSearch-408ee5f4ee.css",
-  "css/routing.css": "css/routing-6055bbb289.css",
-  "css/staticPages.css": "css/staticPages-3ddff53851.css",
-  "js/findRoute.js": "js/findRoute-9dff2831d1.js",
-  "js/iframeSearch.js": "js/iframeSearch-c0101202c9.js",
-  "js/map.js": "js/map-b1ddce5137.js",
-  "js/mapSearch.js": "js/mapSearch-08bd7fdfef.js",
-  "js/routing.js": "js/routing-2f2ac38e0e.js"
+  "css/general.css": "css/general-fcf372d3a3.css",
+  "css/iframeSearch.css": "css/iframeSearch-5fc01fa5b8.css",
+  "css/mapSearch.css": "css/mapSearch-2a38184ee9.css",
+  "css/routing.css": "css/routing-63d1c56ee5.css",
+  "css/staticPages.css": "css/staticPages-4b52eaac83.css",
+  "js/map.js": "js/map-5373124b52.js"
 }

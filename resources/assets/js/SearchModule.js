@@ -4,10 +4,19 @@ function SearchModule(interactiveMap){
 	this.initializeInterface();
 	// Add the Listeners
 	this.addSearchListeners();
+	// Add Options Menu
+	this.addOptionsMenu();
 }
 
 SearchModule.prototype.initializeInterface = function(){
 	$("#search-addon").show('slow');
+}
+
+SearchModule.prototype.addOptionsMenu = function(){
+	var caller = this;
+	$("#options > ul > li").click(function(){
+		caller.interactiveMap.switchModule('offline-karten');
+	});
 }
 
 SearchModule.prototype.addSearchListeners = function(){
@@ -37,21 +46,17 @@ SearchModule.prototype.startSearch = function(event){
 		return;
 	}
 
+	if(this.results !== null && this.results !== undefined){
+		this.results.deleteSearch();
+		this.results = null;
+	}
+
 	var lockSearchFunctions = function(){
 		// Prevent Additional searches until this one finishes
 		$("#search button[type=submit]").attr("disabled", true);
 		$("#search input[name=q]").attr("readonly", true);
 
 	    // Let's add a Loading animation:
-	    var loading = $('\
-	        <div class="container-fluid wait-for-search">\
-	            <p>\
-	                Ergebnisse werden geladen \
-	                <img src="/img/ajax-loader.gif" alt="loading..." id="loading-search-results" />\
-	            </p>\
-	        </div>\
-	        ');
-	    $(".results .results-container").before(loading);
 	    $(".results .wait-for-search").show('fast');
 
 	    // Let's make a new input-group-addon to cancel the search if it takes too long
@@ -69,9 +74,7 @@ SearchModule.prototype.startSearch = function(event){
 		$("#search input[name=q]").attr("readonly", false);
 
 	    // Let's add a Loading animation:
-	    $(".results .wait-for-search").hide('fast', function(){
-	    	$(".results .wait-for-search").remove();
-	    });
+	    $(".results .wait-for-search").hide('fast');
 
 	    $("#search #cancel-search").remove();
 	};
@@ -91,6 +94,15 @@ SearchModule.prototype.startSearch = function(event){
 		unlockSearchFunctions();
 	});	
 
+}
+
+SearchModule.prototype.enableGps = function(){
+    this.interactiveMap.map.getView().setCenter(this.interactiveMap.map.transformToMapCoordinates(this.interactiveMap.GpsManager.location));
+    this.interactiveMap.map.getView().setZoom(12);
+}
+
+SearchModule.prototype.disableGps = function(){
+	
 }
 
 SearchModule.prototype.focusSearchInput = function(){
@@ -131,7 +143,8 @@ SearchModule.prototype.focusSearchInput = function(){
 }
 
 SearchModule.prototype.exit = function(){
-	this.results.deleteSearch();
+	if(this.results !== null && this.results !== undefined)	this.results.deleteSearch();
+	$("#popup-closer").click();
 	this.removeSearchListeners();
 	$("#search-addon").hide('slow');
 }

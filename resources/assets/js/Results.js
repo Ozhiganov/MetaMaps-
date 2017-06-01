@@ -92,17 +92,18 @@ Results.prototype.updateInterface = function(){
 					event.data.caller.mobilesWindowClick();
 				});
 				// The Search box got focussed on a mobile Let's get more Space
-				$("#search-addon").animate({"margin": 0}, 'slow');
-				$("#search-addon .results").css("border-radius", 0);
-				$("#search-addon .results").css("max-height", "95vh");
-				$("#search-addon .results").css("background-color", "transparent");
+				$("#search-addon").animate({"margin": 0}, 'slow', function(){
+					$("#search-addon .results").css("border-radius", 0);
+					$("#search-addon .results").css("max-height", "95vh");
+					$("#search-addon .results").css("background-color", "transparent");
 
-				// Hide Zoombar on mobiles in results view
-				$(".ol-zoom, .ol-zoomslider").hide();
+					// Hide Zoombar on mobiles in results view
+					$(".ol-zoom, .ol-zoomslider").hide();
 
-				var height = $(window).outerHeight() - $(".results").outerHeight() - $("#search").outerHeight();
-				height = Math.max(height, 175);
-				$(".results .mobiles-window").css("height", height + "px");
+					var height = $(window).outerHeight() - $(".results").outerHeight() - $("#search").outerHeight();
+					height = Math.max(height, 175);
+					$(".results .mobiles-window").css("height", height + "px");
+				});
 			}
 			// Let's make a new input-group-addon to cancel the search if it takes too long
 			var cancelSearch = $('\

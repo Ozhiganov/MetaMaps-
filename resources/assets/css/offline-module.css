@@ -1,0 +1,67 @@
+#offline-addon {
+	display: none;
+}
+
+@media(max-width: 767px){
+	#offline-addon {
+		width: calc(100% - 30px);
+	}
+}
+
+#offline-addon > #heading {
+	display:flex;
+	justify-content: space-between;
+	background-color: rgb(255,128,0);
+}
+
+#offline-addon > #heading > .exit {
+	padding:7px;
+	color: white;
+}
+
+#offline-addon > #heading > .logo {
+	align-self: center;
+	padding: 7px;
+}
+
+#offline-addon .add-area {
+	text-align: center;
+    display: block;
+    padding: 10px 20px;
+    border-top: 1px solid #e7e7e7;
+}
+
+#offline-addon .add-area a:visited {
+	color: #337ab7
+}
+
+#offline-addon .downloaded-areas {
+	list-style-type: none;
+    padding: 10px;
+}
+
+body > #selector {
+	width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    pointer-events: none;
+    display:none;
+}
+
+body > #selector-accept {
+	 position: absolute;
+    bottom: 10px;
+    right: 10px;
+    background-color: rgba(255, 255, 255, .9);
+    padding: 10px;
+    border-radius: 15px;
+    border: 2px solid rgb(255,128,0);
+    color: green;
+    cursor: pointer;
+    display: none;
+}
+
+body > #selector-accept > span {
+	font-size: 27px;
+}

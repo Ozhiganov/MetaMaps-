@@ -23,12 +23,18 @@
                                     <span class="glyphicon glyphicon-arrow-left">
                                     </span>
                                 </div>
-                                <div class="input-group-addon hidden-xs" id="logo">
-                                    <div class="logo">
+                                <div class="input-group-addon hidden-xs logo">
+                                    <div >
                                         <h1>
                                             Maps.MetaGer.de
                                         </h1>
                                     </div>
+                                </div>
+                                <div class="input-group-addon dropdown" id="options">
+                                    <button id="options-button" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" class="glyphicon glyphicon-menu-hamburger"></button>
+                                    <ul class="dropdown-menu" aria-labelledby="options-button">
+                                        <li><a href="#">Offline Karten</a></li>
+                                    </ul>
                                 </div>
                                 <input class="form-control" name="q" placeholder="Karten durchsuchen..." type="text" autocomplete="off" value="@if(isset($search)){{$search}}@endif"/ onsubmit="return false;">
                                 <div class="input-group-addon" id="doSearch">
@@ -39,6 +45,12 @@
                         </div>
                     </form>
                     <div class="results">
+                        <div class="container-fluid wait-for-search">\
+                            <p>
+                                Ergebnisse werden geladen 
+                                <img src="/img/ajax-loader.gif" alt="loading..." id="loading-search-results" />
+                            </p>
+                        </div>
                         <div class="results-container" data-status="in">
 
                         </div>
@@ -61,9 +73,52 @@
                     <label class="radio-inline" title="Auto">
                       <input type="radio" name="vehicle" value="car"> <div><img src="/img/car.png" height="20px" /></div>
                     </label>
+                    <button type="button" class="btn btn-success start-navigation">Navigation starten</button>
                     <button type="button" class="close" aria-label="Close" title="Routenplanung abbrechen">
                       <span aria-hidden="true">&times;</span>
                     </button>
+                </div>
+                <div class="results">
+                    <div class="container-fluid wait-for-search">
+                        <p>
+                            Ergebnisse werden geladen 
+                            <img src="/img/ajax-loader.gif" alt="loading..." id="loading-search-results" />
+                        </p>
+                    </div>
+                    <div class="results-container">
+                    </div>
+                </div>
+                <div id="waypoint-list-container" >
+                    <div class="mobiles-window"></div>
+                    <div class="route-information">
+                        <div class="length"></div>
+                        <div class="duration"></div>
+                    </div>
+                    <ul id="waypoint-list" class="list-unstyled"></ul>
+                </div>
+            </figure>
+            <figure id="offline-addon" class="addon">
+                <div id="heading">
+                    <div class="exit">
+                        <span class="glyphicon glyphicon-arrow-left">
+                        </span>
+                    </div>
+                    <div class="logo">
+                        <div>
+                            <h1>
+                                Maps.MetaGer.de
+                                <small>Offline Karten</small>
+                            </h1>
+                        </div>
+                    </div>
+                </div>
+                <div class="results">
+                    <ul class="downloaded-areas">
+                        <li>Noch kein Gebiet heruntergeladen</li>
+                    </ul>
+                    <div class="add-area">
+                        <a href="#">+ Gebiet für Download hinzufügen</a>
+                    </div>
                 </div>
             </figure>
             <div class="ol-popup" id="popup">

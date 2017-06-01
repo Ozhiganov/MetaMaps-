@@ -3,24 +3,58 @@
  * It will then evaluate the Position into an Object with a name etc which will require an Ajax call
  * If a callback is given this Class will call it when the Position is evaluated with an Instance of this object as first argument 
 **/
-function Waypoint(lon, lat, index, map, callback){
-	this.lon = parseFloat(lon);
-	this.lat = parseFloat(lat);
+function Waypoint(lon, lat, nominatimParser, gpsManager, index, map, callback){
+	this.evaluated = false;
+	this.callback = callback;
+	this.resultHtml = null;
 	this.index = index;
 	this.charCode = String.fromCharCode(97 + index).toUpperCase();
+	console.log(nominatimParser);
+	if(lon !== undefined && lat !== undefined){
+		this.lon = parseFloat(lon);
+		this.lat = parseFloat(lat);
+	}else if(nominatimParser !== undefined){
+		this.lon = parseFloat(nominatimParser.nominatimResult.lon);
+		this.lat = parseFloat(nominatimParser.nominatimResult.lat);
+		this.data = nominatimParser;
+		this.evaluated = true;
+		console.log("nope");
+	}else if(gpsManager !== undefined){
+		this.lon = parseFloat(gpsManager.location[0]);
+		this.lat = parseFloat(gpsManager.location[1]);
+		this.data = gpsManager;
+		this.evaluated = true;
+		console.log("baba");
+	}else{
+		console.log("nope");
+		return;
+	}
 	this.marker = new ol.Overlay({
 			position: map.transformToMapCoordinates([this.lon, this.lat]),
 			element: $('<span class="marker" data-resultNumber="'+index+'">' + this.charCode + '</span>').get(0),
 			offset: [-12, -45],
 			stopEvent: false,
 	});
-	this.callback = callback;
-	this.evaluated = false;
 	if(this.callback === undefined){
 		this.callback = null;
 	}
 
-	this.positionToAdress();
+	if(nominatimParser !== undefined || gpsManager !== undefined){
+		if(typeof callback === "function"){
+			callback(this);
+		} 
+	}else{
+		this.positionToAdress();
+	}
+}
+
+Waypoint.prototype.changeIndex = function(newIndex){
+	this.index = newIndex;
+	this.charCode = String.fromCharCode(97 + newIndex).toUpperCase();
+	$(this.resultHtml).find(".marker").html(this.charCode);
+	$(this.resultHtml).attr("data-index", newIndex);
+	$(this.resultHtml).find(".delete-waypoint").attr("data-index", newIndex);
+	this.marker.setElement($('<span class="marker" data-resultNumber="'+this.index+'">' + this.charCode + '</span>').get(0));
 }
 
 Waypoint.prototype.positionToAdress = function() {
@@ -45,20 +79,30 @@ Waypoint.prototype.positionToAdress = function() {
 
 Waypoint.prototype.getHtml = function() {
 	if(this.evaluated){
-		var res = '\
-		<div class="waypoint">\
-				<div class="marker">\
-					' + this.charCode + '\
+		if(this.resultHtml === null){
+			console.log(this.index);
+			var description = typeof this.data.getHTMLAddressDetails === "function" ? this.data.getHTMLAddressDetails() : "Eigene Position";
+			this.resultHtml = $('\
+			<li class="wp" data-index="' + this.index + '">\
+				<div class="waypoint">\
+					<div class="drag">\
+						<img src="/img/anfasser.png" width="30px" alt="drag here" />\
+					</div>\
+					<div class="marker">\
+						' + this.charCode + '\
+					</div>\
+					<div class="description">\
+						' + description + '\
+					</div>\
+					<div class="delete-waypoint" data-index="' + this.index + '">\
+						<span class="glyphicon glyphicon-trash"></span>\
+					</div>\
 				</div>\
-				<div class="description">\
-					' + this.data.getHTMLAddressDetails() + '\
-				</div>\
-				<div class="delete-waypoint" data-index="' + this.index + '">\
-					<span class="glyphicon glyphicon-trash"></span>\
-				</div>\
-			</div>\
-			';
-		return res;
+			</li>\
+			');
+		}
+		
+		return this.resultHtml;
 	}else{
 		return "Not Ready Yet";
 	}

@@ -8,7 +8,9 @@ function InteractiveMap() {
     // Initialize the Positions gathering on click on the Map
     this.reversePositionManager = new ReversePositionManager(this); // This is the Overlay that displays informations about a position where the user has clicked.
     // Initialize the GPS Module
-    this.GpsManager = new GpsManager(this.map);
+    this.GpsManager = new GpsManager(this); 
+    // Initialize Offline Data with Service worker
+    this.OfflineManager = new OfflineManager(this);
     // The default Module is the search Module
     // Let's start that:
     this.switchModule("search");
@@ -82,7 +84,10 @@ InteractiveMap.prototype.initMap = function() {
 InteractiveMap.prototype.switchModule = function(name, args){
 
     // Todo remove when development of Route Finder finished
-    this.module = new RouteFinder(this, [[9.71802887131353, 52.3454087]]);
+    //this.module = new RouteFinder(this, [/*[11.576734, 48.136886],*/[9.916052, 52.345042]]);
+    //return;
+
+    this.module = new OfflineModule(this);
     return;
 
     if(this.module !== null){
@@ -96,6 +101,11 @@ InteractiveMap.prototype.switchModule = function(name, args){
             break;
         case "route-finding":
             this.module = new RouteFinder(this, [[parseFloat(args.lon), parseFloat(args.lat)]]);
+            break;
+        case "navigatiion":
+            break;
+        case "offline-karten":
+            this.module = new OfflineModule(this);
             break;
         default:
             return;

@@ -2,6 +2,19 @@ a:hover {
     text-decoration: none;
 }
 
+#options {
+    background-color: white;
+    color: #ababab;
+    border-right: 0;
+    border-left: 0;
+    cursor: pointer;
+}
+
+#options > button {
+    background-color: inherit;
+    border: 0;
+}
+
 body {
     overflow: hidden;
 }
@@ -95,8 +108,17 @@ input + .input-group-addon {
     display:none;
 }
 
+#offline-addon {
+    min-width: 320px;
+    background-color: white;
+}
+
 .result {
     display:flex;
+}
+
+#popup-content .result {
+    flex-direction: column;
 }
 
 .result .result-actions {
@@ -129,6 +151,16 @@ input + .input-group-addon {
     padding: 0;
 }
 
+figure.addon {
+    z-index: 20002;
+    position: absolute;
+    right: 0;
+    margin-right: 15px;
+    margin-left: 15px;
+    margin-top: 15px;
+    max-width: 100%;
+}
+
 figure#search-addon {
     z-index: 20002;
     position: absolute;
@@ -143,18 +175,18 @@ figure#search-addon .form-group {
     margin-bottom: 0;
 }
 
-#logo {
+.logo {
     background-color: rgba(255, 128, 0, .7);
     border-bottom-left-radius: 0;
     border-top-left-radius: 8px;
 }
 
-.logo {
+.logo > div{
     height: 100%;
     font-family: Liberation Sans, sans-serif;
 }
 
-.logo > h1 {
+.logo > div > h1 {
     color: white;
     height: 100%;
     font-family: sans-serif;
@@ -166,8 +198,8 @@ figure#search-addon .form-group {
     font-size: 20px;
 }
 
-.logo > h1 > small {
-    color: rgb(255, 128, 0);
+.logo > div > h1 > small {
+    color: white;
     font-size: 0.5em;
 }
 

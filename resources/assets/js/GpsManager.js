@@ -1,5 +1,6 @@
-function GpsManager(map) {
-    this.map = map;
+function GpsManager(interactiveMap) {
+    this.map = interactiveMap.map;
+    this.interactiveMap = interactiveMap;
     this.gps = false // Boolean which declares whether gps is available or not so we don't have to check against the API everytime
     this.location = null; // Array with Position data of the Last Position we retrieved
     this.lockViewToPosition = true; // Whether the view should be locked when the current Location is shown.
@@ -23,17 +24,10 @@ GpsManager.prototype.checkGps = function() {
         navigator.geolocation.getCurrentPosition(function(position) {
             caller.toggleGpsLocator(true);
             caller.location = [position.coords.longitude, position.coords.latitude];
-            if (caller.location !== null) {
-                caller.map.getView().setCenter(caller.map.transformToMapCoordinates(caller.location));
-                caller.map.getView().setZoom(12);
-            }
-            if (position.coords.accuracy > 1500) {
-                caller.gps = false;
-                caller.disableGpsFeatures();
-            } else {
-                caller.gps = true;
-                caller.enableGpsFeatures();
-            }
+            caller.accuracy = position.coords.accuracy;
+
+            caller.gps = true;
+            caller.enableGpsFeatures();
         }, function(error) {
             caller.gps = false;
             caller.toggleGpsLocator(false);
@@ -50,8 +44,12 @@ GpsManager.prototype.checkGps = function() {
         this.disableGpsFeatures();
     }
 }
-GpsManager.prototype.enableGpsFeatures = function() {}
-GpsManager.prototype.disableGpsFeatures = function() {}
+GpsManager.prototype.enableGpsFeatures = function() {
+    this.interactiveMap.module.enableGps();
+}
+GpsManager.prototype.disableGpsFeatures = function() {
+    this.interactiveMap.module.disableGps();
+}
 /**
  * Toggles the Map Feature (GpsLocation)
  * It's a button on the map to display your own Position

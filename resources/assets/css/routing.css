@@ -1,3 +1,92 @@
+.route-description .collapse > ul {
+    list-style-type: none;
+    padding-left: 0;
+}
+
+.route-description .collapse > ul > li {
+    display: flex;
+    align-items: flex-end;
+    padding: 10px 0 5px 0;
+}
+
+.route-description .collapse > ul > li > div.step-string {
+    flex-shrink: 1;
+    flex-grow: 1;
+    border-bottom: 1px dotted #e7e7e7;
+    padding-bottom: 5px;
+}
+
+.route-description .collapse > ul > li > div.step-length {
+    flex-grow: 0;
+    flex-shrink: 0;
+    white-space: nowrap;
+    color: #777;
+}
+
+.route-description .collapse > ul > li img {
+    width: 45px;
+}
+
+.leg-description-toggle {
+    width: 100%;
+    display: flex;
+    background-color: white;
+    color: #333;
+    border: 0;
+    align-items: center;
+}
+
+.leg-description-toggle > .summary {
+    width: 80%;
+    text-align: left;
+    white-space: pre-line;
+}
+
+.leg-description-toggle > .information {
+    width: 20%;
+    text-align: right;
+}
+
+.leg-description-toggle .dur {
+    font-size: .9em;
+}
+
+.leg-description-toggle .dist {
+    font-size: .8em;
+    color: lightgrey;
+}
+
+.ol-popup.alternative-route {
+    padding: 5px;
+    border-radius: 0;
+    border-color: rgb(255,128,0);
+    min-width:75px;
+    font-weight: bold;
+    text-align: center;
+    cursor: pointer;
+}
+
+.ol-popup.alternative-route:hover {
+    border-color: rgb(255, 0, 0);
+    border-width: 2px;
+}
+
+#waypoint-list-container .route-information {
+    background-color: white;
+    display: flex;
+    justify-content: center;
+    text-align: center;
+    font-weight: bold;
+}
+
+#waypoint-list-container .route-information > div {
+    flex-basis: 50%;
+}
+
+#waypoint-list-container .route-information > div.length {
+    border-right: 1px solid #ddd;
+}
+
 #route-finder-addon {
     max-width: 450px;
     overflow: hidden;
@@ -11,13 +100,32 @@
     display: none;
 }
 
-@media(max-width: 767px){
-    #route-finder-addon {
-        width: 100%;
-    }
+#route-finder-addon .results {
+    background-color: transparent;
+    border: 0;
+}
+
+#route-finder-addon #waypoint-list-container {
+    overflow: auto;
+    max-height: 88vh;
+    border: 1px solid #ccc;
+    border-top: 0;
+}
+
+#route-finder-addon .results .results-container {
+    display: none;
+    background-color: white;
 }
 
 #waypoint-list-container #waypoint-list{
+    background-color: white;
+    margin-bottom: 0;
+    border-top: 1px solid #ddd;
+}
+
+#waypoint-list-container #waypoint-list > li {
+    border-bottom:1px solid #ddd;
+    padding: 4px 0;
     background-color: white;
 }
 
@@ -31,6 +139,15 @@
     flex-shrink: 0;
     flex-grow: 0;
     margin: 0 20px;
+    margin-left: 5px;
+    cursor: inherit;
+}
+
+#waypoint-list .waypoint .drag {
+    display: flex;
+    flex-direction: column;
+    padding: 0 15px;
+    cursor: pointer;
 }
 
 #waypoint-list .waypoint .description {
@@ -38,17 +155,25 @@
     flex-shrink: 0;
 }
 
+
 #waypoint-list .waypoint .delete-waypoint {
     flex-grow: 0;
     flex-shrink: 0;
     padding: 20px;
+    cursor: pointer;
 }
 
 #route-finder-addon .new-waypoint-form {
     background-color:white;
     margin: 0;
-    padding: 7px;
+    padding: 3px 1px 3px 1px;
+    border-left: 1px solid #ccc;
+    border-right: 1px solid #ccc;
 }
+
+#route-finder-addon .new-waypoint-form span.input-group-addon {
+    background-color: white;
+} 
 
 #route-finder-addon .new-waypoint-form button[data-toggle=popover] {
     background-color:white;
@@ -57,6 +182,11 @@
 #route-finder-addon .new-waypoint-form button[type=submit] {
     border: 0;
     background-color: inherit;
+}
+
+#route-finder-addon .new-waypoint-form .form-control, #route-finder-addon .new-waypoint-form .input-group-addon {
+    border-radius: 0;
+    border-color: #ddd;
 }
 
 .drop-target {
@@ -77,6 +207,17 @@
 
 .hide {
     transform: translateX(-9999px);
+}
+
+.wait-for-search {
+    display: none;
+    text-align: center;
+    padding: 10px;
+    background-color: white;
+}
+
+.wait-for-search img {
+    margin-left: 10px;
 }
 
 #calc-route {
@@ -338,14 +479,22 @@
     border-radius: 4px;
     font-weight: bold;
     text-align: center;
-    display: inline-block;
     padding: 5px;
+    display: flex;
+    align-items: center;
+    margin-right: 5px;
+}
+
+.schild > span.dests {
+    flex-grow: 1;
 }
 
 .schild > .highway-number {
     display: inline-block;
     background-size: 100%;
     background-repeat: no-repeat;
+    background-size: cover;
+    flex-shrink: 0;
     width: 50px;
     height: 25px;
     padding-top: 2px;
@@ -363,11 +512,38 @@
 }
 
 .landstrasse > .highway-number {
-    background-image: url(/img/landstraße.png);
+    background-image: url(/img/landstrasse.png);
 }
 
 .landstrasse {
     color: black;
     background-color: #ffcc3c;
     border: 1px solid #777;
+}
+
+@media(max-width: 767px){
+    #route-finder-addon {
+        width: 100%;
+        padding: 0;
+    }
+
+    #vehicle-chooser {
+        border: 0;
+        border-radius: 0;
+    }
+
+    #route-finder-addon .new-waypoint-form {
+        padding: 3px 0 0 0;
+        border-left: 0;
+        border-right: 0;
+    }
+
+    .results {
+        border-radius: 0;
+    }
+}
+
+.popover {
+    max-width:100%;
+    min-width: 300px;
 }
