@@ -1018,930 +1018,46 @@ Ok.prototype.changed=Ok.prototype.s;Ok.prototype.dispatchEvent=Ok.prototype.b;Ok
 }));
 
 
-var map;
-var extent;
-var overlays = [];
-var vectorSource = new ol.source.Vector();
-var lastClick;
-var popupOverlay;
-var vectorLayer;
-var id = null;
-var userPositionMarker = null;
-var lockViewToPosition = true;
-var gps = false;
-var gpsLocation = null;
-var featureStyle = new ol.style.Style({
-    stroke: new ol.style.Stroke({
-        color: 'rgb(153,39,208)',
-        lineDash: [4, 8]
-    }),
-    fill: new ol.style.Fill({
-        color: 'rgba(153,39,208,.03)'
-    })
-});
-var mapClickFunction = function(evt) {
-    var pos = ol.proj.transform(evt["coordinate"], 'EPSG:3857', 'EPSG:4326');
-    console.log(pos);
-    lastClick = pos;
-    getNearest(pos[0], pos[1]);
-};
+function Map(type) {}
 
-var clearInputFunction = function() {
-    $("#search input[name=q]").val('');
-    $("#search input[name=q]").focus();
-    clearPOIS();
-    $.each(overlays, function(index, value) {
-        map.removeOverlay(value);
-        $("#popup-closer").click();
-    });
-    deinitResults();
-    $("#clearInput").off();
-    searchResults = null;
-    if(typeof updateUrl === "function"){
-        updateUrl();
-    }
-};
-var options = {
-            enableHighAccuracy: true,
-            maximumAge: 0
-        };
-$(document).ready(function() {
-    // Initialize the Map
-    initMap();
-
-    if(getPosition){
-        checkGPS(startApplication);
-    }else{
-        startApplication();
-    }
-
-    map.on('singleclick', mapClickFunction);
-    $("#follow-location > span.button").click(function() {
-        followLocation();
-    });
-    $("#lock-location > span.button").click(function() {
-        toggleViewLock();
-    });
-});
-
-function updateMapExtent() {
-    var tmpExtent = map.getView().calculateExtent(map.getSize());
-    extent = ol.proj.transform([tmpExtent[0], tmpExtent[1]], 'EPSG:3857', 'EPSG:4326').concat(ol.proj.transform([tmpExtent[2], tmpExtent[3]], 'EPSG:3857', 'EPSG:4326'));
+function InteractiveMap() {
+    Map.call(this);
+    // Initialize the Map With Controls to change the view
+    this.map = this.initMap();
+    this.module = null;
+    // Initialize the Positions gathering on click on the Map
+    this.reversePositionManager = new ReversePositionManager(this); // This is the Overlay that displays informations about a position where the user has clicked.
+    // Initialize the GPS Module
+    this.GpsManager = new GpsManager(this.map);
+    // The default Module is the search Module
+    // Let's start that:
+    this.switchModule("search");
 }
-
-function numberWithPoints(x) {
-    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-}
-
-function deinitSearchBox() {
-    $("#search").remove();
-}
-
-function initStartNavigation() {
-    $("#start-navigation").removeClass("hidden");
-}
-
-function deinitStartNavigation() {
-    $("#start-navigation").addClass("hidden");
-}
-
-function initClearInput() {
-    $("#clearInput").html('<span class="font-bold">X</span>');
-    $("#clearInput").off();
-    $("#clearInput").click(clearInputFunction);
-    $("#clearInput").attr("title", "Sucheingabe löschen");
-}
-
-var resultsHeight = $(window).height() - 80;
-function toggleResults(status) {
-    var currentStatus = $("#results").attr("data-status");
-    if (typeof status === "undefined") {
-        status = currentStatus;
-        if(status === "in")
-            status = "out";
-        else if(status === "out")
-            status = "in";
-        else
-            status = "in";
-    } else if (status !== "in" && status !== "out") {
-        status = "in";
+InteractiveMap.prototype = Object.create(Map.prototype);
+InteractiveMap.prototype.constructor = InteractiveMap;
+InteractiveMap.prototype.initMap = function() {
+    /**
+     * Add prototypes to the map that can convert coordinates
+     */
+    /**
+     * transformToMapCoordinates()
+     * Transforms a point [lon, lat] from 'EPSG:4326' (World-Coordinates) to 'EPSG:3857' (Map-Coordinates)
+     * @param point  : Input Point in EPSG:4326 format
+     * @return point : returns the point in EPSG:3857
+     **/
+    ol.Map.prototype.transformToMapCoordinates = function(point) {
+        return ol.proj.transform(point, 'EPSG:4326', 'EPSG:3857');
     }
-    if (status === "in" && currentStatus !== "in") {
-        $("#results").attr("data-status", "in");
-        $("#result-toggler").html("Liste anzeigen")
-        $("#results").animate({"max-height": 0}, 600);
-    } else if(status === "out" && currentStatus !== "out"){
-        $("#results").attr("data-status", "out");
-        $("#result-toggler").html("Liste ausblenden")
-        $("#results").animate({"max-height": resultsHeight}, 600);
-        if($("#result-toggler").hasClass("hidden")){
-            $("#result-toggler").removeClass("hidden");
-        }
+    /**
+     * transformToWorldCoordinates()
+     * Transforms a point [lon, lat] from 'EPSG:3857' (Map-Coordinates) to 'EPSG:4326' (World-Coordinates)
+     * @param point  : Input Point in EPSG:3857 format
+     * @return point : returns the point in EPSG:4326
+     **/
+    ol.Map.prototype.transformToWorldCoordinates = function(point) {
+        return ol.proj.transform(point, 'EPSG:3857', 'EPSG:4326');
     }
-}
-
-function adjustView(results, limit) {
-    if(limit === null){
-        limit = results.length;
-    }
-    if (results.length <= 0) return;
-    var minPosition = [];
-    var maxPosition = [];
-    for (var i = 0; i < limit; i++) {
-        if (typeof minPosition[0] === 'undefined' || minPosition[0] > parseFloat(results[i]["lon"])) {
-            minPosition[0] = parseFloat(results[i]["lon"]);
-        }
-        if (typeof minPosition[0] === 'undefined' || (typeof results[i]["boundingbox"] !== 'undefined' && minPosition[0] > parseFloat(results[i]["boundingbox"][2]))) {
-            minPosition[0] = parseFloat(results[i]["boundingbox"][2]);
-        }
-        if (typeof minPosition[1] === 'undefined' || minPosition[1] > parseFloat(results[i]["lat"])) {
-            minPosition[1] = parseFloat(results[i]["lat"]);
-        }
-        if (typeof minPosition[1] === 'undefined' || (typeof results[i]["boundingbox"] !== 'undefined' && minPosition[1] > parseFloat(results[i]["boundingbox"][0]))) {
-            minPosition[1] = parseFloat(results[i]["boundingbox"][0]);
-        }
-        if (typeof maxPosition[0] === 'undefined' || maxPosition[0] < parseFloat(results[i]["lon"])) {
-            maxPosition[0] = parseFloat(results[i]["lon"]);
-        }
-        if (typeof maxPosition[0] === 'undefined' || (typeof results[i]["boundingbox"] !== 'undefined' && maxPosition[0] < parseFloat(results[i]["boundingbox"][3]))) {
-            maxPosition[0] = parseFloat(results[i]["boundingbox"][3]);
-        }
-        if (typeof maxPosition[1] === 'undefined' || maxPosition[1] < parseFloat(results[i]["lat"])) {
-            maxPosition[1] = parseFloat(results[i]["lat"]);
-        }
-        if (typeof maxPosition[1] === 'undefined' || (typeof results[i]["boundingbox"] !== 'undefined' && maxPosition[1] < parseFloat(results[i]["boundingbox"][1]))) {
-            maxPosition[1] = parseFloat(results[i]["boundingbox"][1]);
-        }
-        /*if (typeof results[i]["type"] !== 'undefined' && (results[i]["type"] === 'city' || results[i]["type"] === 'administrative' || results[i]["type"] === 'river')) {
-            break;
-        }*/
-    }
-    minPosition = ol.proj.transform(minPosition, 'EPSG:4326', 'EPSG:3857');
-    maxPosition = ol.proj.transform(maxPosition, 'EPSG:4326', 'EPSG:3857');
-
-    if(minPosition.length === 2 && maxPosition.length === 2){
-        // If this is not on a mobile AND the Results are Visible, we fit the Results to the left of the List
-        var paddingRight = 0;
-        if(parseInt( $(document).outerWidth()) > 768 && $("#results").attr("data-status") === "out" ){
-            paddingRight = $("#search-addon").outerWidth();
-        }
-
-        map.getView().fit([minPosition[0], minPosition[1], maxPosition[0], maxPosition[1]], { duration: 1500, nearest: true, maxZoom: 18, padding: [0, paddingRight, 0, 0]});
-    }
-}
-/**
- * Parsesan OSM-Address-Object for the Road-Name
- * @param {Array} address
- * @return {String} roadname
- */
-function getRoad(address) {
-    var road = "";
-    if (typeof address["road"] !== 'undefined') {
-        road = address["road"];
-    } else if (typeof address["pedestrian"] !== 'undefined') {
-        road = address["pedestrian"];
-    } else if (typeof address["path"] !== 'undefined') {
-        road = address["path"];
-    } else if (typeof address["footway"] !== 'undefined') {
-        road = address["footway"];
-    }
-    return road;
-}
-/**
- * Parse an OSM-Address-Object for the House Number
- * @param {Array} address
- * @return {String} Housenumber
- */
-function getHouseNumber(address) {
-    var house_number = typeof address["house_number"] !== 'undefined' ? address["house_number"] : "";
-    return house_number;
-}
-/**
- * Parse an OSM-Address-Object for the City (including Zip-Code)
- * @param {Array} address
- * @return {String} City
- */
-function getCity(address) {
-    var city = typeof address["postcode"] !== 'undefined' ? address["postcode"] + " " : "";
-    if (typeof address["city"] !== "undefined") {
-        city += address["city"];
-    } else if (typeof address["town"] !== "undefined") {
-        city += address["town"];
-    } else if (typeof address["village"] !== "undefined") {
-        city += address["village"];
-    }
-    return city;
-}
-
-function adjustViewBoundingBox(minpos, maxpos, padding) {
-    minPosition = ol.proj.transform(minpos, 'EPSG:4326', 'EPSG:3857');
-    maxPosition = ol.proj.transform(maxpos, 'EPSG:4326', 'EPSG:3857');
-    if(typeof padding === "undefined"){
-        padding = [5,5,5,5];
-    }
-    map.getView().fit([minPosition[0], minPosition[1], maxPosition[0], maxPosition[1]], {padding: padding, duration: 1500});
-    updateMapExtent();
-}
-/*
- * This Function takes an array of Positions and adjusts the view of the map so everything is visible
- * @param positions{Array} - Array with Position Objects ([lon,lat])
- */
-function adjustViewPosList(positions, padding) {
-    var minpos = [null, null];
-    var maxpos = [null, null];
-    $.each(positions, function(index, value) {
-        if(value === ""){
-            return;
-        }else if(value === "gps" ){
-            if(typeof gpsLocation !== "undefined"){
-                value = gpsLocation;
-            }else{
-                return;
-            }
-        }
-        if (minpos[0] === null || value[0] < minpos[0]) {
-            minpos[0] = value[0];
-        }
-        if (maxpos[0] === null || value[0] > maxpos[0]) {
-            maxpos[0] = value[0];
-        }
-        if (minpos[1] === null || value[1] < minpos[1]) {
-            minpos[1] = value[1];
-        }
-        if (maxpos[1] === null || value[1] > maxpos[1]) {
-            maxpos[1] = value[1];
-        }
-    });
-    console.log(padding);
-    adjustViewBoundingBox(minpos, maxpos, padding);
-}
-
-function clearPOIS() {
-    // Remove All Existing Overlays
-    $.each(overlays, function(index, value) {
-        map.removeOverlay(value);
-    });
-    map.removeLayer(vectorLayer);
-    vectorSource = new ol.source.Vector();
-    // Remove Existing Results
-    $("#results > .result-container").remove();
-    overlays = [];
-}
-
-function centerMap(longitude, latitude) {
-    var point = ol.proj.transform([longitude, latitude], 'EPSG:4326', 'EPSG:3857')
-    map.getView().setCenter(point);
-}
-/**
- * Fügt einen Marker auf die Karte hinzu
- * Parameter:
- *  el: HTML-Code für das Element, welches den Marker definiert
- *  pos: Position, auf der sich der Marker befinden soll int[2] (Lat, Long)
- **/
-function addMarker(el, pos) {
-    var overlay = new ol.Overlay({
-        position: pos,
-        element: el.get(0),
-        offset: [-12, -45],
-        stopEvent: false,
-    });
-    map.addOverlay(overlay);
-    return overlay;
-}
-
-function toggleGpsWarning(){
-    $("#gps-error").addClass("visible-xs");
-    $("#gps-error").removeClass("hidden");
-    setTimeout(function(){
-        $("#gps-error").addClass("hidden");
-        $("#gps-error").removeClass("visible-xs");
-    }, 5000);
-}
-
-function checkGPS(callback) {
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(function(position){
-            if(position.coords.accuracy > 1500){
-                gps = false;
-                toggleGPSLocator(true);
-                lon = parseFloat(position.coords.longitude);
-                lat = parseFloat(position.coords.latitude);
-                gpsLocation = [lon, lat];
-            }else{
-                gps = gps = true;
-                lon = parseFloat(position.coords.longitude);
-                lat = parseFloat(position.coords.latitude);
-                gpsLocation = [lon, lat];
-                toggleGPSLocator(true);
-            }
-            if(gpsLocation !== null){
-                map.getView().setCenter(ol.proj.transform(gpsLocation, 'EPSG:4326', 'EPSG:3857'));
-                map.getView().setZoom(12);
-            }
-            if(typeof callback === "function"){
-                callback();
-            }
-        }, function(error){
-            gps = false;
-            toggleGPSLocator(false);
-            toggleGpsWarning();
-            if(typeof callback === "function"){
-                callback();
-            }
-        },{enableHighAccuracy: true, maximumAge: 0 });
-        if(typeof callback === "function"){
-            callback();
-        }
-    } else {
-        gps = false;
-        toggleGPSLocator(false);
-        toggleGpsWarning();
-        if(typeof callback === "function"){
-            callback();
-        }
-    }
-}
-
-function startApplication(){
-    if(typeof start === "function"){
-        start();
-    }
-}
-
-function toggleGPSLocator(visible){
-    if(gps){
-       
-    }else{
-        
-    }
-    if(visible){
-        $("#location-tool").removeClass("hidden");
-        $("#start-navigation > a").attr("href", "/route/start/foot/gps;");
-    }else{
-        $("#location-tool").addClass("hidden");
-        $("#start-navigation > a").attr("href", "/route/start/foot");
-    }
-}
-
-var point_geom = null;  // Point displaying the center where the user possibly is
-var point_feature = null;
-var circle = null;      // Circle displaying the accuracy
-var accuracy_feature = null;
-function followLocation() {
-    // Element to be displayed at the user-location
-    var el = $('<span id="user-position" class="glyphicon glyphicon-record" style="color: #2881cc;"></span>');
-    if (lockViewToPosition) $("#lock-location").addClass("active");
-    else $("#lock-location").removeClass("active");
-    if (id === null) {
-        id = navigator.geolocation.watchPosition(function(position) {
-            var center = ol.proj.transform([parseFloat(position.coords.longitude), parseFloat(position.coords.latitude)], 'EPSG:4326', 'EPSG:3857');
-            var accuracy = parseFloat(position.coords.accuracy);
-            if(userPositionMarker === null){
-                // Create User Position
-                point_geom = new ol.geom.Point(center);
-                point_feature = new ol.Feature({
-                    name: "Position",
-                    geometry: point_geom
-                });
-                // Create the accuracy Circle:
-                circle = new ol.geom.Circle(center, accuracy);
-                accuracy_feature = new ol.Feature({
-                    name: "Accuracy",
-                    geometry: circle
-                });
-                userPositionMarker = new ol.layer.Vector({
-                    source: new ol.source.Vector({
-                        features: [point_feature, accuracy_feature]
-                    })
-                });
-                map.addLayer(userPositionMarker);
-            }else{
-                point_geom.setCoordinates(center);
-                circle.setCenter(center);
-                circle.setRadius(accuracy);
-            }
-            if (lockViewToPosition) {
-                // Fit the Extent of the Map to Fit the new Features Exactly
-                map.getView().fit(userPositionMarker.getSource().getExtent(), {padding: [5,5,5,5], duration: 1500});
-            }
-            // Change the color of the Icon so the user knows that the position is tracked:
-            $("#follow-location").addClass("active");
-        }, function(error) {}, options);
-        // Show the Lock View to Position Button
-        $("#lock-location").removeClass("hidden");
-        $("#lock-location > span.info").fadeOut(2000);
-    } else {
-        map.removeLayer(userPositionMarker);
-        userPositionMarker = null;
-        point_geom = null;
-        point_feature = null;
-        circle = null;
-        accuracy_feature = null;
-        navigator.geolocation.clearWatch(id);
-        id = null;
-        // Clear the color of the Icon so the user knows that the position is no longer tracked
-        $("#follow-location").removeClass("active");
-        // Hide the lock View to Position Button
-        $("#lock-location").addClass("hidden");
-        $("#lock-location > span.info").css("display", "");
-    }
-}
-
-function updateCurrentLocation(callback) {
-    var lon = "";
-    var lat = "";
-    if (gps) {
-        navigator.geolocation.getCurrentPosition(function(position) {
-            lon = parseFloat(position.coords.longitude);
-            lat = parseFloat(position.coords.latitude);
-            gpsLocation = [lon, lat];
-            if(typeof callback === "function"){
-                callback();
-            }
-        }, function(error) {
-            checkGPS(callback);
-        });
-
-        
-    } else {
-        return null;
-    }
-}
-
-function toggleViewLock() {
-    if (lockViewToPosition) {
-        lockViewToPosition = false;
-        $("#lock-location").removeClass("active");
-        $("#lock-location > span.info").html("Ansicht freigegeben");
-        $("#lock-location > span.info").css("display", "");
-        $("#lock-location > span.info").fadeOut(2000);
-    } else {
-        lockViewToPosition = true;
-        $("#lock-location").addClass("active");
-        $("#lock-location > span.info").html("Ansicht zentriert");
-        $("#lock-location > span.info").css("display", "");
-        $("#lock-location > span.info").fadeOut(2000);
-    }
-}
-
-function createPopup(lon, lat, html) {
-    var pos = ol.proj.transform([parseFloat(lon), parseFloat(lat)], 'EPSG:4326', 'EPSG:3857');
-    $("#popup-content").html(html);
-    popupOverlay.setPosition(pos);
-}
-
-function buildResultFromData(data){
-    if (typeof data !== "undefined" && typeof data["address"] !== "undefined") {
-            // Success we have an address
-            var address = data["address"];
-
-            var road = getRoad(address);
-            var house_number = getHouseNumber(address);
-            var city = getCity(address);
-            var id = data["place_id"];
-
-            
-
-            var html = "<div class=\"result col-xs-12\">\n";
-
-            // Wir extrahieren noch einen Namen
-            if(typeof data["namedetails"]["name"] !== "undefined"){
-                html += "<p class=\"title\">" + data["namedetails"]["name"] + "</p>\n";
-            }
-
-            var road = getRoad(address);
-            var house_number = getHouseNumber(address);
-            if(road !== ""){
-                html += "<p class=\"address\">" + road;
-                if(house_number !== ""){
-                    html += " " + house_number;
-                }
-                html += "</p>\n";
-            }
-
-            var city = getCity(address);
-            if(city !== ""){
-                html += "<p class=\"city\">" + city + "</p>\n";
-            }
-
-            var phone = "";
-            if(typeof data["extratags"]["contact:phone"] !== "undefined"){
-                phone = data["extratags"]["contact:phone"];
-            }else if(typeof data["extratags"]["phone"] !== "undefined"){
-                phone = data["extratags"]["phone"];
-            }
-            if(phone !== ""){
-                html += "<p class=\"opening-hours\"><a href=\"tel:" + phone + "\" target=_blank><span class=\"glyphicon glyphicon-earphone\"></span> " + phone + "</a></p>\n";
-            }
-
-            if(typeof data["extratags"]["website"] !== "undefined"){
-                var url = data["extratags"]["website"];
-                if(url.lastIndexOf("http", 0) !== 0){
-                    url = "http://" + url;
-                }
-                html += "<p class=\"opening-hours\"><a href=\"" + url + "\" target=_blank><span class=\"glyphicon glyphicon-globe\"></span> " + url + "</a></p>\n";
-            }
-
-            if(typeof data["extratags"]["wikipedia"] !== "undefined"){
-                var url = "https://de.wikipedia.org/wiki/" + data["extratags"]["wikipedia"];
-                html += "<p class=\"opening-hours\"><a href=\"" + url + "\" target=_blank>Wikipedia</a></p>\n";
-            }
-
-            // Add possible Opening Hours:
-            if(typeof data["extratags"]["opening_hours"] !== "undefined"){
-                html += "<p class=\"opening-hours\">" + data["extratags"]["opening_hours"] + "</p>\n";
-            }
-
-            if(typeof data["extratags"]["description"] !== "undefined"){
-                html += "<p class=\"opening-hours\">" + data["extratags"]["description"] + "</p>\n";
-            }
-
-            // Update Address details
-            lon = parseFloat(data["lon"]);
-            lat = parseFloat(data["lat"]);
-            //html += "<div class=\"geo-position container-fluid\"><div class=\"row\">\n";
-            //html += "<div class=\"col-xs-6\">Lon: " + lon + "</div>\n";
-            //html += "<div class=\"col-xs-6\">Lat: " + lat + "</div>\n"; 
-            //html += "</div></div>";
-
-            // Now the two Links
-            var url = "";
-            if(gps){
-                url = "/route/start/foot/gps;"+lon+","+lat;
-            }else{
-                url = "/route/start/foot/"+lon+","+lat;
-            }
-            html += '<a href=\"'+url+'\" class=\"btn btn-default btn-xs\">Route berechnen</a>';
-
-            // And the Link to the MetaGer Search
-            // build the search query
-            var query = "";
-            if(typeof data["namedetails"]["name"] !== "undefined"){
-                query += data["namedetails"]["name"];
-            }
-            query += " " + road;
-            query += " " + city;
-            query = query.trim();
-            if(query.length > 0){
-                var url = 'https://metager.de/meta/meta.ger3?focus=web&eingabe=' + encodeURIComponent(query) + '&encoding=utf8&lang=all';
-                html += '<a href=\"'+url+'\" class=\"btn btn-default btn-xs\" target=_blank>MetaGer Suche</a>';
-            }
-
-            var popup = $(html);
-            return popup;
-            
-        }else{
-            return null;
-        }
-}
-
-function showResearchButton(){
-    if($("#research-button").hasClass("hidden") && $("#search input[name=q]").val() !== ""){
-        $("#research-button").removeClass("hidden");
-    }
-}
-
-function toggleResearchButtonMoveEvent(){
-    if($("#search input[name=q]").val() !== ""){
-        map.un("moveend", toggleResearchButtonMoveEvent);
-        map.on("moveend", showResearchButton);
-    }
-}
-
-function getDistance(p1, p2){
-    var wgs84Sphere = new ol.Sphere(6378137);
-    var dist = wgs84Sphere.haversineDistance(p1,p2);
-    return dist;
-}
-
-Array.prototype.move = function(from, to) {
-    this.splice(to, 0, this.splice(from, 1)[0]);
-};
-var shouldUpdate = true;
-$(document).ready(function(){
-    
-    if(typeof vehicle === "undefined"){
-        map.on("moveend", updateUrl);
-        initStartNavigation();
-    }
-
-    // Initialize research Button
-    var research = $("<div id=\"research-button\" class=\"hidden\"><button type=\"button\" class=\"btn btn-default\">In diesem Bereich erneut Suchen</button></div>")
-    $("#map").append(research);
-    $(research).find("button").off();
-    $(research).find("button").click(function(){
-        $("#doSearch").click();
-    });
-
-    if(typeof center !== "undefined" && typeof zoom !== "undefined" && typeof vehicle === "undefined"){
-        if(typeof query !== "undefined"){
-            $("#search input[name=q]").val(query);
-        }
-        map.un("moveend", updateUrl);
-        map.getView().animate({
-            zoom: parseInt(zoom),
-            center: center,
-            duration: 1500
-        }, function(){
-            setTimeout(function(){
-                map.un("moveend", updateUrl);
-                map.on("moveend", updateUrl);
-                if($("#search input[name=q]").val() !== ""){
-                    $("#doSearch").click();
-                }
-            }, 500); 
-        });
-    }
-
-    $("#search input[name=q]").focusin(function(){
-
-        if($("#search-suggestions").attr("data-status") === "out" || $(document).outerWidth() > 768){
-            return;
-        }
-
-        var history = getHistory();
-
-        if(history.length > 0){
-            $.each(history, function(index, value){
-                if(typeof(value) !== "undefined"){
-                    var suggestion = $('\
-                        <div class="container-fluid suggestion">\
-                            <div class="flex-container">\
-                                <div class="item history">\
-                                    <span class="glyphicon glyphicon-time"></span>\
-                                </div>\
-                                <div class="item">\
-                                    ' + value["name"] + '\
-                                </div>\
-                            </div>\
-                        </div>\
-                        ');
-                    $("#search-suggestions").append(suggestion);
-                    $(suggestion).click(function(){
-                        $("#search input[name=q]").blur();
-                        $("#search input[name=q]").val(value["name"]);
-                        $("#doSearch").click();
-                    });
-                }
-            });
-        }else{
-            return;
-        }
-
-        var resultTogglerVisible = !$("#result-toggler").hasClass("hidden");
-
-        if(resultTogglerVisible){
-            $("#result-toggler").addClass("hidden");
-        }
-
-        if($("#results").attr("data-status") === "out"){
-            toggleResults("in");
-        }
-
-        $("#search-suggestions").animate({top: "0vh"}, 500, function(){
-            $("#search-suggestions").attr("data-status", "out");
-            $("#search-suggestions").css("padding-top", "70px");
-            $("#search input[name=q]").css("border-top-left-radius", 0);
-            $("#exit-suggestions").removeClass("hidden");
-            $("#exit-suggestions").click(function(){
-                $("#exit-suggestions").off();
-                if(resultTogglerVisible){
-                    $("#result-toggler").removeClass("hidden");
-                }
-                $("#search-suggestions").animate({top: "100vh"}, 500, function(){
-                    $("#exit-suggestions").addClass("hidden");
-                    $("#search input[name=q]").css("border-top-left-radius", "8px");
-                    $("#search-suggestions").html("");
-                    $("#search-suggestions").attr("data-status", "");
-                    $("#search-suggestions").css("padding-top", "");
-                });
-            });
-        });
-    });
-
-    $("#search input[name=q]").on("keydown", function(event) {
-        if (event.which == 13){
-            $("#search-addon input[name=q]").blur();
-            $("#doSearch").click();
-        }
-    });
-
-    
-    if(typeof vehicle === "undefined"){
-        // Put the Popstate Event:
-        $(window).unbind('popstate');
-        $(window).bind('popstate', function(event) {
-            var state = event.originalEvent.state;
-            if (state !== null && state["center"] !== undefined && state["zoom"] !== undefined) {
-                center = state["center"].split(",");
-                zoom = state["zoom"];
-                q = state["q"];
-                var shouldSearch = false;
-                var shouldClear = false;
-                if($("#search input[name=q]").val() !== state["q"] && state["q"] !== ""){
-                    shouldSearch = true;
-                }
-                $("#search input[name=q]").val(state["q"]);
-                if(typeof searchResults !== "undefined" && $("#search input[name=q]").val() === ""){
-                    shouldClear = true;
-                }
-                
-                map.un("moveend", updateUrl);
-                map.getView().animate({
-                    zoom: parseInt(zoom),
-                    center: center,
-                    duration: 1500
-                }, function(){
-                    setTimeout(function(){
-                        map.on("moveend", updateUrl);
-                        if(shouldSearch){
-                            $("#doSearch").click();
-                        }else if(shouldClear){
-                            deinitResults();
-                        }
-                    }, 500); 
-                });
-            }else{
-                // Das sieht merkürdig aus und hat ältere Geräte zum Absturz gebracht-
-                //document.location.href = document.location.href;
-            }
-        });
-
-        $("#doSearch").click(function() {
-            deinitStartNavigation();
-            executeSearch();
-        });
-    }
-
-    $("#result-toggler").click(function(){
-        toggleResults();
-    })
-});
-
-function executeSearch(){
-
-    // Leave Search suggestions if they are enabled
-    if($("#search-suggestions").attr("data-status") === "out") {
-        $("#exit-suggestions").click();
-    }
-
-    q = $("#search input[name=q]").val();
-    if(q === ""){
-        $("#search-addon input[name=q]").focus();
-        return;
-    }
-    // we need some Feedback that the search has startet
-    // Depending on the search it could last pretty long
-    // because our servers aren't that strong so the user
-    // has to know what's going on.
-    // Let's make the Input Field readonly
-    $("#search-addon input[name=q]").attr("readonly", true);
-    // Let's hide the search Button and the clear-search button
-    $("#search-addon #doSearch").addClass("hidden");
-    $("#search-addon #clear-search").addClass("hidden");
-    // Let's make a new input-group-addon to cancel the search if it takes too long
-    var cancelSearch = $('\
-        <div class="input-group-addon" id="cancel-search" title="Suche abbrechen">\
-            X\
-        </div> \
-    ');
-    $("#search input[name=q]").after(cancelSearch);
-    // Let's add a Loading animation:
-    var loading = $('\
-        <div class="container-fluid wait-for-search">\
-            <p>\
-                Ergebnisse werden geladen \
-                <img src="/img/ajax-loader.gif" alt="loading..." id="loading-search-results" />\
-            </p>\
-        </div>\
-        ');
-    $("#results").html(loading);
-    toggleResults("out");
-    $("#loading-search-results").load(function(){
-        // Calculate the current Extent of the map
-        var tmpExtent = map.getView().calculateExtent(map.getSize());
-        var extent = ol.proj.transform([tmpExtent[0], tmpExtent[1]], 'EPSG:3857', 'EPSG:4326').concat(ol.proj.transform([tmpExtent[2], tmpExtent[3]], 'EPSG:3857', 'EPSG:4326'));
-
-        var url = '/' + encodeURI(q) + '/' + encodeURI(extent[0]) + '/' + encodeURI(extent[1]) + '/' + encodeURI(extent[2]) + '/' + encodeURI(extent[3]);
-        
-        // Before we go on -> let's remove the current results
-        searchResults = undefined;
-        clearPOIS();
-        $("#clear-search").remove();
-        var markers = [];
-
-        var xhr = $.getScript(url)
-            .fail(function(jqxhr, settings, exception) {
-                console.log(exception);
-                deinitResults();
-            })
-            .done(function(){
-                // We undo the feedback that we created in the beginning
-                $("#results > .wait-for-search").remove();
-                if($("#results").attr("data-status") === "in"){
-                    $("#results").css("max-height", 0);
-                }
-                $("#cancel-search").remove();
-                $("#search-addon #doSearch").removeClass("hidden");
-                $("#search-addon #clear-search").removeClass("hidden");
-                $("#search-addon input[name=q]").attr("readonly", false);
-                if(typeof searchResults === "undefined" || searchResults.length <= 0){
-                    console.log("keine Ergebnisse");
-                    makeError($("#search-addon input[name=q]"), "Keine Ergebnisse gefunden :(");
-                }else{
-                    // Füge diesen Suchbegriff zur History hinzu
-                    // Add the first Result to the LocalStorage if it's the only one.
-                    // Otherwise we will add the search query
-                    if(searchResults.length === 1){
-                        addToHistory(searchResults[0]["display_name"], searchResults[0]["lon"], searchResults[0]["lat"]);
-                    }else{
-                        addToHistory(q, "0.0", "0.0");
-                    }
-                }
-            });
-        $("#cancel-search").click(function(){
-            xhr.abort();
-        });
-    });
-}
-
-function makeError(element, message){
-    $(element).css("border", "3px solid red");
-    $(element).tooltip({
-        placement: 'auto',
-        title: message
-    }).tooltip('show');
-
-    setTimeout(function(){
-        $(element).css("border", "");
-        $(element).tooltip('destroy');
-    }, 5000);
-}
-
-function updateUrl(){
-
-    if(typeof map.getView().getZoom() === "undefined"){
-        // If the Zoom is undefined for this resolution, we will round it so it is valid again.
-        var resolution = map.getView().getResolution() * 10;    // We'll round to one digit
-        resolution = Math.round(resolution) / 10;
-
-        map.getView().setResolution(resolution);
-
-        if(typeof map.getView().getZoom() === "undefined"){
-            // If the zoom is undefined again I can't help
-            return;
-        }     
-    }
-    if(typeof zoom === "undefined"){
-        zoom = map.getView().getZoom();
-    }
-
-    if(typeof center === "undefined"){
-        center = map.getView().getCenter();
-    }
-
-    if(typeof q === "undefined"){
-        q = $("#search input[name=q]").val();
-    }
-
-    if(map.getView().getCenter() === center && zoom === parseInt(map.getView().getZoom()) && $("#search input[name=q]").val() === q){
-        return;
-    }
-
-    center = map.getView().getCenter();
-    if(parseInt(map.getView().getZoom()) !== "NaN"){
-        zoom = parseInt(map.getView().getZoom());
-    }
-    q = $("#search input[name=q]").val();
-
-    var uri = '/map/';
-
-    var query = "";
-    if(typeof q !== "undefined" && q !== ""){
-        query = q;
-        uri += query + "/";
-    }
-
-    uri += center.toString() + "," + zoom;
-
-    var stateObj = {
-        center: center.toString(),
-        zoom: zoom,
-        q: query
-    };
-    // Change URL
-    window.history.pushState(stateObj, '', uri);
-}
-
-function initMap() {
-    popupOverlay = new ol.Overlay( /** @type {olx.OverlayOptions} */ ({
-        element: document.getElementById("popup"),
-        autoPan: true,
-        autoPanAnimation: {
-            duration: 250
-        }
-    }));
-    map = new ol.Map({
+    var map = new ol.Map({
         layers: [
             new ol.layer.Tile({
                 preload: Infinity,
@@ -1970,7 +1086,6 @@ function initMap() {
         }).extend([
             new ol.control.ScaleLine()
         ]),
-        overlays: [popupOverlay],
         view: new ol.View({
             maxZoom: 18,
             minZoom: 6,
@@ -1982,149 +1097,112 @@ function initMap() {
         loadTilesWhileInteracting: true
     });
     map.addControl(new ol.control.ZoomSlider());
-    $("#popup-closer").click(function() {
+    return map;
+}
+InteractiveMap.prototype.switchModule = function(name, args){
+
+    // Todo remove when development of Route Finder finished
+    this.module = new RouteFinder(this, [[9.71802887131353, 52.3454087]]);
+    return;
+
+    if(this.module !== null){
+        // Every Module must implement this method for deinitialization
+        this.module.exit();
+        this.module = null;
+    }
+    switch(name){
+        case "search":
+            this.module = new SearchModule(this);
+            break;
+        case "route-finding":
+            this.module = new RouteFinder(this, [[parseFloat(args.lon), parseFloat(args.lat)]]);
+            break;
+        default:
+            return;
+    }
+}
+
+function StaticMap() {
+    Map.call(this);
+}
+function initMap() {
+
+    popupOverlay = new ol.Overlay(/** @type {olx.OverlayOptions} */ ({
+        element: $("#popup").get(0),
+        autoPan: true,
+        autoPanAnimation: {
+            duration: 250
+        }
+    }));
+    map = new ol.Map({
+        layers: [
+            new ol.layer.Tile({
+                preload: Infinity,
+                source: new ol.source.OSM({
+                    attributions: [
+                        new ol.Attribution({
+                            html: '<a href="https://metager.de/impressum">Impressum</a>'
+                        }),
+                        new ol.Attribution({
+                            html: 'All search results &copy; ' + '<a href="http://nominatim.openstreetmap.org/">Nominatim</a>'
+                        }),
+                        ol.source.OSM.ATTRIBUTION,
+                    ],
+                    url: 'https://maps.metager.de/osm_tiles/{z}/{x}/{y}.png'
+                })
+            })
+        ],
+        target: 'map',
+        controls: [],
+            interactions: ol.interaction.defaults({
+                doubleClickZoom: false,
+                dragAndDrop: false,
+                dragPan: false,
+                dragBox: false,
+                dragRotate: false,
+                dragRotateAndZoom: false,
+                dragZoom: false,
+                draw: false,
+                extent: false,
+                interaction: false,
+                pointer: false,
+                keyboardPan: false,
+                keyboardZoom: false,
+                modify: false,
+                pinchRotate: false,
+                pinchZoom: false,
+                snap: false,
+                translate: false,
+                mouseWheelZoom: false,
+                pointer: false,
+                select: false
+            }),
+        overlays: [popupOverlay],
+        view: new ol.View({
+            maxZoom: 18,
+            minZoom: 5,
+            center: ol.proj.transform(
+                [10.06897, 51.37247], 'EPSG:4326', 'EPSG:3857'),
+            zoom: 5
+        }),
+        loadTilesWhileAnimating: true,
+        loadTilesWhileInteracting: true
+    });
+    map.addControl(new ol.control.ZoomSlider());
+    $("#popup-closer").click(function(){
         popupOverlay.setPosition(undefined);
         $(this).blur();
         return false;
     });
 }
-/**
- * This function sends a request to our Nominatim instance and evaluates the given coordinates to an adress
- * @param {Float} lon
- * @param {Float} lat
- * @return {Array} adress
+/*! iFrame Resizer (iframeSizer.contentWindow.min.js) - v3.5.5 - 2016-06-16
+ *  Desc: Include this file in any page being loaded into an iframe
+ *        to force the iframe to resize to the content size.
+ *  Requires: iframeResizer.min.js on host page.
+ *  Copyright: (c) 2016 David J. Bradshaw - dave@bradshaw.net
+ *  License: MIT
  */
-function getNearest(lon, lat) {
-    var url = "https://maps.metager.de/nominatim/reverse.php?format=json&lat=" + lat + "&lon=" + lon + "&zoom=18&extratags=1&addressdetails=1&namedetails=1";
-    // Send the Request
-    $.get(url, function(data) {
-        var popup = buildResultFromData(data);
-        // And now we can show the Popup where the user clicked
-        createPopup(lon, lat, popup);
-    });
-}
 
-function deinitResults() {
-    searchResults = undefined;
-    toggleResults("in");
-    $("#results").html("");
-    $("#result-toggler").addClass("hidden");
-    $("#search input[name=q]").val("");
-    $("#cancel-search").remove();
-    $("#search-addon #doSearch").removeClass("hidden");
-    $("#search-addon #clear-search").removeClass("hidden");
-    $("#search-addon input[name=q]").attr("readonly", false);
-    clearPOIS();
-    q = "";
-    updateUrl();
-    initStartNavigation();
-    map.on("singleclick", mapClickFunction);
-    $("#clear-search").remove();
-
-}
-
-
-function getHistory(withGeoPosition) {
-    if(withGeoPosition === null){
-        withGeoPosition = false;
-    }
-    var präfix = "place-search:";
-    var result = [];
-    if (localStorage) {
-        var reg = new RegExp("^" + präfix, '');
-        $.each(localStorage, function(key, value) {
-            if (key.match(reg) !== null && value.match(/^\d+;\d+\.{0,1}\d*,\d+\.{0,1}\d*$/) !== null) {
-                var match = value.match(/([\d]+?);([\d\.]+),([\d\.]+)/);
-                var count = parseInt(match[1]);
-                var lon = parseFloat(match[2]);
-                var lat = parseFloat(match[3]);
-                var name = atob(key.replace(präfix, ''));
-                if(!withGeoPosition || (lon !== 0 && lat !== 0)){
-                    result.push({
-                        name: name,
-                        count: count,
-                        lon: lon,
-                        lat: lat
-                    });
-                }
-            }
-        });
-        result.sort(function(a, b) {
-            return b.count - a.count
-        });
-    }
-    return result;
-}
-
-function saveHistory(history, präfix) {
-    if (localStorage) {
-        // Das abspeichern der neuen History verläuft in 2 Schritten:
-        // 1. Löschen der vorhanden History
-        // 2. Hinzufügen der neuen History
-        // 1. Löschen der vorhandenen History
-        clearHistory(präfix);
-        // 2. Hinzufügen der neuen History
-        $.each(history, function(index, value) {
-            var key = präfix + btoa(value.name);
-            var val = value.count + ";" + value.lon + "," + value.lat;
-            localStorage.setItem(key, val);
-        });
-    }
-}
-
-function clearHistory(präfix) {
-    var oldhistory = getHistory();
-    $.each(oldhistory, function(index, value) {
-        var key = präfix + btoa(value.name);
-        localStorage.removeItem(key);
-    });
-}
-
-function addToHistory(name, lon, lat) {
-    if (localStorage) {
-        var präfix = "place-search:";
-        var key = btoa(name);
-        var historyLimit = 10;
-        // Let's get the sorted List of Results
-        var history = getHistory();
-        // Check if item exists:
-        var item = localStorage.getItem(präfix + key);
-        if (item === null) {
-            // Item ist noch nicht in der History. Es wird an die erste Stelle gesetzt
-            if (history.length >= historyLimit) {
-                // Zuerst das letzte Element entfernen, da unsere History voll ist
-                history.pop();
-            }
-            // Nun fügen wir das neue Element hinzu:
-            history.unshift({
-                name: name,
-                count: 10,
-                lon: lon,
-                lat: lat
-            });
-        } else {
-            // Item ist bereits in der History. Es wird einen Platz nach oben gepackt.
-            var itemIndex = parseInt(item.match(/^\d+/)[0]);
-            // Der angezeigte Index ist eine Zahl zwischen 1 und 10 wobei 10 das erste Element ist und 1 das letzte
-            // Wir konvertieren diese Zahl zum Array-Index
-            itemIndex = Math.abs(itemIndex - 10);
-            // Wir verschieben das Array Element jetzt um einen Platz nach vorne, also z.B: Element an stelle 4 kommt an stelle 3 etc.
-            if(itemIndex > 0){
-                history.move(itemIndex, itemIndex - 1);
-            }
-        }
-        // Jetzt müssen wir noch den Count Parameter für jedes Element aktualisieren:
-        var newHistory = [];
-        $.each(history, function(index, value) {
-            var c = historyLimit - index;
-            newHistory.push({
-                name: value.name,
-                count: c,
-                lon: value.lon,
-                lat: value.lat
-            });
-        });
-        saveHistory(newHistory, präfix);
-    }
-}
-//# sourceMappingURL=mapSearch.js.map
+!function(a,b){"use strict";function c(b,c,d){"addEventListener"in a?b.addEventListener(c,d,!1):"attachEvent"in a&&b.attachEvent("on"+c,d)}function d(b,c,d){"removeEventListener"in a?b.removeEventListener(c,d,!1):"detachEvent"in a&&b.detachEvent("on"+c,d)}function e(a){return a.charAt(0).toUpperCase()+a.slice(1)}function f(a){var b,c,d,e=null,f=0,g=function(){f=Ha(),e=null,d=a.apply(b,c),e||(b=c=null)};return function(){var h=Ha();f||(f=h);var i=ya-(h-f);return b=this,c=arguments,0>=i||i>ya?(e&&(clearTimeout(e),e=null),f=h,d=a.apply(b,c),e||(b=c=null)):e||(e=setTimeout(g,i)),d}}function g(a){return na+"["+pa+"] "+a}function h(b){ma&&"object"==typeof a.console&&console.log(g(b))}function i(b){"object"==typeof a.console&&console.warn(g(b))}function j(){k(),h("Initialising iFrame ("+location.href+")"),l(),o(),n("background",X),n("padding",_),B(),t(),u(),p(),D(),v(),ja=C(),O("init","Init message from host page"),Ea()}function k(){function a(a){return"true"===a?!0:!1}var c=ia.substr(oa).split(":");pa=c[0],Y=b!==c[1]?Number(c[1]):Y,aa=b!==c[2]?a(c[2]):aa,ma=b!==c[3]?a(c[3]):ma,ka=b!==c[4]?Number(c[4]):ka,V=b!==c[6]?a(c[6]):V,Z=c[7],ga=b!==c[8]?c[8]:ga,X=c[9],_=c[10],va=b!==c[11]?Number(c[11]):va,ja.enable=b!==c[12]?a(c[12]):!1,ra=b!==c[13]?c[13]:ra,Ba=b!==c[14]?c[14]:Ba}function l(){function b(){var b=a.iFrameResizer;h("Reading data from page: "+JSON.stringify(b)),Da="messageCallback"in b?b.messageCallback:Da,Ea="readyCallback"in b?b.readyCallback:Ea,ua="targetOrigin"in b?b.targetOrigin:ua,ga="heightCalculationMethod"in b?b.heightCalculationMethod:ga,Ba="widthCalculationMethod"in b?b.widthCalculationMethod:Ba}function c(a,b){return"function"==typeof a&&(h("Setup custom "+b+"CalcMethod"),Ga[b]=a,a="custom"),a}"iFrameResizer"in a&&Object===a.iFrameResizer.constructor&&(b(),ga=c(ga,"height"),Ba=c(Ba,"width")),h("TargetOrigin for parent set to: "+ua)}function m(a,b){return-1!==b.indexOf("-")&&(i("Negative CSS value ignored for "+a),b=""),b}function n(a,c){b!==c&&""!==c&&"null"!==c&&(document.body.style[a]=c,h("Body "+a+' set to "'+c+'"'))}function o(){b===Z&&(Z=Y+"px"),n("margin",m("margin",Z))}function p(){document.documentElement.style.height="",document.body.style.height="",h('HTML & body height set to "auto"')}function q(b){function f(){O(b.eventName,b.eventType)}var g={add:function(b){c(a,b,f)},remove:function(b){d(a,b,f)}};b.eventNames&&Array.prototype.map?(b.eventName=b.eventNames[0],b.eventNames.map(g[b.method])):g[b.method](b.eventName),h(e(b.method)+" event listener: "+b.eventType)}function r(a){q({method:a,eventType:"Animation Start",eventNames:["animationstart","webkitAnimationStart"]}),q({method:a,eventType:"Animation Iteration",eventNames:["animationiteration","webkitAnimationIteration"]}),q({method:a,eventType:"Animation End",eventNames:["animationend","webkitAnimationEnd"]}),q({method:a,eventType:"Input",eventName:"input"}),q({method:a,eventType:"Mouse Up",eventName:"mouseup"}),q({method:a,eventType:"Mouse Down",eventName:"mousedown"}),q({method:a,eventType:"Orientation Change",eventName:"orientationchange"}),q({method:a,eventType:"Print",eventName:["afterprint","beforeprint"]}),q({method:a,eventType:"Ready State Change",eventName:"readystatechange"}),q({method:a,eventType:"Touch Start",eventName:"touchstart"}),q({method:a,eventType:"Touch End",eventName:"touchend"}),q({method:a,eventType:"Touch Cancel",eventName:"touchcancel"}),q({method:a,eventType:"Transition Start",eventNames:["transitionstart","webkitTransitionStart","MSTransitionStart","oTransitionStart","otransitionstart"]}),q({method:a,eventType:"Transition Iteration",eventNames:["transitioniteration","webkitTransitionIteration","MSTransitionIteration","oTransitionIteration","otransitioniteration"]}),q({method:a,eventType:"Transition End",eventNames:["transitionend","webkitTransitionEnd","MSTransitionEnd","oTransitionEnd","otransitionend"]}),"child"===ra&&q({method:a,eventType:"IFrame Resized",eventName:"resize"})}function s(a,b,c,d){return b!==a&&(a in c||(i(a+" is not a valid option for "+d+"CalculationMethod."),a=b),h(d+' calculation method set to "'+a+'"')),a}function t(){ga=s(ga,fa,Ia,"height")}function u(){Ba=s(Ba,Aa,Ja,"width")}function v(){!0===V?(r("add"),G()):h("Auto Resize disabled")}function w(){h("Disable outgoing messages"),sa=!1}function x(){h("Remove event listener: Message"),d(a,"message",T)}function y(){null!==$&&$.disconnect()}function z(){r("remove"),y(),clearInterval(la)}function A(){w(),x(),!0===V&&z()}function B(){var a=document.createElement("div");a.style.clear="both",a.style.display="block",document.body.appendChild(a)}function C(){function d(){return{x:a.pageXOffset!==b?a.pageXOffset:document.documentElement.scrollLeft,y:a.pageYOffset!==b?a.pageYOffset:document.documentElement.scrollTop}}function e(a){var b=a.getBoundingClientRect(),c=d();return{x:parseInt(b.left,10)+parseInt(c.x,10),y:parseInt(b.top,10)+parseInt(c.y,10)}}function f(a){function c(a){var b=e(a);h("Moving to in page link (#"+d+") at x: "+b.x+" y: "+b.y),S(b.y,b.x,"scrollToOffset")}var d=a.split("#")[1]||a,f=decodeURIComponent(d),g=document.getElementById(f)||document.getElementsByName(f)[0];b!==g?c(g):(h("In page link (#"+d+") not found in iFrame, so sending to parent"),S(0,0,"inPageLink","#"+d))}function g(){""!==location.hash&&"#"!==location.hash&&f(location.href)}function j(){function a(a){function b(a){a.preventDefault(),f(this.getAttribute("href"))}"#"!==a.getAttribute("href")&&c(a,"click",b)}Array.prototype.forEach.call(document.querySelectorAll('a[href^="#"]'),a)}function k(){c(a,"hashchange",g)}function l(){setTimeout(g,ca)}function m(){Array.prototype.forEach&&document.querySelectorAll?(h("Setting up location.hash handlers"),j(),k(),l()):i("In page linking not fully supported in this browser! (See README.md for IE8 workaround)")}return ja.enable?m():h("In page linking not enabled"),{findTarget:f}}function D(){h("Enable public methods"),Ca.parentIFrame={autoResize:function(a){return!0===a&&!1===V?(V=!0,v()):!1===a&&!0===V&&(V=!1,z()),V},close:function(){S(0,0,"close"),A()},getId:function(){return pa},getPageInfo:function(a){"function"==typeof a?(Fa=a,S(0,0,"pageInfo")):(Fa=function(){},S(0,0,"pageInfoStop"))},moveToAnchor:function(a){ja.findTarget(a)},reset:function(){R("parentIFrame.reset")},scrollTo:function(a,b){S(b,a,"scrollTo")},scrollToOffset:function(a,b){S(b,a,"scrollToOffset")},sendMessage:function(a,b){S(0,0,"message",JSON.stringify(a),b)},setHeightCalculationMethod:function(a){ga=a,t()},setWidthCalculationMethod:function(a){Ba=a,u()},setTargetOrigin:function(a){h("Set targetOrigin: "+a),ua=a},size:function(a,b){var c=""+(a?a:"")+(b?","+b:"");O("size","parentIFrame.size("+c+")",a,b)}}}function E(){0!==ka&&(h("setInterval: "+ka+"ms"),la=setInterval(function(){O("interval","setInterval: "+ka)},Math.abs(ka)))}function F(){function c(a){function b(a){!1===a.complete&&(h("Attach listeners to "+a.src),a.addEventListener("load",g,!1),a.addEventListener("error",i,!1),l.push(a))}"attributes"===a.type&&"src"===a.attributeName?b(a.target):"childList"===a.type&&Array.prototype.forEach.call(a.target.querySelectorAll("img"),b)}function d(a){l.splice(l.indexOf(a),1)}function e(a){h("Remove listeners from "+a.src),a.removeEventListener("load",g,!1),a.removeEventListener("error",i,!1),d(a)}function f(a,c,d){e(a.target),O(c,d+": "+a.target.src,b,b)}function g(a){f(a,"imageLoad","Image loaded")}function i(a){f(a,"imageLoadFailed","Image load failed")}function j(a){O("mutationObserver","mutationObserver: "+a[0].target+" "+a[0].type),a.forEach(c)}function k(){var a=document.querySelector("body"),b={attributes:!0,attributeOldValue:!1,characterData:!0,characterDataOldValue:!1,childList:!0,subtree:!0};return n=new m(j),h("Create body MutationObserver"),n.observe(a,b),n}var l=[],m=a.MutationObserver||a.WebKitMutationObserver,n=k();return{disconnect:function(){"disconnect"in n&&(h("Disconnect body MutationObserver"),n.disconnect(),l.forEach(e))}}}function G(){var b=0>ka;a.MutationObserver||a.WebKitMutationObserver?b?E():$=F():(h("MutationObserver not supported in this browser!"),E())}function H(a,b){function c(a){var c=/^\d+(px)?$/i;if(c.test(a))return parseInt(a,W);var d=b.style.left,e=b.runtimeStyle.left;return b.runtimeStyle.left=b.currentStyle.left,b.style.left=a||0,a=b.style.pixelLeft,b.style.left=d,b.runtimeStyle.left=e,a}var d=0;return b=b||document.body,"defaultView"in document&&"getComputedStyle"in document.defaultView?(d=document.defaultView.getComputedStyle(b,null),d=null!==d?d[a]:0):d=c(b.currentStyle[a]),parseInt(d,W)}function I(a){a>ya/2&&(ya=2*a,h("Event throttle increased to "+ya+"ms"))}function J(a,b){for(var c=b.length,d=0,f=0,g=e(a),i=Ha(),j=0;c>j;j++)d=b[j].getBoundingClientRect()[a]+H("margin"+g,b[j]),d>f&&(f=d);return i=Ha()-i,h("Parsed "+c+" HTML elements"),h("Element position calculated in "+i+"ms"),I(i),f}function K(a){return[a.bodyOffset(),a.bodyScroll(),a.documentElementOffset(),a.documentElementScroll()]}function L(a,b){function c(){return i("No tagged elements ("+b+") found on page"),ea}var d=document.querySelectorAll("["+b+"]");return 0===d.length?c():J(a,d)}function M(){return document.querySelectorAll("body *")}function N(a,c,d,e){function f(){ea=m,za=n,S(ea,za,a)}function g(){function a(a,b){var c=Math.abs(a-b)<=va;return!c}return m=b!==d?d:Ia[ga](),n=b!==e?e:Ja[Ba](),a(ea,m)||aa&&a(za,n)}function i(){return!(a in{init:1,interval:1,size:1})}function j(){return ga in qa||aa&&Ba in qa}function k(){h("No change in size detected")}function l(){i()&&j()?R(c):a in{interval:1}||k()}var m,n;g()||"init"===a?(P(),f()):l()}function O(a,b,c,d){function e(){a in{reset:1,resetPage:1,init:1}||h("Trigger event: "+b)}function f(){return wa&&a in ba}f()?h("Trigger event cancelled: "+a):(e(),Ka(a,b,c,d))}function P(){wa||(wa=!0,h("Trigger event lock on")),clearTimeout(xa),xa=setTimeout(function(){wa=!1,h("Trigger event lock off"),h("--")},ca)}function Q(a){ea=Ia[ga](),za=Ja[Ba](),S(ea,za,a)}function R(a){var b=ga;ga=fa,h("Reset trigger event: "+a),P(),Q("reset"),ga=b}function S(a,c,d,e,f){function g(){b===f?f=ua:h("Message targetOrigin: "+f)}function i(){var g=a+":"+c,i=pa+":"+g+":"+d+(b!==e?":"+e:"");h("Sending message to host page ("+i+")"),ta.postMessage(na+i,f)}!0===sa&&(g(),i())}function T(b){function d(){return na===(""+b.data).substr(0,oa)}function e(){function d(){ia=b.data,ta=b.source,j(),da=!1,setTimeout(function(){ha=!1},ca)}document.body?d():(h("Waiting for page ready"),c(a,"readystatechange",e))}function f(){ha?h("Page reset ignored by init"):(h("Page size reset by host page"),Q("resetPage"))}function g(){O("resizeParent","Parent window requested size check")}function k(){var a=m();ja.findTarget(a)}function l(){return b.data.split("]")[1].split(":")[0]}function m(){return b.data.substr(b.data.indexOf(":")+1)}function n(){return"iFrameResize"in a}function o(){var a=m();h("MessageCallback called from parent: "+a),Da(JSON.parse(a)),h(" --")}function p(){var a=m();h("PageInfoFromParent called from parent: "+a),Fa(JSON.parse(a)),h(" --")}function q(){return b.data.split(":")[2]in{"true":1,"false":1}}function r(){switch(l()){case"reset":f();break;case"resize":g();break;case"inPageLink":case"moveToAnchor":k();break;case"message":o();break;case"pageInfo":p();break;default:n()||q()||i("Unexpected message ("+b.data+")")}}function s(){!1===da?r():q()?e():h('Ignored message of type "'+l()+'". Received before initialization.')}d()&&s()}function U(){"loading"!==document.readyState&&a.parent.postMessage("[iFrameResizerChild]Ready","*")}var V=!0,W=10,X="",Y=0,Z="",$=null,_="",aa=!1,ba={resize:1,click:1},ca=128,da=!0,ea=1,fa="bodyOffset",ga=fa,ha=!0,ia="",ja={},ka=32,la=null,ma=!1,na="[iFrameSizer]",oa=na.length,pa="",qa={max:1,min:1,bodyScroll:1,documentElementScroll:1},ra="child",sa=!0,ta=a.parent,ua="*",va=0,wa=!1,xa=null,ya=16,za=1,Aa="scroll",Ba=Aa,Ca=a,Da=function(){i("MessageCallback function not defined")},Ea=function(){},Fa=function(){},Ga={height:function(){return i("Custom height calculation function not defined"),document.documentElement.offsetHeight},width:function(){return i("Custom width calculation function not defined"),document.body.scrollWidth}},Ha=Date.now||function(){return(new Date).getTime()},Ia={bodyOffset:function(){return document.body.offsetHeight+H("marginTop")+H("marginBottom")},offset:function(){return Ia.bodyOffset()},bodyScroll:function(){return document.body.scrollHeight},custom:function(){return Ga.height()},documentElementOffset:function(){return document.documentElement.offsetHeight},documentElementScroll:function(){return document.documentElement.scrollHeight},max:function(){return Math.max.apply(null,K(Ia))},min:function(){return Math.min.apply(null,K(Ia))},grow:function(){return Ia.max()},lowestElement:function(){return Math.max(Ia.bodyOffset(),J("bottom",M()))},taggedElement:function(){return L("bottom","data-iframe-height")}},Ja={bodyScroll:function(){return document.body.scrollWidth},bodyOffset:function(){return document.body.offsetWidth},custom:function(){return Ga.width()},documentElementScroll:function(){return document.documentElement.scrollWidth},documentElementOffset:function(){return document.documentElement.offsetWidth},scroll:function(){return Math.max(Ja.bodyScroll(),Ja.documentElementScroll())},max:function(){return Math.max.apply(null,K(Ja))},min:function(){return Math.min.apply(null,K(Ja))},rightMostElement:function(){return J("right",M())},taggedElement:function(){return L("right","data-iframe-width")}},Ka=f(N);c(a,"message",T),U()}(window||{});
+//# sourceMappingURL=iframeResizer.contentWindow.map
+//# sourceMappingURL=iframeSearch.js.map

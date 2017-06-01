@@ -1,3 +1,188 @@
+function md5cycle(x, k) {
+var a = x[0], b = x[1], c = x[2], d = x[3];
+
+a = ff(a, b, c, d, k[0], 7, -680876936);
+d = ff(d, a, b, c, k[1], 12, -389564586);
+c = ff(c, d, a, b, k[2], 17,  606105819);
+b = ff(b, c, d, a, k[3], 22, -1044525330);
+a = ff(a, b, c, d, k[4], 7, -176418897);
+d = ff(d, a, b, c, k[5], 12,  1200080426);
+c = ff(c, d, a, b, k[6], 17, -1473231341);
+b = ff(b, c, d, a, k[7], 22, -45705983);
+a = ff(a, b, c, d, k[8], 7,  1770035416);
+d = ff(d, a, b, c, k[9], 12, -1958414417);
+c = ff(c, d, a, b, k[10], 17, -42063);
+b = ff(b, c, d, a, k[11], 22, -1990404162);
+a = ff(a, b, c, d, k[12], 7,  1804603682);
+d = ff(d, a, b, c, k[13], 12, -40341101);
+c = ff(c, d, a, b, k[14], 17, -1502002290);
+b = ff(b, c, d, a, k[15], 22,  1236535329);
+
+a = gg(a, b, c, d, k[1], 5, -165796510);
+d = gg(d, a, b, c, k[6], 9, -1069501632);
+c = gg(c, d, a, b, k[11], 14,  643717713);
+b = gg(b, c, d, a, k[0], 20, -373897302);
+a = gg(a, b, c, d, k[5], 5, -701558691);
+d = gg(d, a, b, c, k[10], 9,  38016083);
+c = gg(c, d, a, b, k[15], 14, -660478335);
+b = gg(b, c, d, a, k[4], 20, -405537848);
+a = gg(a, b, c, d, k[9], 5,  568446438);
+d = gg(d, a, b, c, k[14], 9, -1019803690);
+c = gg(c, d, a, b, k[3], 14, -187363961);
+b = gg(b, c, d, a, k[8], 20,  1163531501);
+a = gg(a, b, c, d, k[13], 5, -1444681467);
+d = gg(d, a, b, c, k[2], 9, -51403784);
+c = gg(c, d, a, b, k[7], 14,  1735328473);
+b = gg(b, c, d, a, k[12], 20, -1926607734);
+
+a = hh(a, b, c, d, k[5], 4, -378558);
+d = hh(d, a, b, c, k[8], 11, -2022574463);
+c = hh(c, d, a, b, k[11], 16,  1839030562);
+b = hh(b, c, d, a, k[14], 23, -35309556);
+a = hh(a, b, c, d, k[1], 4, -1530992060);
+d = hh(d, a, b, c, k[4], 11,  1272893353);
+c = hh(c, d, a, b, k[7], 16, -155497632);
+b = hh(b, c, d, a, k[10], 23, -1094730640);
+a = hh(a, b, c, d, k[13], 4,  681279174);
+d = hh(d, a, b, c, k[0], 11, -358537222);
+c = hh(c, d, a, b, k[3], 16, -722521979);
+b = hh(b, c, d, a, k[6], 23,  76029189);
+a = hh(a, b, c, d, k[9], 4, -640364487);
+d = hh(d, a, b, c, k[12], 11, -421815835);
+c = hh(c, d, a, b, k[15], 16,  530742520);
+b = hh(b, c, d, a, k[2], 23, -995338651);
+
+a = ii(a, b, c, d, k[0], 6, -198630844);
+d = ii(d, a, b, c, k[7], 10,  1126891415);
+c = ii(c, d, a, b, k[14], 15, -1416354905);
+b = ii(b, c, d, a, k[5], 21, -57434055);
+a = ii(a, b, c, d, k[12], 6,  1700485571);
+d = ii(d, a, b, c, k[3], 10, -1894986606);
+c = ii(c, d, a, b, k[10], 15, -1051523);
+b = ii(b, c, d, a, k[1], 21, -2054922799);
+a = ii(a, b, c, d, k[8], 6,  1873313359);
+d = ii(d, a, b, c, k[15], 10, -30611744);
+c = ii(c, d, a, b, k[6], 15, -1560198380);
+b = ii(b, c, d, a, k[13], 21,  1309151649);
+a = ii(a, b, c, d, k[4], 6, -145523070);
+d = ii(d, a, b, c, k[11], 10, -1120210379);
+c = ii(c, d, a, b, k[2], 15,  718787259);
+b = ii(b, c, d, a, k[9], 21, -343485551);
+
+x[0] = add32(a, x[0]);
+x[1] = add32(b, x[1]);
+x[2] = add32(c, x[2]);
+x[3] = add32(d, x[3]);
+
+}
+
+function cmn(q, a, b, x, s, t) {
+a = add32(add32(a, q), add32(x, t));
+return add32((a << s) | (a >>> (32 - s)), b);
+}
+
+function ff(a, b, c, d, x, s, t) {
+return cmn((b & c) | ((~b) & d), a, b, x, s, t);
+}
+
+function gg(a, b, c, d, x, s, t) {
+return cmn((b & d) | (c & (~d)), a, b, x, s, t);
+}
+
+function hh(a, b, c, d, x, s, t) {
+return cmn(b ^ c ^ d, a, b, x, s, t);
+}
+
+function ii(a, b, c, d, x, s, t) {
+return cmn(c ^ (b | (~d)), a, b, x, s, t);
+}
+
+function md51(s) {
+txt = '';
+var n = s.length,
+state = [1732584193, -271733879, -1732584194, 271733878], i;
+for (i=64; i<=s.length; i+=64) {
+md5cycle(state, md5blk(s.substring(i-64, i)));
+}
+s = s.substring(i-64);
+var tail = [0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0];
+for (i=0; i<s.length; i++)
+tail[i>>2] |= s.charCodeAt(i) << ((i%4) << 3);
+tail[i>>2] |= 0x80 << ((i%4) << 3);
+if (i > 55) {
+md5cycle(state, tail);
+for (i=0; i<16; i++) tail[i] = 0;
+}
+tail[14] = n*8;
+md5cycle(state, tail);
+return state;
+}
+
+/* there needs to be support for Unicode here,
+ * unless we pretend that we can redefine the MD-5
+ * algorithm for multi-byte characters (perhaps
+ * by adding every four 16-bit characters and
+ * shortening the sum to 32 bits). Otherwise
+ * I suggest performing MD-5 as if every character
+ * was two bytes--e.g., 0040 0025 = @%--but then
+ * how will an ordinary MD-5 sum be matched?
+ * There is no way to standardize text to something
+ * like UTF-8 before transformation; speed cost is
+ * utterly prohibitive. The JavaScript standard
+ * itself needs to look at this: it should start
+ * providing access to strings as preformed UTF-8
+ * 8-bit unsigned value arrays.
+ */
+function md5blk(s) { /* I figured global was faster.   */
+var md5blks = [], i; /* Andy King said do it this way. */
+for (i=0; i<64; i+=4) {
+md5blks[i>>2] = s.charCodeAt(i)
++ (s.charCodeAt(i+1) << 8)
++ (s.charCodeAt(i+2) << 16)
++ (s.charCodeAt(i+3) << 24);
+}
+return md5blks;
+}
+
+var hex_chr = '0123456789abcdef'.split('');
+
+function rhex(n)
+{
+var s='', j=0;
+for(; j<4; j++)
+s += hex_chr[(n >> (j * 8 + 4)) & 0x0F]
++ hex_chr[(n >> (j * 8)) & 0x0F];
+return s;
+}
+
+function hex(x) {
+for (var i=0; i<x.length; i++)
+x[i] = rhex(x[i]);
+return x.join('');
+}
+
+function md5(s) {
+return hex(md51(s));
+}
+
+/* this function is much faster,
+so if possible we use it. Some IEs
+are the only ones I know of that
+need the idiotic second function,
+generated by an if clause.  */
+
+function add32(a, b) {
+return (a + b) & 0xFFFFFFFF;
+}
+
+if (md5('hello') != '5d41402abc4b2a76b9719d911017c592') {
+function add32(x, y) {
+var lsw = (x & 0xFFFF) + (y & 0xFFFF),
+msw = (x >> 16) + (y >> 16) + (lsw >> 16);
+return (msw << 16) | (lsw & 0xFFFF);
+}
+}
+
 /*! jQuery v1.11.2 | (c) 2005, 2014 jQuery Foundation, Inc. | jquery.org/license */
 !function(a,b){"object"==typeof module&&"object"==typeof module.exports?module.exports=a.document?b(a,!0):function(a){if(!a.document)throw new Error("jQuery requires a window with a document");return b(a)}:b(a)}("undefined"!=typeof window?window:this,function(a,b){var c=[],d=c.slice,e=c.concat,f=c.push,g=c.indexOf,h={},i=h.toString,j=h.hasOwnProperty,k={},l="1.11.2",m=function(a,b){return new m.fn.init(a,b)},n=/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g,o=/^-ms-/,p=/-([\da-z])/gi,q=function(a,b){return b.toUpperCase()};m.fn=m.prototype={jquery:l,constructor:m,selector:"",length:0,toArray:function(){return d.call(this)},get:function(a){return null!=a?0>a?this[a+this.length]:this[a]:d.call(this)},pushStack:function(a){var b=m.merge(this.constructor(),a);return b.prevObject=this,b.context=this.context,b},each:function(a,b){return m.each(this,a,b)},map:function(a){return this.pushStack(m.map(this,function(b,c){return a.call(b,c,b)}))},slice:function(){return this.pushStack(d.apply(this,arguments))},first:function(){return this.eq(0)},last:function(){return this.eq(-1)},eq:function(a){var b=this.length,c=+a+(0>a?b:0);return this.pushStack(c>=0&&b>c?[this[c]]:[])},end:function(){return this.prevObject||this.constructor(null)},push:f,sort:c.sort,splice:c.splice},m.extend=m.fn.extend=function(){var a,b,c,d,e,f,g=arguments[0]||{},h=1,i=arguments.length,j=!1;for("boolean"==typeof g&&(j=g,g=arguments[h]||{},h++),"object"==typeof g||m.isFunction(g)||(g={}),h===i&&(g=this,h--);i>h;h++)if(null!=(e=arguments[h]))for(d in e)a=g[d],c=e[d],g!==c&&(j&&c&&(m.isPlainObject(c)||(b=m.isArray(c)))?(b?(b=!1,f=a&&m.isArray(a)?a:[]):f=a&&m.isPlainObject(a)?a:{},g[d]=m.extend(j,f,c)):void 0!==c&&(g[d]=c));return g},m.extend({expando:"jQuery"+(l+Math.random()).replace(/\D/g,""),isReady:!0,error:function(a){throw new Error(a)},noop:function(){},isFunction:function(a){return"function"===m.type(a)},isArray:Array.isArray||function(a){return"array"===m.type(a)},isWindow:function(a){return null!=a&&a==a.window},isNumeric:function(a){return!m.isArray(a)&&a-parseFloat(a)+1>=0},isEmptyObject:function(a){var b;for(b in a)return!1;return!0},isPlainObject:function(a){var b;if(!a||"object"!==m.type(a)||a.nodeType||m.isWindow(a))return!1;try{if(a.constructor&&!j.call(a,"constructor")&&!j.call(a.constructor.prototype,"isPrototypeOf"))return!1}catch(c){return!1}if(k.ownLast)for(b in a)return j.call(a,b);for(b in a);return void 0===b||j.call(a,b)},type:function(a){return null==a?a+"":"object"==typeof a||"function"==typeof a?h[i.call(a)]||"object":typeof a},globalEval:function(b){b&&m.trim(b)&&(a.execScript||function(b){a.eval.call(a,b)})(b)},camelCase:function(a){return a.replace(o,"ms-").replace(p,q)},nodeName:function(a,b){return a.nodeName&&a.nodeName.toLowerCase()===b.toLowerCase()},each:function(a,b,c){var d,e=0,f=a.length,g=r(a);if(c){if(g){for(;f>e;e++)if(d=b.apply(a[e],c),d===!1)break}else for(e in a)if(d=b.apply(a[e],c),d===!1)break}else if(g){for(;f>e;e++)if(d=b.call(a[e],e,a[e]),d===!1)break}else for(e in a)if(d=b.call(a[e],e,a[e]),d===!1)break;return a},trim:function(a){return null==a?"":(a+"").replace(n,"")},makeArray:function(a,b){var c=b||[];return null!=a&&(r(Object(a))?m.merge(c,"string"==typeof a?[a]:a):f.call(c,a)),c},inArray:function(a,b,c){var d;if(b){if(g)return g.call(b,a,c);for(d=b.length,c=c?0>c?Math.max(0,d+c):c:0;d>c;c++)if(c in b&&b[c]===a)return c}return-1},merge:function(a,b){var c=+b.length,d=0,e=a.length;while(c>d)a[e++]=b[d++];if(c!==c)while(void 0!==b[d])a[e++]=b[d++];return a.length=e,a},grep:function(a,b,c){for(var d,e=[],f=0,g=a.length,h=!c;g>f;f++)d=!b(a[f],f),d!==h&&e.push(a[f]);return e},map:function(a,b,c){var d,f=0,g=a.length,h=r(a),i=[];if(h)for(;g>f;f++)d=b(a[f],f,c),null!=d&&i.push(d);else for(f in a)d=b(a[f],f,c),null!=d&&i.push(d);return e.apply([],i)},guid:1,proxy:function(a,b){var c,e,f;return"string"==typeof b&&(f=a[b],b=a,a=f),m.isFunction(a)?(c=d.call(arguments,2),e=function(){return a.apply(b||this,c.concat(d.call(arguments)))},e.guid=a.guid=a.guid||m.guid++,e):void 0},now:function(){return+new Date},support:k}),m.each("Boolean Number String Function Array Date RegExp Object Error".split(" "),function(a,b){h["[object "+b+"]"]=b.toLowerCase()});function r(a){var b=a.length,c=m.type(a);return"function"===c||m.isWindow(a)?!1:1===a.nodeType&&b?!0:"array"===c||0===b||"number"==typeof b&&b>0&&b-1 in a}var s=function(a){var b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u="sizzle"+1*new Date,v=a.document,w=0,x=0,y=hb(),z=hb(),A=hb(),B=function(a,b){return a===b&&(l=!0),0},C=1<<31,D={}.hasOwnProperty,E=[],F=E.pop,G=E.push,H=E.push,I=E.slice,J=function(a,b){for(var c=0,d=a.length;d>c;c++)if(a[c]===b)return c;return-1},K="checked|selected|async|autofocus|autoplay|controls|defer|disabled|hidden|ismap|loop|multiple|open|readonly|required|scoped",L="[\\x20\\t\\r\\n\\f]",M="(?:\\\\.|[\\w-]|[^\\x00-\\xa0])+",N=M.replace("w","w#"),O="\\["+L+"*("+M+")(?:"+L+"*([*^$|!~]?=)"+L+"*(?:'((?:\\\\.|[^\\\\'])*)'|\"((?:\\\\.|[^\\\\\"])*)\"|("+N+"))|)"+L+"*\\]",P=":("+M+")(?:\\((('((?:\\\\.|[^\\\\'])*)'|\"((?:\\\\.|[^\\\\\"])*)\")|((?:\\\\.|[^\\\\()[\\]]|"+O+")*)|.*)\\)|)",Q=new RegExp(L+"+","g"),R=new RegExp("^"+L+"+|((?:^|[^\\\\])(?:\\\\.)*)"+L+"+$","g"),S=new RegExp("^"+L+"*,"+L+"*"),T=new RegExp("^"+L+"*([>+~]|"+L+")"+L+"*"),U=new RegExp("="+L+"*([^\\]'\"]*?)"+L+"*\\]","g"),V=new RegExp(P),W=new RegExp("^"+N+"$"),X={ID:new RegExp("^#("+M+")"),CLASS:new RegExp("^\\.("+M+")"),TAG:new RegExp("^("+M.replace("w","w*")+")"),ATTR:new RegExp("^"+O),PSEUDO:new RegExp("^"+P),CHILD:new RegExp("^:(only|first|last|nth|nth-last)-(child|of-type)(?:\\("+L+"*(even|odd|(([+-]|)(\\d*)n|)"+L+"*(?:([+-]|)"+L+"*(\\d+)|))"+L+"*\\)|)","i"),bool:new RegExp("^(?:"+K+")$","i"),needsContext:new RegExp("^"+L+"*[>+~]|:(even|odd|eq|gt|lt|nth|first|last)(?:\\("+L+"*((?:-\\d)?\\d*)"+L+"*\\)|)(?=[^-]|$)","i")},Y=/^(?:input|select|textarea|button)$/i,Z=/^h\d$/i,$=/^[^{]+\{\s*\[native \w/,_=/^(?:#([\w-]+)|(\w+)|\.([\w-]+))$/,ab=/[+~]/,bb=/'|\\/g,cb=new RegExp("\\\\([\\da-f]{1,6}"+L+"?|("+L+")|.)","ig"),db=function(a,b,c){var d="0x"+b-65536;return d!==d||c?b:0>d?String.fromCharCode(d+65536):String.fromCharCode(d>>10|55296,1023&d|56320)},eb=function(){m()};try{H.apply(E=I.call(v.childNodes),v.childNodes),E[v.childNodes.length].nodeType}catch(fb){H={apply:E.length?function(a,b){G.apply(a,I.call(b))}:function(a,b){var c=a.length,d=0;while(a[c++]=b[d++]);a.length=c-1}}}function gb(a,b,d,e){var f,h,j,k,l,o,r,s,w,x;if((b?b.ownerDocument||b:v)!==n&&m(b),b=b||n,d=d||[],k=b.nodeType,"string"!=typeof a||!a||1!==k&&9!==k&&11!==k)return d;if(!e&&p){if(11!==k&&(f=_.exec(a)))if(j=f[1]){if(9===k){if(h=b.getElementById(j),!h||!h.parentNode)return d;if(h.id===j)return d.push(h),d}else if(b.ownerDocument&&(h=b.ownerDocument.getElementById(j))&&t(b,h)&&h.id===j)return d.push(h),d}else{if(f[2])return H.apply(d,b.getElementsByTagName(a)),d;if((j=f[3])&&c.getElementsByClassName)return H.apply(d,b.getElementsByClassName(j)),d}if(c.qsa&&(!q||!q.test(a))){if(s=r=u,w=b,x=1!==k&&a,1===k&&"object"!==b.nodeName.toLowerCase()){o=g(a),(r=b.getAttribute("id"))?s=r.replace(bb,"\\$&"):b.setAttribute("id",s),s="[id='"+s+"'] ",l=o.length;while(l--)o[l]=s+rb(o[l]);w=ab.test(a)&&pb(b.parentNode)||b,x=o.join(",")}if(x)try{return H.apply(d,w.querySelectorAll(x)),d}catch(y){}finally{r||b.removeAttribute("id")}}}return i(a.replace(R,"$1"),b,d,e)}function hb(){var a=[];function b(c,e){return a.push(c+" ")>d.cacheLength&&delete b[a.shift()],b[c+" "]=e}return b}function ib(a){return a[u]=!0,a}function jb(a){var b=n.createElement("div");try{return!!a(b)}catch(c){return!1}finally{b.parentNode&&b.parentNode.removeChild(b),b=null}}function kb(a,b){var c=a.split("|"),e=a.length;while(e--)d.attrHandle[c[e]]=b}function lb(a,b){var c=b&&a,d=c&&1===a.nodeType&&1===b.nodeType&&(~b.sourceIndex||C)-(~a.sourceIndex||C);if(d)return d;if(c)while(c=c.nextSibling)if(c===b)return-1;return a?1:-1}function mb(a){return function(b){var c=b.nodeName.toLowerCase();return"input"===c&&b.type===a}}function nb(a){return function(b){var c=b.nodeName.toLowerCase();return("input"===c||"button"===c)&&b.type===a}}function ob(a){return ib(function(b){return b=+b,ib(function(c,d){var e,f=a([],c.length,b),g=f.length;while(g--)c[e=f[g]]&&(c[e]=!(d[e]=c[e]))})})}function pb(a){return a&&"undefined"!=typeof a.getElementsByTagName&&a}c=gb.support={},f=gb.isXML=function(a){var b=a&&(a.ownerDocument||a).documentElement;return b?"HTML"!==b.nodeName:!1},m=gb.setDocument=function(a){var b,e,g=a?a.ownerDocument||a:v;return g!==n&&9===g.nodeType&&g.documentElement?(n=g,o=g.documentElement,e=g.defaultView,e&&e!==e.top&&(e.addEventListener?e.addEventListener("unload",eb,!1):e.attachEvent&&e.attachEvent("onunload",eb)),p=!f(g),c.attributes=jb(function(a){return a.className="i",!a.getAttribute("className")}),c.getElementsByTagName=jb(function(a){return a.appendChild(g.createComment("")),!a.getElementsByTagName("*").length}),c.getElementsByClassName=$.test(g.getElementsByClassName),c.getById=jb(function(a){return o.appendChild(a).id=u,!g.getElementsByName||!g.getElementsByName(u).length}),c.getById?(d.find.ID=function(a,b){if("undefined"!=typeof b.getElementById&&p){var c=b.getElementById(a);return c&&c.parentNode?[c]:[]}},d.filter.ID=function(a){var b=a.replace(cb,db);return function(a){return a.getAttribute("id")===b}}):(delete d.find.ID,d.filter.ID=function(a){var b=a.replace(cb,db);return function(a){var c="undefined"!=typeof a.getAttributeNode&&a.getAttributeNode("id");return c&&c.value===b}}),d.find.TAG=c.getElementsByTagName?function(a,b){return"undefined"!=typeof b.getElementsByTagName?b.getElementsByTagName(a):c.qsa?b.querySelectorAll(a):void 0}:function(a,b){var c,d=[],e=0,f=b.getElementsByTagName(a);if("*"===a){while(c=f[e++])1===c.nodeType&&d.push(c);return d}return f},d.find.CLASS=c.getElementsByClassName&&function(a,b){return p?b.getElementsByClassName(a):void 0},r=[],q=[],(c.qsa=$.test(g.querySelectorAll))&&(jb(function(a){o.appendChild(a).innerHTML="<a id='"+u+"'></a><select id='"+u+"-\f]' msallowcapture=''><option selected=''></option></select>",a.querySelectorAll("[msallowcapture^='']").length&&q.push("[*^$]="+L+"*(?:''|\"\")"),a.querySelectorAll("[selected]").length||q.push("\\["+L+"*(?:value|"+K+")"),a.querySelectorAll("[id~="+u+"-]").length||q.push("~="),a.querySelectorAll(":checked").length||q.push(":checked"),a.querySelectorAll("a#"+u+"+*").length||q.push(".#.+[+~]")}),jb(function(a){var b=g.createElement("input");b.setAttribute("type","hidden"),a.appendChild(b).setAttribute("name","D"),a.querySelectorAll("[name=d]").length&&q.push("name"+L+"*[*^$|!~]?="),a.querySelectorAll(":enabled").length||q.push(":enabled",":disabled"),a.querySelectorAll("*,:x"),q.push(",.*:")})),(c.matchesSelector=$.test(s=o.matches||o.webkitMatchesSelector||o.mozMatchesSelector||o.oMatchesSelector||o.msMatchesSelector))&&jb(function(a){c.disconnectedMatch=s.call(a,"div"),s.call(a,"[s!='']:x"),r.push("!=",P)}),q=q.length&&new RegExp(q.join("|")),r=r.length&&new RegExp(r.join("|")),b=$.test(o.compareDocumentPosition),t=b||$.test(o.contains)?function(a,b){var c=9===a.nodeType?a.documentElement:a,d=b&&b.parentNode;return a===d||!(!d||1!==d.nodeType||!(c.contains?c.contains(d):a.compareDocumentPosition&&16&a.compareDocumentPosition(d)))}:function(a,b){if(b)while(b=b.parentNode)if(b===a)return!0;return!1},B=b?function(a,b){if(a===b)return l=!0,0;var d=!a.compareDocumentPosition-!b.compareDocumentPosition;return d?d:(d=(a.ownerDocument||a)===(b.ownerDocument||b)?a.compareDocumentPosition(b):1,1&d||!c.sortDetached&&b.compareDocumentPosition(a)===d?a===g||a.ownerDocument===v&&t(v,a)?-1:b===g||b.ownerDocument===v&&t(v,b)?1:k?J(k,a)-J(k,b):0:4&d?-1:1)}:function(a,b){if(a===b)return l=!0,0;var c,d=0,e=a.parentNode,f=b.parentNode,h=[a],i=[b];if(!e||!f)return a===g?-1:b===g?1:e?-1:f?1:k?J(k,a)-J(k,b):0;if(e===f)return lb(a,b);c=a;while(c=c.parentNode)h.unshift(c);c=b;while(c=c.parentNode)i.unshift(c);while(h[d]===i[d])d++;return d?lb(h[d],i[d]):h[d]===v?-1:i[d]===v?1:0},g):n},gb.matches=function(a,b){return gb(a,null,null,b)},gb.matchesSelector=function(a,b){if((a.ownerDocument||a)!==n&&m(a),b=b.replace(U,"='$1']"),!(!c.matchesSelector||!p||r&&r.test(b)||q&&q.test(b)))try{var d=s.call(a,b);if(d||c.disconnectedMatch||a.document&&11!==a.document.nodeType)return d}catch(e){}return gb(b,n,null,[a]).length>0},gb.contains=function(a,b){return(a.ownerDocument||a)!==n&&m(a),t(a,b)},gb.attr=function(a,b){(a.ownerDocument||a)!==n&&m(a);var e=d.attrHandle[b.toLowerCase()],f=e&&D.call(d.attrHandle,b.toLowerCase())?e(a,b,!p):void 0;return void 0!==f?f:c.attributes||!p?a.getAttribute(b):(f=a.getAttributeNode(b))&&f.specified?f.value:null},gb.error=function(a){throw new Error("Syntax error, unrecognized expression: "+a)},gb.uniqueSort=function(a){var b,d=[],e=0,f=0;if(l=!c.detectDuplicates,k=!c.sortStable&&a.slice(0),a.sort(B),l){while(b=a[f++])b===a[f]&&(e=d.push(f));while(e--)a.splice(d[e],1)}return k=null,a},e=gb.getText=function(a){var b,c="",d=0,f=a.nodeType;if(f){if(1===f||9===f||11===f){if("string"==typeof a.textContent)return a.textContent;for(a=a.firstChild;a;a=a.nextSibling)c+=e(a)}else if(3===f||4===f)return a.nodeValue}else while(b=a[d++])c+=e(b);return c},d=gb.selectors={cacheLength:50,createPseudo:ib,match:X,attrHandle:{},find:{},relative:{">":{dir:"parentNode",first:!0}," ":{dir:"parentNode"},"+":{dir:"previousSibling",first:!0},"~":{dir:"previousSibling"}},preFilter:{ATTR:function(a){return a[1]=a[1].replace(cb,db),a[3]=(a[3]||a[4]||a[5]||"").replace(cb,db),"~="===a[2]&&(a[3]=" "+a[3]+" "),a.slice(0,4)},CHILD:function(a){return a[1]=a[1].toLowerCase(),"nth"===a[1].slice(0,3)?(a[3]||gb.error(a[0]),a[4]=+(a[4]?a[5]+(a[6]||1):2*("even"===a[3]||"odd"===a[3])),a[5]=+(a[7]+a[8]||"odd"===a[3])):a[3]&&gb.error(a[0]),a},PSEUDO:function(a){var b,c=!a[6]&&a[2];return X.CHILD.test(a[0])?null:(a[3]?a[2]=a[4]||a[5]||"":c&&V.test(c)&&(b=g(c,!0))&&(b=c.indexOf(")",c.length-b)-c.length)&&(a[0]=a[0].slice(0,b),a[2]=c.slice(0,b)),a.slice(0,3))}},filter:{TAG:function(a){var b=a.replace(cb,db).toLowerCase();return"*"===a?function(){return!0}:function(a){return a.nodeName&&a.nodeName.toLowerCase()===b}},CLASS:function(a){var b=y[a+" "];return b||(b=new RegExp("(^|"+L+")"+a+"("+L+"|$)"))&&y(a,function(a){return b.test("string"==typeof a.className&&a.className||"undefined"!=typeof a.getAttribute&&a.getAttribute("class")||"")})},ATTR:function(a,b,c){return function(d){var e=gb.attr(d,a);return null==e?"!="===b:b?(e+="","="===b?e===c:"!="===b?e!==c:"^="===b?c&&0===e.indexOf(c):"*="===b?c&&e.indexOf(c)>-1:"$="===b?c&&e.slice(-c.length)===c:"~="===b?(" "+e.replace(Q," ")+" ").indexOf(c)>-1:"|="===b?e===c||e.slice(0,c.length+1)===c+"-":!1):!0}},CHILD:function(a,b,c,d,e){var f="nth"!==a.slice(0,3),g="last"!==a.slice(-4),h="of-type"===b;return 1===d&&0===e?function(a){return!!a.parentNode}:function(b,c,i){var j,k,l,m,n,o,p=f!==g?"nextSibling":"previousSibling",q=b.parentNode,r=h&&b.nodeName.toLowerCase(),s=!i&&!h;if(q){if(f){while(p){l=b;while(l=l[p])if(h?l.nodeName.toLowerCase()===r:1===l.nodeType)return!1;o=p="only"===a&&!o&&"nextSibling"}return!0}if(o=[g?q.firstChild:q.lastChild],g&&s){k=q[u]||(q[u]={}),j=k[a]||[],n=j[0]===w&&j[1],m=j[0]===w&&j[2],l=n&&q.childNodes[n];while(l=++n&&l&&l[p]||(m=n=0)||o.pop())if(1===l.nodeType&&++m&&l===b){k[a]=[w,n,m];break}}else if(s&&(j=(b[u]||(b[u]={}))[a])&&j[0]===w)m=j[1];else while(l=++n&&l&&l[p]||(m=n=0)||o.pop())if((h?l.nodeName.toLowerCase()===r:1===l.nodeType)&&++m&&(s&&((l[u]||(l[u]={}))[a]=[w,m]),l===b))break;return m-=e,m===d||m%d===0&&m/d>=0}}},PSEUDO:function(a,b){var c,e=d.pseudos[a]||d.setFilters[a.toLowerCase()]||gb.error("unsupported pseudo: "+a);return e[u]?e(b):e.length>1?(c=[a,a,"",b],d.setFilters.hasOwnProperty(a.toLowerCase())?ib(function(a,c){var d,f=e(a,b),g=f.length;while(g--)d=J(a,f[g]),a[d]=!(c[d]=f[g])}):function(a){return e(a,0,c)}):e}},pseudos:{not:ib(function(a){var b=[],c=[],d=h(a.replace(R,"$1"));return d[u]?ib(function(a,b,c,e){var f,g=d(a,null,e,[]),h=a.length;while(h--)(f=g[h])&&(a[h]=!(b[h]=f))}):function(a,e,f){return b[0]=a,d(b,null,f,c),b[0]=null,!c.pop()}}),has:ib(function(a){return function(b){return gb(a,b).length>0}}),contains:ib(function(a){return a=a.replace(cb,db),function(b){return(b.textContent||b.innerText||e(b)).indexOf(a)>-1}}),lang:ib(function(a){return W.test(a||"")||gb.error("unsupported lang: "+a),a=a.replace(cb,db).toLowerCase(),function(b){var c;do if(c=p?b.lang:b.getAttribute("xml:lang")||b.getAttribute("lang"))return c=c.toLowerCase(),c===a||0===c.indexOf(a+"-");while((b=b.parentNode)&&1===b.nodeType);return!1}}),target:function(b){var c=a.location&&a.location.hash;return c&&c.slice(1)===b.id},root:function(a){return a===o},focus:function(a){return a===n.activeElement&&(!n.hasFocus||n.hasFocus())&&!!(a.type||a.href||~a.tabIndex)},enabled:function(a){return a.disabled===!1},disabled:function(a){return a.disabled===!0},checked:function(a){var b=a.nodeName.toLowerCase();return"input"===b&&!!a.checked||"option"===b&&!!a.selected},selected:function(a){return a.parentNode&&a.parentNode.selectedIndex,a.selected===!0},empty:function(a){for(a=a.firstChild;a;a=a.nextSibling)if(a.nodeType<6)return!1;return!0},parent:function(a){return!d.pseudos.empty(a)},header:function(a){return Z.test(a.nodeName)},input:function(a){return Y.test(a.nodeName)},button:function(a){var b=a.nodeName.toLowerCase();return"input"===b&&"button"===a.type||"button"===b},text:function(a){var b;return"input"===a.nodeName.toLowerCase()&&"text"===a.type&&(null==(b=a.getAttribute("type"))||"text"===b.toLowerCase())},first:ob(function(){return[0]}),last:ob(function(a,b){return[b-1]}),eq:ob(function(a,b,c){return[0>c?c+b:c]}),even:ob(function(a,b){for(var c=0;b>c;c+=2)a.push(c);return a}),odd:ob(function(a,b){for(var c=1;b>c;c+=2)a.push(c);return a}),lt:ob(function(a,b,c){for(var d=0>c?c+b:c;--d>=0;)a.push(d);return a}),gt:ob(function(a,b,c){for(var d=0>c?c+b:c;++d<b;)a.push(d);return a})}},d.pseudos.nth=d.pseudos.eq;for(b in{radio:!0,checkbox:!0,file:!0,password:!0,image:!0})d.pseudos[b]=mb(b);for(b in{submit:!0,reset:!0})d.pseudos[b]=nb(b);function qb(){}qb.prototype=d.filters=d.pseudos,d.setFilters=new qb,g=gb.tokenize=function(a,b){var c,e,f,g,h,i,j,k=z[a+" "];if(k)return b?0:k.slice(0);h=a,i=[],j=d.preFilter;while(h){(!c||(e=S.exec(h)))&&(e&&(h=h.slice(e[0].length)||h),i.push(f=[])),c=!1,(e=T.exec(h))&&(c=e.shift(),f.push({value:c,type:e[0].replace(R," ")}),h=h.slice(c.length));for(g in d.filter)!(e=X[g].exec(h))||j[g]&&!(e=j[g](e))||(c=e.shift(),f.push({value:c,type:g,matches:e}),h=h.slice(c.length));if(!c)break}return b?h.length:h?gb.error(a):z(a,i).slice(0)};function rb(a){for(var b=0,c=a.length,d="";c>b;b++)d+=a[b].value;return d}function sb(a,b,c){var d=b.dir,e=c&&"parentNode"===d,f=x++;return b.first?function(b,c,f){while(b=b[d])if(1===b.nodeType||e)return a(b,c,f)}:function(b,c,g){var h,i,j=[w,f];if(g){while(b=b[d])if((1===b.nodeType||e)&&a(b,c,g))return!0}else while(b=b[d])if(1===b.nodeType||e){if(i=b[u]||(b[u]={}),(h=i[d])&&h[0]===w&&h[1]===f)return j[2]=h[2];if(i[d]=j,j[2]=a(b,c,g))return!0}}}function tb(a){return a.length>1?function(b,c,d){var e=a.length;while(e--)if(!a[e](b,c,d))return!1;return!0}:a[0]}function ub(a,b,c){for(var d=0,e=b.length;e>d;d++)gb(a,b[d],c);return c}function vb(a,b,c,d,e){for(var f,g=[],h=0,i=a.length,j=null!=b;i>h;h++)(f=a[h])&&(!c||c(f,d,e))&&(g.push(f),j&&b.push(h));return g}function wb(a,b,c,d,e,f){return d&&!d[u]&&(d=wb(d)),e&&!e[u]&&(e=wb(e,f)),ib(function(f,g,h,i){var j,k,l,m=[],n=[],o=g.length,p=f||ub(b||"*",h.nodeType?[h]:h,[]),q=!a||!f&&b?p:vb(p,m,a,h,i),r=c?e||(f?a:o||d)?[]:g:q;if(c&&c(q,r,h,i),d){j=vb(r,n),d(j,[],h,i),k=j.length;while(k--)(l=j[k])&&(r[n[k]]=!(q[n[k]]=l))}if(f){if(e||a){if(e){j=[],k=r.length;while(k--)(l=r[k])&&j.push(q[k]=l);e(null,r=[],j,i)}k=r.length;while(k--)(l=r[k])&&(j=e?J(f,l):m[k])>-1&&(f[j]=!(g[j]=l))}}else r=vb(r===g?r.splice(o,r.length):r),e?e(null,g,r,i):H.apply(g,r)})}function xb(a){for(var b,c,e,f=a.length,g=d.relative[a[0].type],h=g||d.relative[" "],i=g?1:0,k=sb(function(a){return a===b},h,!0),l=sb(function(a){return J(b,a)>-1},h,!0),m=[function(a,c,d){var e=!g&&(d||c!==j)||((b=c).nodeType?k(a,c,d):l(a,c,d));return b=null,e}];f>i;i++)if(c=d.relative[a[i].type])m=[sb(tb(m),c)];else{if(c=d.filter[a[i].type].apply(null,a[i].matches),c[u]){for(e=++i;f>e;e++)if(d.relative[a[e].type])break;return wb(i>1&&tb(m),i>1&&rb(a.slice(0,i-1).concat({value:" "===a[i-2].type?"*":""})).replace(R,"$1"),c,e>i&&xb(a.slice(i,e)),f>e&&xb(a=a.slice(e)),f>e&&rb(a))}m.push(c)}return tb(m)}function yb(a,b){var c=b.length>0,e=a.length>0,f=function(f,g,h,i,k){var l,m,o,p=0,q="0",r=f&&[],s=[],t=j,u=f||e&&d.find.TAG("*",k),v=w+=null==t?1:Math.random()||.1,x=u.length;for(k&&(j=g!==n&&g);q!==x&&null!=(l=u[q]);q++){if(e&&l){m=0;while(o=a[m++])if(o(l,g,h)){i.push(l);break}k&&(w=v)}c&&((l=!o&&l)&&p--,f&&r.push(l))}if(p+=q,c&&q!==p){m=0;while(o=b[m++])o(r,s,g,h);if(f){if(p>0)while(q--)r[q]||s[q]||(s[q]=F.call(i));s=vb(s)}H.apply(i,s),k&&!f&&s.length>0&&p+b.length>1&&gb.uniqueSort(i)}return k&&(w=v,j=t),r};return c?ib(f):f}return h=gb.compile=function(a,b){var c,d=[],e=[],f=A[a+" "];if(!f){b||(b=g(a)),c=b.length;while(c--)f=xb(b[c]),f[u]?d.push(f):e.push(f);f=A(a,yb(e,d)),f.selector=a}return f},i=gb.select=function(a,b,e,f){var i,j,k,l,m,n="function"==typeof a&&a,o=!f&&g(a=n.selector||a);if(e=e||[],1===o.length){if(j=o[0]=o[0].slice(0),j.length>2&&"ID"===(k=j[0]).type&&c.getById&&9===b.nodeType&&p&&d.relative[j[1].type]){if(b=(d.find.ID(k.matches[0].replace(cb,db),b)||[])[0],!b)return e;n&&(b=b.parentNode),a=a.slice(j.shift().value.length)}i=X.needsContext.test(a)?0:j.length;while(i--){if(k=j[i],d.relative[l=k.type])break;if((m=d.find[l])&&(f=m(k.matches[0].replace(cb,db),ab.test(j[0].type)&&pb(b.parentNode)||b))){if(j.splice(i,1),a=f.length&&rb(j),!a)return H.apply(e,f),e;break}}}return(n||h(a,o))(f,b,!p,e,ab.test(a)&&pb(b.parentNode)||b),e},c.sortStable=u.split("").sort(B).join("")===u,c.detectDuplicates=!!l,m(),c.sortDetached=jb(function(a){return 1&a.compareDocumentPosition(n.createElement("div"))}),jb(function(a){return a.innerHTML="<a href='#'></a>","#"===a.firstChild.getAttribute("href")})||kb("type|href|height|width",function(a,b,c){return c?void 0:a.getAttribute(b,"type"===b.toLowerCase()?1:2)}),c.attributes&&jb(function(a){return a.innerHTML="<input/>",a.firstChild.setAttribute("value",""),""===a.firstChild.getAttribute("value")})||kb("value",function(a,b,c){return c||"input"!==a.nodeName.toLowerCase()?void 0:a.defaultValue}),jb(function(a){return null==a.getAttribute("disabled")})||kb(K,function(a,b,c){var d;return c?void 0:a[b]===!0?b.toLowerCase():(d=a.getAttributeNode(b))&&d.specified?d.value:null}),gb}(a);m.find=s,m.expr=s.selectors,m.expr[":"]=m.expr.pseudos,m.unique=s.uniqueSort,m.text=s.getText,m.isXMLDoc=s.isXML,m.contains=s.contains;var t=m.expr.match.needsContext,u=/^<(\w+)\s*\/?>(?:<\/\1>|)$/,v=/^.[^:#\[\.,]*$/;function w(a,b,c){if(m.isFunction(b))return m.grep(a,function(a,d){return!!b.call(a,d,a)!==c});if(b.nodeType)return m.grep(a,function(a){return a===b!==c});if("string"==typeof b){if(v.test(b))return m.filter(b,a,c);b=m.filter(b,a)}return m.grep(a,function(a){return m.inArray(a,b)>=0!==c})}m.filter=function(a,b,c){var d=b[0];return c&&(a=":not("+a+")"),1===b.length&&1===d.nodeType?m.find.matchesSelector(d,a)?[d]:[]:m.find.matches(a,m.grep(b,function(a){return 1===a.nodeType}))},m.fn.extend({find:function(a){var b,c=[],d=this,e=d.length;if("string"!=typeof a)return this.pushStack(m(a).filter(function(){for(b=0;e>b;b++)if(m.contains(d[b],this))return!0}));for(b=0;e>b;b++)m.find(a,d[b],c);return c=this.pushStack(e>1?m.unique(c):c),c.selector=this.selector?this.selector+" "+a:a,c},filter:function(a){return this.pushStack(w(this,a||[],!1))},not:function(a){return this.pushStack(w(this,a||[],!0))},is:function(a){return!!w(this,"string"==typeof a&&t.test(a)?m(a):a||[],!1).length}});var x,y=a.document,z=/^(?:\s*(<[\w\W]+>)[^>]*|#([\w-]*))$/,A=m.fn.init=function(a,b){var c,d;if(!a)return this;if("string"==typeof a){if(c="<"===a.charAt(0)&&">"===a.charAt(a.length-1)&&a.length>=3?[null,a,null]:z.exec(a),!c||!c[1]&&b)return!b||b.jquery?(b||x).find(a):this.constructor(b).find(a);if(c[1]){if(b=b instanceof m?b[0]:b,m.merge(this,m.parseHTML(c[1],b&&b.nodeType?b.ownerDocument||b:y,!0)),u.test(c[1])&&m.isPlainObject(b))for(c in b)m.isFunction(this[c])?this[c](b[c]):this.attr(c,b[c]);return this}if(d=y.getElementById(c[2]),d&&d.parentNode){if(d.id!==c[2])return x.find(a);this.length=1,this[0]=d}return this.context=y,this.selector=a,this}return a.nodeType?(this.context=this[0]=a,this.length=1,this):m.isFunction(a)?"undefined"!=typeof x.ready?x.ready(a):a(m):(void 0!==a.selector&&(this.selector=a.selector,this.context=a.context),m.makeArray(a,this))};A.prototype=m.fn,x=m(y);var B=/^(?:parents|prev(?:Until|All))/,C={children:!0,contents:!0,next:!0,prev:!0};m.extend({dir:function(a,b,c){var d=[],e=a[b];while(e&&9!==e.nodeType&&(void 0===c||1!==e.nodeType||!m(e).is(c)))1===e.nodeType&&d.push(e),e=e[b];return d},sibling:function(a,b){for(var c=[];a;a=a.nextSibling)1===a.nodeType&&a!==b&&c.push(a);return c}}),m.fn.extend({has:function(a){var b,c=m(a,this),d=c.length;return this.filter(function(){for(b=0;d>b;b++)if(m.contains(this,c[b]))return!0})},closest:function(a,b){for(var c,d=0,e=this.length,f=[],g=t.test(a)||"string"!=typeof a?m(a,b||this.context):0;e>d;d++)for(c=this[d];c&&c!==b;c=c.parentNode)if(c.nodeType<11&&(g?g.index(c)>-1:1===c.nodeType&&m.find.matchesSelector(c,a))){f.push(c);break}return this.pushStack(f.length>1?m.unique(f):f)},index:function(a){return a?"string"==typeof a?m.inArray(this[0],m(a)):m.inArray(a.jquery?a[0]:a,this):this[0]&&this[0].parentNode?this.first().prevAll().length:-1},add:function(a,b){return this.pushStack(m.unique(m.merge(this.get(),m(a,b))))},addBack:function(a){return this.add(null==a?this.prevObject:this.prevObject.filter(a))}});function D(a,b){do a=a[b];while(a&&1!==a.nodeType);return a}m.each({parent:function(a){var b=a.parentNode;return b&&11!==b.nodeType?b:null},parents:function(a){return m.dir(a,"parentNode")},parentsUntil:function(a,b,c){return m.dir(a,"parentNode",c)},next:function(a){return D(a,"nextSibling")},prev:function(a){return D(a,"previousSibling")},nextAll:function(a){return m.dir(a,"nextSibling")},prevAll:function(a){return m.dir(a,"previousSibling")},nextUntil:function(a,b,c){return m.dir(a,"nextSibling",c)},prevUntil:function(a,b,c){return m.dir(a,"previousSibling",c)},siblings:function(a){return m.sibling((a.parentNode||{}).firstChild,a)},children:function(a){return m.sibling(a.firstChild)},contents:function(a){return m.nodeName(a,"iframe")?a.contentDocument||a.contentWindow.document:m.merge([],a.childNodes)}},function(a,b){m.fn[a]=function(c,d){var e=m.map(this,b,c);return"Until"!==a.slice(-5)&&(d=c),d&&"string"==typeof d&&(e=m.filter(d,e)),this.length>1&&(C[a]||(e=m.unique(e)),B.test(a)&&(e=e.reverse())),this.pushStack(e)}});var E=/\S+/g,F={};function G(a){var b=F[a]={};return m.each(a.match(E)||[],function(a,c){b[c]=!0}),b}m.Callbacks=function(a){a="string"==typeof a?F[a]||G(a):m.extend({},a);var b,c,d,e,f,g,h=[],i=!a.once&&[],j=function(l){for(c=a.memory&&l,d=!0,f=g||0,g=0,e=h.length,b=!0;h&&e>f;f++)if(h[f].apply(l[0],l[1])===!1&&a.stopOnFalse){c=!1;break}b=!1,h&&(i?i.length&&j(i.shift()):c?h=[]:k.disable())},k={add:function(){if(h){var d=h.length;!function f(b){m.each(b,function(b,c){var d=m.type(c);"function"===d?a.unique&&k.has(c)||h.push(c):c&&c.length&&"string"!==d&&f(c)})}(arguments),b?e=h.length:c&&(g=d,j(c))}return this},remove:function(){return h&&m.each(arguments,function(a,c){var d;while((d=m.inArray(c,h,d))>-1)h.splice(d,1),b&&(e>=d&&e--,f>=d&&f--)}),this},has:function(a){return a?m.inArray(a,h)>-1:!(!h||!h.length)},empty:function(){return h=[],e=0,this},disable:function(){return h=i=c=void 0,this},disabled:function(){return!h},lock:function(){return i=void 0,c||k.disable(),this},locked:function(){return!i},fireWith:function(a,c){return!h||d&&!i||(c=c||[],c=[a,c.slice?c.slice():c],b?i.push(c):j(c)),this},fire:function(){return k.fireWith(this,arguments),this},fired:function(){return!!d}};return k},m.extend({Deferred:function(a){var b=[["resolve","done",m.Callbacks("once memory"),"resolved"],["reject","fail",m.Callbacks("once memory"),"rejected"],["notify","progress",m.Callbacks("memory")]],c="pending",d={state:function(){return c},always:function(){return e.done(arguments).fail(arguments),this},then:function(){var a=arguments;return m.Deferred(function(c){m.each(b,function(b,f){var g=m.isFunction(a[b])&&a[b];e[f[1]](function(){var a=g&&g.apply(this,arguments);a&&m.isFunction(a.promise)?a.promise().done(c.resolve).fail(c.reject).progress(c.notify):c[f[0]+"With"](this===d?c.promise():this,g?[a]:arguments)})}),a=null}).promise()},promise:function(a){return null!=a?m.extend(a,d):d}},e={};return d.pipe=d.then,m.each(b,function(a,f){var g=f[2],h=f[3];d[f[1]]=g.add,h&&g.add(function(){c=h},b[1^a][2].disable,b[2][2].lock),e[f[0]]=function(){return e[f[0]+"With"](this===e?d:this,arguments),this},e[f[0]+"With"]=g.fireWith}),d.promise(e),a&&a.call(e,e),e},when:function(a){var b=0,c=d.call(arguments),e=c.length,f=1!==e||a&&m.isFunction(a.promise)?e:0,g=1===f?a:m.Deferred(),h=function(a,b,c){return function(e){b[a]=this,c[a]=arguments.length>1?d.call(arguments):e,c===i?g.notifyWith(b,c):--f||g.resolveWith(b,c)}},i,j,k;if(e>1)for(i=new Array(e),j=new Array(e),k=new Array(e);e>b;b++)c[b]&&m.isFunction(c[b].promise)?c[b].promise().done(h(b,k,c)).fail(g.reject).progress(h(b,j,i)):--f;return f||g.resolveWith(k,c),g.promise()}});var H;m.fn.ready=function(a){return m.ready.promise().done(a),this},m.extend({isReady:!1,readyWait:1,holdReady:function(a){a?m.readyWait++:m.ready(!0)},ready:function(a){if(a===!0?!--m.readyWait:!m.isReady){if(!y.body)return setTimeout(m.ready);m.isReady=!0,a!==!0&&--m.readyWait>0||(H.resolveWith(y,[m]),m.fn.triggerHandler&&(m(y).triggerHandler("ready"),m(y).off("ready")))}}});function I(){y.addEventListener?(y.removeEventListener("DOMContentLoaded",J,!1),a.removeEventListener("load",J,!1)):(y.detachEvent("onreadystatechange",J),a.detachEvent("onload",J))}function J(){(y.addEventListener||"load"===event.type||"complete"===y.readyState)&&(I(),m.ready())}m.ready.promise=function(b){if(!H)if(H=m.Deferred(),"complete"===y.readyState)setTimeout(m.ready);else if(y.addEventListener)y.addEventListener("DOMContentLoaded",J,!1),a.addEventListener("load",J,!1);else{y.attachEvent("onreadystatechange",J),a.attachEvent("onload",J);var c=!1;try{c=null==a.frameElement&&y.documentElement}catch(d){}c&&c.doScroll&&!function e(){if(!m.isReady){try{c.doScroll("left")}catch(a){return setTimeout(e,50)}I(),m.ready()}}()}return H.promise(b)};var K="undefined",L;for(L in m(k))break;k.ownLast="0"!==L,k.inlineBlockNeedsLayout=!1,m(function(){var a,b,c,d;c=y.getElementsByTagName("body")[0],c&&c.style&&(b=y.createElement("div"),d=y.createElement("div"),d.style.cssText="position:absolute;border:0;width:0;height:0;top:0;left:-9999px",c.appendChild(d).appendChild(b),typeof b.style.zoom!==K&&(b.style.cssText="display:inline;margin:0;border:0;padding:1px;width:1px;zoom:1",k.inlineBlockNeedsLayout=a=3===b.offsetWidth,a&&(c.style.zoom=1)),c.removeChild(d))}),function(){var a=y.createElement("div");if(null==k.deleteExpando){k.deleteExpando=!0;try{delete a.test}catch(b){k.deleteExpando=!1}}a=null}(),m.acceptData=function(a){var b=m.noData[(a.nodeName+" ").toLowerCase()],c=+a.nodeType||1;return 1!==c&&9!==c?!1:!b||b!==!0&&a.getAttribute("classid")===b};var M=/^(?:\{[\w\W]*\}|\[[\w\W]*\])$/,N=/([A-Z])/g;function O(a,b,c){if(void 0===c&&1===a.nodeType){var d="data-"+b.replace(N,"-$1").toLowerCase();if(c=a.getAttribute(d),"string"==typeof c){try{c="true"===c?!0:"false"===c?!1:"null"===c?null:+c+""===c?+c:M.test(c)?m.parseJSON(c):c}catch(e){}m.data(a,b,c)}else c=void 0}return c}function P(a){var b;for(b in a)if(("data"!==b||!m.isEmptyObject(a[b]))&&"toJSON"!==b)return!1;
 return!0}function Q(a,b,d,e){if(m.acceptData(a)){var f,g,h=m.expando,i=a.nodeType,j=i?m.cache:a,k=i?a[h]:a[h]&&h;if(k&&j[k]&&(e||j[k].data)||void 0!==d||"string"!=typeof b)return k||(k=i?a[h]=c.pop()||m.guid++:h),j[k]||(j[k]=i?{}:{toJSON:m.noop}),("object"==typeof b||"function"==typeof b)&&(e?j[k]=m.extend(j[k],b):j[k].data=m.extend(j[k].data,b)),g=j[k],e||(g.data||(g.data={}),g=g.data),void 0!==d&&(g[m.camelCase(b)]=d),"string"==typeof b?(f=g[b],null==f&&(f=g[m.camelCase(b)])):f=g,f}}function R(a,b,c){if(m.acceptData(a)){var d,e,f=a.nodeType,g=f?m.cache:a,h=f?a[m.expando]:m.expando;if(g[h]){if(b&&(d=c?g[h]:g[h].data)){m.isArray(b)?b=b.concat(m.map(b,m.camelCase)):b in d?b=[b]:(b=m.camelCase(b),b=b in d?[b]:b.split(" ")),e=b.length;while(e--)delete d[b[e]];if(c?!P(d):!m.isEmptyObject(d))return}(c||(delete g[h].data,P(g[h])))&&(f?m.cleanData([a],!0):k.deleteExpando||g!=g.window?delete g[h]:g[h]=null)}}}m.extend({cache:{},noData:{"applet ":!0,"embed ":!0,"object ":"clsid:D27CDB6E-AE6D-11cf-96B8-444553540000"},hasData:function(a){return a=a.nodeType?m.cache[a[m.expando]]:a[m.expando],!!a&&!P(a)},data:function(a,b,c){return Q(a,b,c)},removeData:function(a,b){return R(a,b)},_data:function(a,b,c){return Q(a,b,c,!0)},_removeData:function(a,b){return R(a,b,!0)}}),m.fn.extend({data:function(a,b){var c,d,e,f=this[0],g=f&&f.attributes;if(void 0===a){if(this.length&&(e=m.data(f),1===f.nodeType&&!m._data(f,"parsedAttrs"))){c=g.length;while(c--)g[c]&&(d=g[c].name,0===d.indexOf("data-")&&(d=m.camelCase(d.slice(5)),O(f,d,e[d])));m._data(f,"parsedAttrs",!0)}return e}return"object"==typeof a?this.each(function(){m.data(this,a)}):arguments.length>1?this.each(function(){m.data(this,a,b)}):f?O(f,a,m.data(f,a)):void 0},removeData:function(a){return this.each(function(){m.removeData(this,a)})}}),m.extend({queue:function(a,b,c){var d;return a?(b=(b||"fx")+"queue",d=m._data(a,b),c&&(!d||m.isArray(c)?d=m._data(a,b,m.makeArray(c)):d.push(c)),d||[]):void 0},dequeue:function(a,b){b=b||"fx";var c=m.queue(a,b),d=c.length,e=c.shift(),f=m._queueHooks(a,b),g=function(){m.dequeue(a,b)};"inprogress"===e&&(e=c.shift(),d--),e&&("fx"===b&&c.unshift("inprogress"),delete f.stop,e.call(a,g,f)),!d&&f&&f.empty.fire()},_queueHooks:function(a,b){var c=b+"queueHooks";return m._data(a,c)||m._data(a,c,{empty:m.Callbacks("once memory").add(function(){m._removeData(a,b+"queue"),m._removeData(a,c)})})}}),m.fn.extend({queue:function(a,b){var c=2;return"string"!=typeof a&&(b=a,a="fx",c--),arguments.length<c?m.queue(this[0],a):void 0===b?this:this.each(function(){var c=m.queue(this,a,b);m._queueHooks(this,a),"fx"===a&&"inprogress"!==c[0]&&m.dequeue(this,a)})},dequeue:function(a){return this.each(function(){m.dequeue(this,a)})},clearQueue:function(a){return this.queue(a||"fx",[])},promise:function(a,b){var c,d=1,e=m.Deferred(),f=this,g=this.length,h=function(){--d||e.resolveWith(f,[f])};"string"!=typeof a&&(b=a,a=void 0),a=a||"fx";while(g--)c=m._data(f[g],a+"queueHooks"),c&&c.empty&&(d++,c.empty.add(h));return h(),e.promise(b)}});var S=/[+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|)/.source,T=["Top","Right","Bottom","Left"],U=function(a,b){return a=b||a,"none"===m.css(a,"display")||!m.contains(a.ownerDocument,a)},V=m.access=function(a,b,c,d,e,f,g){var h=0,i=a.length,j=null==c;if("object"===m.type(c)){e=!0;for(h in c)m.access(a,b,h,c[h],!0,f,g)}else if(void 0!==d&&(e=!0,m.isFunction(d)||(g=!0),j&&(g?(b.call(a,d),b=null):(j=b,b=function(a,b,c){return j.call(m(a),c)})),b))for(;i>h;h++)b(a[h],c,g?d:d.call(a[h],h,b(a[h],c)));return e?a:j?b.call(a):i?b(a[0],c):f},W=/^(?:checkbox|radio)$/i;!function(){var a=y.createElement("input"),b=y.createElement("div"),c=y.createDocumentFragment();if(b.innerHTML="  <link/><table></table><a href='/a'>a</a><input type='checkbox'/>",k.leadingWhitespace=3===b.firstChild.nodeType,k.tbody=!b.getElementsByTagName("tbody").length,k.htmlSerialize=!!b.getElementsByTagName("link").length,k.html5Clone="<:nav></:nav>"!==y.createElement("nav").cloneNode(!0).outerHTML,a.type="checkbox",a.checked=!0,c.appendChild(a),k.appendChecked=a.checked,b.innerHTML="<textarea>x</textarea>",k.noCloneChecked=!!b.cloneNode(!0).lastChild.defaultValue,c.appendChild(b),b.innerHTML="<input type='radio' checked='checked' name='t'/>",k.checkClone=b.cloneNode(!0).cloneNode(!0).lastChild.checked,k.noCloneEvent=!0,b.attachEvent&&(b.attachEvent("onclick",function(){k.noCloneEvent=!1}),b.cloneNode(!0).click()),null==k.deleteExpando){k.deleteExpando=!0;try{delete b.test}catch(d){k.deleteExpando=!1}}}(),function(){var b,c,d=y.createElement("div");for(b in{submit:!0,change:!0,focusin:!0})c="on"+b,(k[b+"Bubbles"]=c in a)||(d.setAttribute(c,"t"),k[b+"Bubbles"]=d.attributes[c].expando===!1);d=null}();var X=/^(?:input|select|textarea)$/i,Y=/^key/,Z=/^(?:mouse|pointer|contextmenu)|click/,$=/^(?:focusinfocus|focusoutblur)$/,_=/^([^.]*)(?:\.(.+)|)$/;function ab(){return!0}function bb(){return!1}function cb(){try{return y.activeElement}catch(a){}}m.event={global:{},add:function(a,b,c,d,e){var f,g,h,i,j,k,l,n,o,p,q,r=m._data(a);if(r){c.handler&&(i=c,c=i.handler,e=i.selector),c.guid||(c.guid=m.guid++),(g=r.events)||(g=r.events={}),(k=r.handle)||(k=r.handle=function(a){return typeof m===K||a&&m.event.triggered===a.type?void 0:m.event.dispatch.apply(k.elem,arguments)},k.elem=a),b=(b||"").match(E)||[""],h=b.length;while(h--)f=_.exec(b[h])||[],o=q=f[1],p=(f[2]||"").split(".").sort(),o&&(j=m.event.special[o]||{},o=(e?j.delegateType:j.bindType)||o,j=m.event.special[o]||{},l=m.extend({type:o,origType:q,data:d,handler:c,guid:c.guid,selector:e,needsContext:e&&m.expr.match.needsContext.test(e),namespace:p.join(".")},i),(n=g[o])||(n=g[o]=[],n.delegateCount=0,j.setup&&j.setup.call(a,d,p,k)!==!1||(a.addEventListener?a.addEventListener(o,k,!1):a.attachEvent&&a.attachEvent("on"+o,k))),j.add&&(j.add.call(a,l),l.handler.guid||(l.handler.guid=c.guid)),e?n.splice(n.delegateCount++,0,l):n.push(l),m.event.global[o]=!0);a=null}},remove:function(a,b,c,d,e){var f,g,h,i,j,k,l,n,o,p,q,r=m.hasData(a)&&m._data(a);if(r&&(k=r.events)){b=(b||"").match(E)||[""],j=b.length;while(j--)if(h=_.exec(b[j])||[],o=q=h[1],p=(h[2]||"").split(".").sort(),o){l=m.event.special[o]||{},o=(d?l.delegateType:l.bindType)||o,n=k[o]||[],h=h[2]&&new RegExp("(^|\\.)"+p.join("\\.(?:.*\\.|)")+"(\\.|$)"),i=f=n.length;while(f--)g=n[f],!e&&q!==g.origType||c&&c.guid!==g.guid||h&&!h.test(g.namespace)||d&&d!==g.selector&&("**"!==d||!g.selector)||(n.splice(f,1),g.selector&&n.delegateCount--,l.remove&&l.remove.call(a,g));i&&!n.length&&(l.teardown&&l.teardown.call(a,p,r.handle)!==!1||m.removeEvent(a,o,r.handle),delete k[o])}else for(o in k)m.event.remove(a,o+b[j],c,d,!0);m.isEmptyObject(k)&&(delete r.handle,m._removeData(a,"events"))}},trigger:function(b,c,d,e){var f,g,h,i,k,l,n,o=[d||y],p=j.call(b,"type")?b.type:b,q=j.call(b,"namespace")?b.namespace.split("."):[];if(h=l=d=d||y,3!==d.nodeType&&8!==d.nodeType&&!$.test(p+m.event.triggered)&&(p.indexOf(".")>=0&&(q=p.split("."),p=q.shift(),q.sort()),g=p.indexOf(":")<0&&"on"+p,b=b[m.expando]?b:new m.Event(p,"object"==typeof b&&b),b.isTrigger=e?2:3,b.namespace=q.join("."),b.namespace_re=b.namespace?new RegExp("(^|\\.)"+q.join("\\.(?:.*\\.|)")+"(\\.|$)"):null,b.result=void 0,b.target||(b.target=d),c=null==c?[b]:m.makeArray(c,[b]),k=m.event.special[p]||{},e||!k.trigger||k.trigger.apply(d,c)!==!1)){if(!e&&!k.noBubble&&!m.isWindow(d)){for(i=k.delegateType||p,$.test(i+p)||(h=h.parentNode);h;h=h.parentNode)o.push(h),l=h;l===(d.ownerDocument||y)&&o.push(l.defaultView||l.parentWindow||a)}n=0;while((h=o[n++])&&!b.isPropagationStopped())b.type=n>1?i:k.bindType||p,f=(m._data(h,"events")||{})[b.type]&&m._data(h,"handle"),f&&f.apply(h,c),f=g&&h[g],f&&f.apply&&m.acceptData(h)&&(b.result=f.apply(h,c),b.result===!1&&b.preventDefault());if(b.type=p,!e&&!b.isDefaultPrevented()&&(!k._default||k._default.apply(o.pop(),c)===!1)&&m.acceptData(d)&&g&&d[p]&&!m.isWindow(d)){l=d[g],l&&(d[g]=null),m.event.triggered=p;try{d[p]()}catch(r){}m.event.triggered=void 0,l&&(d[g]=l)}return b.result}},dispatch:function(a){a=m.event.fix(a);var b,c,e,f,g,h=[],i=d.call(arguments),j=(m._data(this,"events")||{})[a.type]||[],k=m.event.special[a.type]||{};if(i[0]=a,a.delegateTarget=this,!k.preDispatch||k.preDispatch.call(this,a)!==!1){h=m.event.handlers.call(this,a,j),b=0;while((f=h[b++])&&!a.isPropagationStopped()){a.currentTarget=f.elem,g=0;while((e=f.handlers[g++])&&!a.isImmediatePropagationStopped())(!a.namespace_re||a.namespace_re.test(e.namespace))&&(a.handleObj=e,a.data=e.data,c=((m.event.special[e.origType]||{}).handle||e.handler).apply(f.elem,i),void 0!==c&&(a.result=c)===!1&&(a.preventDefault(),a.stopPropagation()))}return k.postDispatch&&k.postDispatch.call(this,a),a.result}},handlers:function(a,b){var c,d,e,f,g=[],h=b.delegateCount,i=a.target;if(h&&i.nodeType&&(!a.button||"click"!==a.type))for(;i!=this;i=i.parentNode||this)if(1===i.nodeType&&(i.disabled!==!0||"click"!==a.type)){for(e=[],f=0;h>f;f++)d=b[f],c=d.selector+" ",void 0===e[c]&&(e[c]=d.needsContext?m(c,this).index(i)>=0:m.find(c,this,null,[i]).length),e[c]&&e.push(d);e.length&&g.push({elem:i,handlers:e})}return h<b.length&&g.push({elem:this,handlers:b.slice(h)}),g},fix:function(a){if(a[m.expando])return a;var b,c,d,e=a.type,f=a,g=this.fixHooks[e];g||(this.fixHooks[e]=g=Z.test(e)?this.mouseHooks:Y.test(e)?this.keyHooks:{}),d=g.props?this.props.concat(g.props):this.props,a=new m.Event(f),b=d.length;while(b--)c=d[b],a[c]=f[c];return a.target||(a.target=f.srcElement||y),3===a.target.nodeType&&(a.target=a.target.parentNode),a.metaKey=!!a.metaKey,g.filter?g.filter(a,f):a},props:"altKey bubbles cancelable ctrlKey currentTarget eventPhase metaKey relatedTarget shiftKey target timeStamp view which".split(" "),fixHooks:{},keyHooks:{props:"char charCode key keyCode".split(" "),filter:function(a,b){return null==a.which&&(a.which=null!=b.charCode?b.charCode:b.keyCode),a}},mouseHooks:{props:"button buttons clientX clientY fromElement offsetX offsetY pageX pageY screenX screenY toElement".split(" "),filter:function(a,b){var c,d,e,f=b.button,g=b.fromElement;return null==a.pageX&&null!=b.clientX&&(d=a.target.ownerDocument||y,e=d.documentElement,c=d.body,a.pageX=b.clientX+(e&&e.scrollLeft||c&&c.scrollLeft||0)-(e&&e.clientLeft||c&&c.clientLeft||0),a.pageY=b.clientY+(e&&e.scrollTop||c&&c.scrollTop||0)-(e&&e.clientTop||c&&c.clientTop||0)),!a.relatedTarget&&g&&(a.relatedTarget=g===a.target?b.toElement:g),a.which||void 0===f||(a.which=1&f?1:2&f?3:4&f?2:0),a}},special:{load:{noBubble:!0},focus:{trigger:function(){if(this!==cb()&&this.focus)try{return this.focus(),!1}catch(a){}},delegateType:"focusin"},blur:{trigger:function(){return this===cb()&&this.blur?(this.blur(),!1):void 0},delegateType:"focusout"},click:{trigger:function(){return m.nodeName(this,"input")&&"checkbox"===this.type&&this.click?(this.click(),!1):void 0},_default:function(a){return m.nodeName(a.target,"a")}},beforeunload:{postDispatch:function(a){void 0!==a.result&&a.originalEvent&&(a.originalEvent.returnValue=a.result)}}},simulate:function(a,b,c,d){var e=m.extend(new m.Event,c,{type:a,isSimulated:!0,originalEvent:{}});d?m.event.trigger(e,null,b):m.event.dispatch.call(b,e),e.isDefaultPrevented()&&c.preventDefault()}},m.removeEvent=y.removeEventListener?function(a,b,c){a.removeEventListener&&a.removeEventListener(b,c,!1)}:function(a,b,c){var d="on"+b;a.detachEvent&&(typeof a[d]===K&&(a[d]=null),a.detachEvent(d,c))},m.Event=function(a,b){return this instanceof m.Event?(a&&a.type?(this.originalEvent=a,this.type=a.type,this.isDefaultPrevented=a.defaultPrevented||void 0===a.defaultPrevented&&a.returnValue===!1?ab:bb):this.type=a,b&&m.extend(this,b),this.timeStamp=a&&a.timeStamp||m.now(),void(this[m.expando]=!0)):new m.Event(a,b)},m.Event.prototype={isDefaultPrevented:bb,isPropagationStopped:bb,isImmediatePropagationStopped:bb,preventDefault:function(){var a=this.originalEvent;this.isDefaultPrevented=ab,a&&(a.preventDefault?a.preventDefault():a.returnValue=!1)},stopPropagation:function(){var a=this.originalEvent;this.isPropagationStopped=ab,a&&(a.stopPropagation&&a.stopPropagation(),a.cancelBubble=!0)},stopImmediatePropagation:function(){var a=this.originalEvent;this.isImmediatePropagationStopped=ab,a&&a.stopImmediatePropagation&&a.stopImmediatePropagation(),this.stopPropagation()}},m.each({mouseenter:"mouseover",mouseleave:"mouseout",pointerenter:"pointerover",pointerleave:"pointerout"},function(a,b){m.event.special[a]={delegateType:b,bindType:b,handle:function(a){var c,d=this,e=a.relatedTarget,f=a.handleObj;return(!e||e!==d&&!m.contains(d,e))&&(a.type=f.origType,c=f.handler.apply(this,arguments),a.type=b),c}}}),k.submitBubbles||(m.event.special.submit={setup:function(){return m.nodeName(this,"form")?!1:void m.event.add(this,"click._submit keypress._submit",function(a){var b=a.target,c=m.nodeName(b,"input")||m.nodeName(b,"button")?b.form:void 0;c&&!m._data(c,"submitBubbles")&&(m.event.add(c,"submit._submit",function(a){a._submit_bubble=!0}),m._data(c,"submitBubbles",!0))})},postDispatch:function(a){a._submit_bubble&&(delete a._submit_bubble,this.parentNode&&!a.isTrigger&&m.event.simulate("submit",this.parentNode,a,!0))},teardown:function(){return m.nodeName(this,"form")?!1:void m.event.remove(this,"._submit")}}),k.changeBubbles||(m.event.special.change={setup:function(){return X.test(this.nodeName)?(("checkbox"===this.type||"radio"===this.type)&&(m.event.add(this,"propertychange._change",function(a){"checked"===a.originalEvent.propertyName&&(this._just_changed=!0)}),m.event.add(this,"click._change",function(a){this._just_changed&&!a.isTrigger&&(this._just_changed=!1),m.event.simulate("change",this,a,!0)})),!1):void m.event.add(this,"beforeactivate._change",function(a){var b=a.target;X.test(b.nodeName)&&!m._data(b,"changeBubbles")&&(m.event.add(b,"change._change",function(a){!this.parentNode||a.isSimulated||a.isTrigger||m.event.simulate("change",this.parentNode,a,!0)}),m._data(b,"changeBubbles",!0))})},handle:function(a){var b=a.target;return this!==b||a.isSimulated||a.isTrigger||"radio"!==b.type&&"checkbox"!==b.type?a.handleObj.handler.apply(this,arguments):void 0},teardown:function(){return m.event.remove(this,"._change"),!X.test(this.nodeName)}}),k.focusinBubbles||m.each({focus:"focusin",blur:"focusout"},function(a,b){var c=function(a){m.event.simulate(b,a.target,m.event.fix(a),!0)};m.event.special[b]={setup:function(){var d=this.ownerDocument||this,e=m._data(d,b);e||d.addEventListener(a,c,!0),m._data(d,b,(e||0)+1)},teardown:function(){var d=this.ownerDocument||this,e=m._data(d,b)-1;e?m._data(d,b,e):(d.removeEventListener(a,c,!0),m._removeData(d,b))}}}),m.fn.extend({on:function(a,b,c,d,e){var f,g;if("object"==typeof a){"string"!=typeof b&&(c=c||b,b=void 0);for(f in a)this.on(f,b,c,a[f],e);return this}if(null==c&&null==d?(d=b,c=b=void 0):null==d&&("string"==typeof b?(d=c,c=void 0):(d=c,c=b,b=void 0)),d===!1)d=bb;else if(!d)return this;return 1===e&&(g=d,d=function(a){return m().off(a),g.apply(this,arguments)},d.guid=g.guid||(g.guid=m.guid++)),this.each(function(){m.event.add(this,a,d,c,b)})},one:function(a,b,c,d){return this.on(a,b,c,d,1)},off:function(a,b,c){var d,e;if(a&&a.preventDefault&&a.handleObj)return d=a.handleObj,m(a.delegateTarget).off(d.namespace?d.origType+"."+d.namespace:d.origType,d.selector,d.handler),this;if("object"==typeof a){for(e in a)this.off(e,b,a[e]);return this}return(b===!1||"function"==typeof b)&&(c=b,b=void 0),c===!1&&(c=bb),this.each(function(){m.event.remove(this,a,c,b)})},trigger:function(a,b){return this.each(function(){m.event.trigger(a,b,this)})},triggerHandler:function(a,b){var c=this[0];return c?m.event.trigger(a,b,c,!0):void 0}});function db(a){var b=eb.split("|"),c=a.createDocumentFragment();if(c.createElement)while(b.length)c.createElement(b.pop());return c}var eb="abbr|article|aside|audio|bdi|canvas|data|datalist|details|figcaption|figure|footer|header|hgroup|mark|meter|nav|output|progress|section|summary|time|video",fb=/ jQuery\d+="(?:null|\d+)"/g,gb=new RegExp("<(?:"+eb+")[\\s/>]","i"),hb=/^\s+/,ib=/<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/gi,jb=/<([\w:]+)/,kb=/<tbody/i,lb=/<|&#?\w+;/,mb=/<(?:script|style|link)/i,nb=/checked\s*(?:[^=]|=\s*.checked.)/i,ob=/^$|\/(?:java|ecma)script/i,pb=/^true\/(.*)/,qb=/^\s*<!(?:\[CDATA\[|--)|(?:\]\]|--)>\s*$/g,rb={option:[1,"<select multiple='multiple'>","</select>"],legend:[1,"<fieldset>","</fieldset>"],area:[1,"<map>","</map>"],param:[1,"<object>","</object>"],thead:[1,"<table>","</table>"],tr:[2,"<table><tbody>","</tbody></table>"],col:[2,"<table><tbody></tbody><colgroup>","</colgroup></table>"],td:[3,"<table><tbody><tr>","</tr></tbody></table>"],_default:k.htmlSerialize?[0,"",""]:[1,"X<div>","</div>"]},sb=db(y),tb=sb.appendChild(y.createElement("div"));rb.optgroup=rb.option,rb.tbody=rb.tfoot=rb.colgroup=rb.caption=rb.thead,rb.th=rb.td;function ub(a,b){var c,d,e=0,f=typeof a.getElementsByTagName!==K?a.getElementsByTagName(b||"*"):typeof a.querySelectorAll!==K?a.querySelectorAll(b||"*"):void 0;if(!f)for(f=[],c=a.childNodes||a;null!=(d=c[e]);e++)!b||m.nodeName(d,b)?f.push(d):m.merge(f,ub(d,b));return void 0===b||b&&m.nodeName(a,b)?m.merge([a],f):f}function vb(a){W.test(a.type)&&(a.defaultChecked=a.checked)}function wb(a,b){return m.nodeName(a,"table")&&m.nodeName(11!==b.nodeType?b:b.firstChild,"tr")?a.getElementsByTagName("tbody")[0]||a.appendChild(a.ownerDocument.createElement("tbody")):a}function xb(a){return a.type=(null!==m.find.attr(a,"type"))+"/"+a.type,a}function yb(a){var b=pb.exec(a.type);return b?a.type=b[1]:a.removeAttribute("type"),a}function zb(a,b){for(var c,d=0;null!=(c=a[d]);d++)m._data(c,"globalEval",!b||m._data(b[d],"globalEval"))}function Ab(a,b){if(1===b.nodeType&&m.hasData(a)){var c,d,e,f=m._data(a),g=m._data(b,f),h=f.events;if(h){delete g.handle,g.events={};for(c in h)for(d=0,e=h[c].length;e>d;d++)m.event.add(b,c,h[c][d])}g.data&&(g.data=m.extend({},g.data))}}function Bb(a,b){var c,d,e;if(1===b.nodeType){if(c=b.nodeName.toLowerCase(),!k.noCloneEvent&&b[m.expando]){e=m._data(b);for(d in e.events)m.removeEvent(b,d,e.handle);b.removeAttribute(m.expando)}"script"===c&&b.text!==a.text?(xb(b).text=a.text,yb(b)):"object"===c?(b.parentNode&&(b.outerHTML=a.outerHTML),k.html5Clone&&a.innerHTML&&!m.trim(b.innerHTML)&&(b.innerHTML=a.innerHTML)):"input"===c&&W.test(a.type)?(b.defaultChecked=b.checked=a.checked,b.value!==a.value&&(b.value=a.value)):"option"===c?b.defaultSelected=b.selected=a.defaultSelected:("input"===c||"textarea"===c)&&(b.defaultValue=a.defaultValue)}}m.extend({clone:function(a,b,c){var d,e,f,g,h,i=m.contains(a.ownerDocument,a);if(k.html5Clone||m.isXMLDoc(a)||!gb.test("<"+a.nodeName+">")?f=a.cloneNode(!0):(tb.innerHTML=a.outerHTML,tb.removeChild(f=tb.firstChild)),!(k.noCloneEvent&&k.noCloneChecked||1!==a.nodeType&&11!==a.nodeType||m.isXMLDoc(a)))for(d=ub(f),h=ub(a),g=0;null!=(e=h[g]);++g)d[g]&&Bb(e,d[g]);if(b)if(c)for(h=h||ub(a),d=d||ub(f),g=0;null!=(e=h[g]);g++)Ab(e,d[g]);else Ab(a,f);return d=ub(f,"script"),d.length>0&&zb(d,!i&&ub(a,"script")),d=h=e=null,f},buildFragment:function(a,b,c,d){for(var e,f,g,h,i,j,l,n=a.length,o=db(b),p=[],q=0;n>q;q++)if(f=a[q],f||0===f)if("object"===m.type(f))m.merge(p,f.nodeType?[f]:f);else if(lb.test(f)){h=h||o.appendChild(b.createElement("div")),i=(jb.exec(f)||["",""])[1].toLowerCase(),l=rb[i]||rb._default,h.innerHTML=l[1]+f.replace(ib,"<$1></$2>")+l[2],e=l[0];while(e--)h=h.lastChild;if(!k.leadingWhitespace&&hb.test(f)&&p.push(b.createTextNode(hb.exec(f)[0])),!k.tbody){f="table"!==i||kb.test(f)?"<table>"!==l[1]||kb.test(f)?0:h:h.firstChild,e=f&&f.childNodes.length;while(e--)m.nodeName(j=f.childNodes[e],"tbody")&&!j.childNodes.length&&f.removeChild(j)}m.merge(p,h.childNodes),h.textContent="";while(h.firstChild)h.removeChild(h.firstChild);h=o.lastChild}else p.push(b.createTextNode(f));h&&o.removeChild(h),k.appendChecked||m.grep(ub(p,"input"),vb),q=0;while(f=p[q++])if((!d||-1===m.inArray(f,d))&&(g=m.contains(f.ownerDocument,f),h=ub(o.appendChild(f),"script"),g&&zb(h),c)){e=0;while(f=h[e++])ob.test(f.type||"")&&c.push(f)}return h=null,o},cleanData:function(a,b){for(var d,e,f,g,h=0,i=m.expando,j=m.cache,l=k.deleteExpando,n=m.event.special;null!=(d=a[h]);h++)if((b||m.acceptData(d))&&(f=d[i],g=f&&j[f])){if(g.events)for(e in g.events)n[e]?m.event.remove(d,e):m.removeEvent(d,e,g.handle);j[f]&&(delete j[f],l?delete d[i]:typeof d.removeAttribute!==K?d.removeAttribute(i):d[i]=null,c.push(f))}}}),m.fn.extend({text:function(a){return V(this,function(a){return void 0===a?m.text(this):this.empty().append((this[0]&&this[0].ownerDocument||y).createTextNode(a))},null,a,arguments.length)},append:function(){return this.domManip(arguments,function(a){if(1===this.nodeType||11===this.nodeType||9===this.nodeType){var b=wb(this,a);b.appendChild(a)}})},prepend:function(){return this.domManip(arguments,function(a){if(1===this.nodeType||11===this.nodeType||9===this.nodeType){var b=wb(this,a);b.insertBefore(a,b.firstChild)}})},before:function(){return this.domManip(arguments,function(a){this.parentNode&&this.parentNode.insertBefore(a,this)})},after:function(){return this.domManip(arguments,function(a){this.parentNode&&this.parentNode.insertBefore(a,this.nextSibling)})},remove:function(a,b){for(var c,d=a?m.filter(a,this):this,e=0;null!=(c=d[e]);e++)b||1!==c.nodeType||m.cleanData(ub(c)),c.parentNode&&(b&&m.contains(c.ownerDocument,c)&&zb(ub(c,"script")),c.parentNode.removeChild(c));return this},empty:function(){for(var a,b=0;null!=(a=this[b]);b++){1===a.nodeType&&m.cleanData(ub(a,!1));while(a.firstChild)a.removeChild(a.firstChild);a.options&&m.nodeName(a,"select")&&(a.options.length=0)}return this},clone:function(a,b){return a=null==a?!1:a,b=null==b?a:b,this.map(function(){return m.clone(this,a,b)})},html:function(a){return V(this,function(a){var b=this[0]||{},c=0,d=this.length;if(void 0===a)return 1===b.nodeType?b.innerHTML.replace(fb,""):void 0;if(!("string"!=typeof a||mb.test(a)||!k.htmlSerialize&&gb.test(a)||!k.leadingWhitespace&&hb.test(a)||rb[(jb.exec(a)||["",""])[1].toLowerCase()])){a=a.replace(ib,"<$1></$2>");try{for(;d>c;c++)b=this[c]||{},1===b.nodeType&&(m.cleanData(ub(b,!1)),b.innerHTML=a);b=0}catch(e){}}b&&this.empty().append(a)},null,a,arguments.length)},replaceWith:function(){var a=arguments[0];return this.domManip(arguments,function(b){a=this.parentNode,m.cleanData(ub(this)),a&&a.replaceChild(b,this)}),a&&(a.length||a.nodeType)?this:this.remove()},detach:function(a){return this.remove(a,!0)},domManip:function(a,b){a=e.apply([],a);var c,d,f,g,h,i,j=0,l=this.length,n=this,o=l-1,p=a[0],q=m.isFunction(p);if(q||l>1&&"string"==typeof p&&!k.checkClone&&nb.test(p))return this.each(function(c){var d=n.eq(c);q&&(a[0]=p.call(this,c,d.html())),d.domManip(a,b)});if(l&&(i=m.buildFragment(a,this[0].ownerDocument,!1,this),c=i.firstChild,1===i.childNodes.length&&(i=c),c)){for(g=m.map(ub(i,"script"),xb),f=g.length;l>j;j++)d=i,j!==o&&(d=m.clone(d,!0,!0),f&&m.merge(g,ub(d,"script"))),b.call(this[j],d,j);if(f)for(h=g[g.length-1].ownerDocument,m.map(g,yb),j=0;f>j;j++)d=g[j],ob.test(d.type||"")&&!m._data(d,"globalEval")&&m.contains(h,d)&&(d.src?m._evalUrl&&m._evalUrl(d.src):m.globalEval((d.text||d.textContent||d.innerHTML||"").replace(qb,"")));i=c=null}return this}}),m.each({appendTo:"append",prependTo:"prepend",insertBefore:"before",insertAfter:"after",replaceAll:"replaceWith"},function(a,b){m.fn[a]=function(a){for(var c,d=0,e=[],g=m(a),h=g.length-1;h>=d;d++)c=d===h?this:this.clone(!0),m(g[d])[b](c),f.apply(e,c.get());return this.pushStack(e)}});var Cb,Db={};function Eb(b,c){var d,e=m(c.createElement(b)).appendTo(c.body),f=a.getDefaultComputedStyle&&(d=a.getDefaultComputedStyle(e[0]))?d.display:m.css(e[0],"display");return e.detach(),f}function Fb(a){var b=y,c=Db[a];return c||(c=Eb(a,b),"none"!==c&&c||(Cb=(Cb||m("<iframe frameborder='0' width='0' height='0'/>")).appendTo(b.documentElement),b=(Cb[0].contentWindow||Cb[0].contentDocument).document,b.write(),b.close(),c=Eb(a,b),Cb.detach()),Db[a]=c),c}!function(){var a;k.shrinkWrapBlocks=function(){if(null!=a)return a;a=!1;var b,c,d;return c=y.getElementsByTagName("body")[0],c&&c.style?(b=y.createElement("div"),d=y.createElement("div"),d.style.cssText="position:absolute;border:0;width:0;height:0;top:0;left:-9999px",c.appendChild(d).appendChild(b),typeof b.style.zoom!==K&&(b.style.cssText="-webkit-box-sizing:content-box;-moz-box-sizing:content-box;box-sizing:content-box;display:block;margin:0;border:0;padding:1px;width:1px;zoom:1",b.appendChild(y.createElement("div")).style.width="5px",a=3!==b.offsetWidth),c.removeChild(d),a):void 0}}();var Gb=/^margin/,Hb=new RegExp("^("+S+")(?!px)[a-z%]+$","i"),Ib,Jb,Kb=/^(top|right|bottom|left)$/;a.getComputedStyle?(Ib=function(b){return b.ownerDocument.defaultView.opener?b.ownerDocument.defaultView.getComputedStyle(b,null):a.getComputedStyle(b,null)},Jb=function(a,b,c){var d,e,f,g,h=a.style;return c=c||Ib(a),g=c?c.getPropertyValue(b)||c[b]:void 0,c&&(""!==g||m.contains(a.ownerDocument,a)||(g=m.style(a,b)),Hb.test(g)&&Gb.test(b)&&(d=h.width,e=h.minWidth,f=h.maxWidth,h.minWidth=h.maxWidth=h.width=g,g=c.width,h.width=d,h.minWidth=e,h.maxWidth=f)),void 0===g?g:g+""}):y.documentElement.currentStyle&&(Ib=function(a){return a.currentStyle},Jb=function(a,b,c){var d,e,f,g,h=a.style;return c=c||Ib(a),g=c?c[b]:void 0,null==g&&h&&h[b]&&(g=h[b]),Hb.test(g)&&!Kb.test(b)&&(d=h.left,e=a.runtimeStyle,f=e&&e.left,f&&(e.left=a.currentStyle.left),h.left="fontSize"===b?"1em":g,g=h.pixelLeft+"px",h.left=d,f&&(e.left=f)),void 0===g?g:g+""||"auto"});function Lb(a,b){return{get:function(){var c=a();if(null!=c)return c?void delete this.get:(this.get=b).apply(this,arguments)}}}!function(){var b,c,d,e,f,g,h;if(b=y.createElement("div"),b.innerHTML="  <link/><table></table><a href='/a'>a</a><input type='checkbox'/>",d=b.getElementsByTagName("a")[0],c=d&&d.style){c.cssText="float:left;opacity:.5",k.opacity="0.5"===c.opacity,k.cssFloat=!!c.cssFloat,b.style.backgroundClip="content-box",b.cloneNode(!0).style.backgroundClip="",k.clearCloneStyle="content-box"===b.style.backgroundClip,k.boxSizing=""===c.boxSizing||""===c.MozBoxSizing||""===c.WebkitBoxSizing,m.extend(k,{reliableHiddenOffsets:function(){return null==g&&i(),g},boxSizingReliable:function(){return null==f&&i(),f},pixelPosition:function(){return null==e&&i(),e},reliableMarginRight:function(){return null==h&&i(),h}});function i(){var b,c,d,i;c=y.getElementsByTagName("body")[0],c&&c.style&&(b=y.createElement("div"),d=y.createElement("div"),d.style.cssText="position:absolute;border:0;width:0;height:0;top:0;left:-9999px",c.appendChild(d).appendChild(b),b.style.cssText="-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box;display:block;margin-top:1%;top:1%;border:1px;padding:1px;width:4px;position:absolute",e=f=!1,h=!0,a.getComputedStyle&&(e="1%"!==(a.getComputedStyle(b,null)||{}).top,f="4px"===(a.getComputedStyle(b,null)||{width:"4px"}).width,i=b.appendChild(y.createElement("div")),i.style.cssText=b.style.cssText="-webkit-box-sizing:content-box;-moz-box-sizing:content-box;box-sizing:content-box;display:block;margin:0;border:0;padding:0",i.style.marginRight=i.style.width="0",b.style.width="1px",h=!parseFloat((a.getComputedStyle(i,null)||{}).marginRight),b.removeChild(i)),b.innerHTML="<table><tr><td></td><td>t</td></tr></table>",i=b.getElementsByTagName("td"),i[0].style.cssText="margin:0;border:0;padding:0;display:none",g=0===i[0].offsetHeight,g&&(i[0].style.display="",i[1].style.display="none",g=0===i[0].offsetHeight),c.removeChild(d))}}}(),m.swap=function(a,b,c,d){var e,f,g={};for(f in b)g[f]=a.style[f],a.style[f]=b[f];e=c.apply(a,d||[]);for(f in b)a.style[f]=g[f];return e};var Mb=/alpha\([^)]*\)/i,Nb=/opacity\s*=\s*([^)]*)/,Ob=/^(none|table(?!-c[ea]).+)/,Pb=new RegExp("^("+S+")(.*)$","i"),Qb=new RegExp("^([+-])=("+S+")","i"),Rb={position:"absolute",visibility:"hidden",display:"block"},Sb={letterSpacing:"0",fontWeight:"400"},Tb=["Webkit","O","Moz","ms"];function Ub(a,b){if(b in a)return b;var c=b.charAt(0).toUpperCase()+b.slice(1),d=b,e=Tb.length;while(e--)if(b=Tb[e]+c,b in a)return b;return d}function Vb(a,b){for(var c,d,e,f=[],g=0,h=a.length;h>g;g++)d=a[g],d.style&&(f[g]=m._data(d,"olddisplay"),c=d.style.display,b?(f[g]||"none"!==c||(d.style.display=""),""===d.style.display&&U(d)&&(f[g]=m._data(d,"olddisplay",Fb(d.nodeName)))):(e=U(d),(c&&"none"!==c||!e)&&m._data(d,"olddisplay",e?c:m.css(d,"display"))));for(g=0;h>g;g++)d=a[g],d.style&&(b&&"none"!==d.style.display&&""!==d.style.display||(d.style.display=b?f[g]||"":"none"));return a}function Wb(a,b,c){var d=Pb.exec(b);return d?Math.max(0,d[1]-(c||0))+(d[2]||"px"):b}function Xb(a,b,c,d,e){for(var f=c===(d?"border":"content")?4:"width"===b?1:0,g=0;4>f;f+=2)"margin"===c&&(g+=m.css(a,c+T[f],!0,e)),d?("content"===c&&(g-=m.css(a,"padding"+T[f],!0,e)),"margin"!==c&&(g-=m.css(a,"border"+T[f]+"Width",!0,e))):(g+=m.css(a,"padding"+T[f],!0,e),"padding"!==c&&(g+=m.css(a,"border"+T[f]+"Width",!0,e)));return g}function Yb(a,b,c){var d=!0,e="width"===b?a.offsetWidth:a.offsetHeight,f=Ib(a),g=k.boxSizing&&"border-box"===m.css(a,"boxSizing",!1,f);if(0>=e||null==e){if(e=Jb(a,b,f),(0>e||null==e)&&(e=a.style[b]),Hb.test(e))return e;d=g&&(k.boxSizingReliable()||e===a.style[b]),e=parseFloat(e)||0}return e+Xb(a,b,c||(g?"border":"content"),d,f)+"px"}m.extend({cssHooks:{opacity:{get:function(a,b){if(b){var c=Jb(a,"opacity");return""===c?"1":c}}}},cssNumber:{columnCount:!0,fillOpacity:!0,flexGrow:!0,flexShrink:!0,fontWeight:!0,lineHeight:!0,opacity:!0,order:!0,orphans:!0,widows:!0,zIndex:!0,zoom:!0},cssProps:{"float":k.cssFloat?"cssFloat":"styleFloat"},style:function(a,b,c,d){if(a&&3!==a.nodeType&&8!==a.nodeType&&a.style){var e,f,g,h=m.camelCase(b),i=a.style;if(b=m.cssProps[h]||(m.cssProps[h]=Ub(i,h)),g=m.cssHooks[b]||m.cssHooks[h],void 0===c)return g&&"get"in g&&void 0!==(e=g.get(a,!1,d))?e:i[b];if(f=typeof c,"string"===f&&(e=Qb.exec(c))&&(c=(e[1]+1)*e[2]+parseFloat(m.css(a,b)),f="number"),null!=c&&c===c&&("number"!==f||m.cssNumber[h]||(c+="px"),k.clearCloneStyle||""!==c||0!==b.indexOf("background")||(i[b]="inherit"),!(g&&"set"in g&&void 0===(c=g.set(a,c,d)))))try{i[b]=c}catch(j){}}},css:function(a,b,c,d){var e,f,g,h=m.camelCase(b);return b=m.cssProps[h]||(m.cssProps[h]=Ub(a.style,h)),g=m.cssHooks[b]||m.cssHooks[h],g&&"get"in g&&(f=g.get(a,!0,c)),void 0===f&&(f=Jb(a,b,d)),"normal"===f&&b in Sb&&(f=Sb[b]),""===c||c?(e=parseFloat(f),c===!0||m.isNumeric(e)?e||0:f):f}}),m.each(["height","width"],function(a,b){m.cssHooks[b]={get:function(a,c,d){return c?Ob.test(m.css(a,"display"))&&0===a.offsetWidth?m.swap(a,Rb,function(){return Yb(a,b,d)}):Yb(a,b,d):void 0},set:function(a,c,d){var e=d&&Ib(a);return Wb(a,c,d?Xb(a,b,d,k.boxSizing&&"border-box"===m.css(a,"boxSizing",!1,e),e):0)}}}),k.opacity||(m.cssHooks.opacity={get:function(a,b){return Nb.test((b&&a.currentStyle?a.currentStyle.filter:a.style.filter)||"")?.01*parseFloat(RegExp.$1)+"":b?"1":""},set:function(a,b){var c=a.style,d=a.currentStyle,e=m.isNumeric(b)?"alpha(opacity="+100*b+")":"",f=d&&d.filter||c.filter||"";c.zoom=1,(b>=1||""===b)&&""===m.trim(f.replace(Mb,""))&&c.removeAttribute&&(c.removeAttribute("filter"),""===b||d&&!d.filter)||(c.filter=Mb.test(f)?f.replace(Mb,e):f+" "+e)}}),m.cssHooks.marginRight=Lb(k.reliableMarginRight,function(a,b){return b?m.swap(a,{display:"inline-block"},Jb,[a,"marginRight"]):void 0}),m.each({margin:"",padding:"",border:"Width"},function(a,b){m.cssHooks[a+b]={expand:function(c){for(var d=0,e={},f="string"==typeof c?c.split(" "):[c];4>d;d++)e[a+T[d]+b]=f[d]||f[d-2]||f[0];return e}},Gb.test(a)||(m.cssHooks[a+b].set=Wb)}),m.fn.extend({css:function(a,b){return V(this,function(a,b,c){var d,e,f={},g=0;if(m.isArray(b)){for(d=Ib(a),e=b.length;e>g;g++)f[b[g]]=m.css(a,b[g],!1,d);return f}return void 0!==c?m.style(a,b,c):m.css(a,b)},a,b,arguments.length>1)},show:function(){return Vb(this,!0)},hide:function(){return Vb(this)},toggle:function(a){return"boolean"==typeof a?a?this.show():this.hide():this.each(function(){U(this)?m(this).show():m(this).hide()})}});function Zb(a,b,c,d,e){return new Zb.prototype.init(a,b,c,d,e)
@@ -1036,930 +1221,48 @@ Ok.prototype.changed=Ok.prototype.s;Ok.prototype.dispatchEvent=Ok.prototype.b;Ok
 }));
 
 
-var map;
-var extent;
-var overlays = [];
-var vectorSource = new ol.source.Vector();
-var lastClick;
-var popupOverlay;
-var vectorLayer;
-var id = null;
-var userPositionMarker = null;
-var lockViewToPosition = true;
-var gps = false;
-var gpsLocation = null;
-var featureStyle = new ol.style.Style({
-    stroke: new ol.style.Stroke({
-        color: 'rgb(153,39,208)',
-        lineDash: [4, 8]
-    }),
-    fill: new ol.style.Fill({
-        color: 'rgba(153,39,208,.03)'
-    })
-});
-var mapClickFunction = function(evt) {
-    var pos = ol.proj.transform(evt["coordinate"], 'EPSG:3857', 'EPSG:4326');
-    console.log(pos);
-    lastClick = pos;
-    getNearest(pos[0], pos[1]);
-};
+function Map(type) {}
 
-var clearInputFunction = function() {
-    $("#search input[name=q]").val('');
-    $("#search input[name=q]").focus();
-    clearPOIS();
-    $.each(overlays, function(index, value) {
-        map.removeOverlay(value);
-        $("#popup-closer").click();
-    });
-    deinitResults();
-    $("#clearInput").off();
-    searchResults = null;
-    if(typeof updateUrl === "function"){
-        updateUrl();
-    }
-};
-var options = {
-            enableHighAccuracy: true,
-            maximumAge: 0
-        };
-$(document).ready(function() {
-    // Initialize the Map
-    initMap();
-
-    if(getPosition){
-        checkGPS(startApplication);
-    }else{
-        startApplication();
-    }
-
-    map.on('singleclick', mapClickFunction);
-    $("#follow-location > span.button").click(function() {
-        followLocation();
-    });
-    $("#lock-location > span.button").click(function() {
-        toggleViewLock();
-    });
-});
-
-function updateMapExtent() {
-    var tmpExtent = map.getView().calculateExtent(map.getSize());
-    extent = ol.proj.transform([tmpExtent[0], tmpExtent[1]], 'EPSG:3857', 'EPSG:4326').concat(ol.proj.transform([tmpExtent[2], tmpExtent[3]], 'EPSG:3857', 'EPSG:4326'));
+function InteractiveMap() {
+    Map.call(this);
+    // Initialize the Map With Controls to change the view
+    this.map = this.initMap();
+    this.module = null;
+    // Initialize the Positions gathering on click on the Map
+    this.reversePositionManager = new ReversePositionManager(this); // This is the Overlay that displays informations about a position where the user has clicked.
+    // Initialize the GPS Module
+    this.GpsManager = new GpsManager(this); 
+    // Initialize Offline Data with Service worker
+    this.OfflineManager = new OfflineManager(this);
+    // The default Module is the search Module
+    // Let's start that:
+    this.switchModule("search");
 }
-
-function numberWithPoints(x) {
-    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-}
-
-function deinitSearchBox() {
-    $("#search").remove();
-}
-
-function initStartNavigation() {
-    $("#start-navigation").removeClass("hidden");
-}
-
-function deinitStartNavigation() {
-    $("#start-navigation").addClass("hidden");
-}
-
-function initClearInput() {
-    $("#clearInput").html('<span class="font-bold">X</span>');
-    $("#clearInput").off();
-    $("#clearInput").click(clearInputFunction);
-    $("#clearInput").attr("title", "Sucheingabe löschen");
-}
-
-var resultsHeight = $(window).height() - 80;
-function toggleResults(status) {
-    var currentStatus = $("#results").attr("data-status");
-    if (typeof status === "undefined") {
-        status = currentStatus;
-        if(status === "in")
-            status = "out";
-        else if(status === "out")
-            status = "in";
-        else
-            status = "in";
-    } else if (status !== "in" && status !== "out") {
-        status = "in";
+InteractiveMap.prototype = Object.create(Map.prototype);
+InteractiveMap.prototype.constructor = InteractiveMap;
+InteractiveMap.prototype.initMap = function() {
+    /**
+     * Add prototypes to the map that can convert coordinates
+     */
+    /**
+     * transformToMapCoordinates()
+     * Transforms a point [lon, lat] from 'EPSG:4326' (World-Coordinates) to 'EPSG:3857' (Map-Coordinates)
+     * @param point  : Input Point in EPSG:4326 format
+     * @return point : returns the point in EPSG:3857
+     **/
+    ol.Map.prototype.transformToMapCoordinates = function(point) {
+        return ol.proj.transform(point, 'EPSG:4326', 'EPSG:3857');
     }
-    if (status === "in" && currentStatus !== "in") {
-        $("#results").attr("data-status", "in");
-        $("#result-toggler").html("Liste anzeigen")
-        $("#results").animate({"max-height": 0}, 600);
-    } else if(status === "out" && currentStatus !== "out"){
-        $("#results").attr("data-status", "out");
-        $("#result-toggler").html("Liste ausblenden")
-        $("#results").animate({"max-height": resultsHeight}, 600);
-        if($("#result-toggler").hasClass("hidden")){
-            $("#result-toggler").removeClass("hidden");
-        }
+    /**
+     * transformToWorldCoordinates()
+     * Transforms a point [lon, lat] from 'EPSG:3857' (Map-Coordinates) to 'EPSG:4326' (World-Coordinates)
+     * @param point  : Input Point in EPSG:3857 format
+     * @return point : returns the point in EPSG:4326
+     **/
+    ol.Map.prototype.transformToWorldCoordinates = function(point) {
+        return ol.proj.transform(point, 'EPSG:3857', 'EPSG:4326');
     }
-}
-
-function adjustView(results, limit) {
-    if(limit === null){
-        limit = results.length;
-    }
-    if (results.length <= 0) return;
-    var minPosition = [];
-    var maxPosition = [];
-    for (var i = 0; i < limit; i++) {
-        if (typeof minPosition[0] === 'undefined' || minPosition[0] > parseFloat(results[i]["lon"])) {
-            minPosition[0] = parseFloat(results[i]["lon"]);
-        }
-        if (typeof minPosition[0] === 'undefined' || (typeof results[i]["boundingbox"] !== 'undefined' && minPosition[0] > parseFloat(results[i]["boundingbox"][2]))) {
-            minPosition[0] = parseFloat(results[i]["boundingbox"][2]);
-        }
-        if (typeof minPosition[1] === 'undefined' || minPosition[1] > parseFloat(results[i]["lat"])) {
-            minPosition[1] = parseFloat(results[i]["lat"]);
-        }
-        if (typeof minPosition[1] === 'undefined' || (typeof results[i]["boundingbox"] !== 'undefined' && minPosition[1] > parseFloat(results[i]["boundingbox"][0]))) {
-            minPosition[1] = parseFloat(results[i]["boundingbox"][0]);
-        }
-        if (typeof maxPosition[0] === 'undefined' || maxPosition[0] < parseFloat(results[i]["lon"])) {
-            maxPosition[0] = parseFloat(results[i]["lon"]);
-        }
-        if (typeof maxPosition[0] === 'undefined' || (typeof results[i]["boundingbox"] !== 'undefined' && maxPosition[0] < parseFloat(results[i]["boundingbox"][3]))) {
-            maxPosition[0] = parseFloat(results[i]["boundingbox"][3]);
-        }
-        if (typeof maxPosition[1] === 'undefined' || maxPosition[1] < parseFloat(results[i]["lat"])) {
-            maxPosition[1] = parseFloat(results[i]["lat"]);
-        }
-        if (typeof maxPosition[1] === 'undefined' || (typeof results[i]["boundingbox"] !== 'undefined' && maxPosition[1] < parseFloat(results[i]["boundingbox"][1]))) {
-            maxPosition[1] = parseFloat(results[i]["boundingbox"][1]);
-        }
-        /*if (typeof results[i]["type"] !== 'undefined' && (results[i]["type"] === 'city' || results[i]["type"] === 'administrative' || results[i]["type"] === 'river')) {
-            break;
-        }*/
-    }
-    minPosition = ol.proj.transform(minPosition, 'EPSG:4326', 'EPSG:3857');
-    maxPosition = ol.proj.transform(maxPosition, 'EPSG:4326', 'EPSG:3857');
-
-    if(minPosition.length === 2 && maxPosition.length === 2){
-        // If this is not on a mobile AND the Results are Visible, we fit the Results to the left of the List
-        var paddingRight = 0;
-        if(parseInt( $(document).outerWidth()) > 768 && $("#results").attr("data-status") === "out" ){
-            paddingRight = $("#search-addon").outerWidth();
-        }
-
-        map.getView().fit([minPosition[0], minPosition[1], maxPosition[0], maxPosition[1]], { duration: 1500, nearest: true, maxZoom: 18, padding: [0, paddingRight, 0, 0]});
-    }
-}
-/**
- * Parsesan OSM-Address-Object for the Road-Name
- * @param {Array} address
- * @return {String} roadname
- */
-function getRoad(address) {
-    var road = "";
-    if (typeof address["road"] !== 'undefined') {
-        road = address["road"];
-    } else if (typeof address["pedestrian"] !== 'undefined') {
-        road = address["pedestrian"];
-    } else if (typeof address["path"] !== 'undefined') {
-        road = address["path"];
-    } else if (typeof address["footway"] !== 'undefined') {
-        road = address["footway"];
-    }
-    return road;
-}
-/**
- * Parse an OSM-Address-Object for the House Number
- * @param {Array} address
- * @return {String} Housenumber
- */
-function getHouseNumber(address) {
-    var house_number = typeof address["house_number"] !== 'undefined' ? address["house_number"] : "";
-    return house_number;
-}
-/**
- * Parse an OSM-Address-Object for the City (including Zip-Code)
- * @param {Array} address
- * @return {String} City
- */
-function getCity(address) {
-    var city = typeof address["postcode"] !== 'undefined' ? address["postcode"] + " " : "";
-    if (typeof address["city"] !== "undefined") {
-        city += address["city"];
-    } else if (typeof address["town"] !== "undefined") {
-        city += address["town"];
-    } else if (typeof address["village"] !== "undefined") {
-        city += address["village"];
-    }
-    return city;
-}
-
-function adjustViewBoundingBox(minpos, maxpos, padding) {
-    minPosition = ol.proj.transform(minpos, 'EPSG:4326', 'EPSG:3857');
-    maxPosition = ol.proj.transform(maxpos, 'EPSG:4326', 'EPSG:3857');
-    if(typeof padding === "undefined"){
-        padding = [5,5,5,5];
-    }
-    map.getView().fit([minPosition[0], minPosition[1], maxPosition[0], maxPosition[1]], {padding: padding, duration: 1500});
-    updateMapExtent();
-}
-/*
- * This Function takes an array of Positions and adjusts the view of the map so everything is visible
- * @param positions{Array} - Array with Position Objects ([lon,lat])
- */
-function adjustViewPosList(positions, padding) {
-    var minpos = [null, null];
-    var maxpos = [null, null];
-    $.each(positions, function(index, value) {
-        if(value === ""){
-            return;
-        }else if(value === "gps" ){
-            if(typeof gpsLocation !== "undefined"){
-                value = gpsLocation;
-            }else{
-                return;
-            }
-        }
-        if (minpos[0] === null || value[0] < minpos[0]) {
-            minpos[0] = value[0];
-        }
-        if (maxpos[0] === null || value[0] > maxpos[0]) {
-            maxpos[0] = value[0];
-        }
-        if (minpos[1] === null || value[1] < minpos[1]) {
-            minpos[1] = value[1];
-        }
-        if (maxpos[1] === null || value[1] > maxpos[1]) {
-            maxpos[1] = value[1];
-        }
-    });
-    console.log(padding);
-    adjustViewBoundingBox(minpos, maxpos, padding);
-}
-
-function clearPOIS() {
-    // Remove All Existing Overlays
-    $.each(overlays, function(index, value) {
-        map.removeOverlay(value);
-    });
-    map.removeLayer(vectorLayer);
-    vectorSource = new ol.source.Vector();
-    // Remove Existing Results
-    $("#results > .result-container").remove();
-    overlays = [];
-}
-
-function centerMap(longitude, latitude) {
-    var point = ol.proj.transform([longitude, latitude], 'EPSG:4326', 'EPSG:3857')
-    map.getView().setCenter(point);
-}
-/**
- * Fügt einen Marker auf die Karte hinzu
- * Parameter:
- *  el: HTML-Code für das Element, welches den Marker definiert
- *  pos: Position, auf der sich der Marker befinden soll int[2] (Lat, Long)
- **/
-function addMarker(el, pos) {
-    var overlay = new ol.Overlay({
-        position: pos,
-        element: el.get(0),
-        offset: [-12, -45],
-        stopEvent: false,
-    });
-    map.addOverlay(overlay);
-    return overlay;
-}
-
-function toggleGpsWarning(){
-    $("#gps-error").addClass("visible-xs");
-    $("#gps-error").removeClass("hidden");
-    setTimeout(function(){
-        $("#gps-error").addClass("hidden");
-        $("#gps-error").removeClass("visible-xs");
-    }, 5000);
-}
-
-function checkGPS(callback) {
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(function(position){
-            if(position.coords.accuracy > 1500){
-                gps = false;
-                toggleGPSLocator(true);
-                lon = parseFloat(position.coords.longitude);
-                lat = parseFloat(position.coords.latitude);
-                gpsLocation = [lon, lat];
-            }else{
-                gps = gps = true;
-                lon = parseFloat(position.coords.longitude);
-                lat = parseFloat(position.coords.latitude);
-                gpsLocation = [lon, lat];
-                toggleGPSLocator(true);
-            }
-            if(gpsLocation !== null){
-                map.getView().setCenter(ol.proj.transform(gpsLocation, 'EPSG:4326', 'EPSG:3857'));
-                map.getView().setZoom(12);
-            }
-            if(typeof callback === "function"){
-                callback();
-            }
-        }, function(error){
-            gps = false;
-            toggleGPSLocator(false);
-            toggleGpsWarning();
-            if(typeof callback === "function"){
-                callback();
-            }
-        },{enableHighAccuracy: true, maximumAge: 0 });
-        if(typeof callback === "function"){
-            callback();
-        }
-    } else {
-        gps = false;
-        toggleGPSLocator(false);
-        toggleGpsWarning();
-        if(typeof callback === "function"){
-            callback();
-        }
-    }
-}
-
-function startApplication(){
-    if(typeof start === "function"){
-        start();
-    }
-}
-
-function toggleGPSLocator(visible){
-    if(gps){
-       
-    }else{
-        
-    }
-    if(visible){
-        $("#location-tool").removeClass("hidden");
-        $("#start-navigation > a").attr("href", "/route/start/foot/gps;");
-    }else{
-        $("#location-tool").addClass("hidden");
-        $("#start-navigation > a").attr("href", "/route/start/foot");
-    }
-}
-
-var point_geom = null;  // Point displaying the center where the user possibly is
-var point_feature = null;
-var circle = null;      // Circle displaying the accuracy
-var accuracy_feature = null;
-function followLocation() {
-    // Element to be displayed at the user-location
-    var el = $('<span id="user-position" class="glyphicon glyphicon-record" style="color: #2881cc;"></span>');
-    if (lockViewToPosition) $("#lock-location").addClass("active");
-    else $("#lock-location").removeClass("active");
-    if (id === null) {
-        id = navigator.geolocation.watchPosition(function(position) {
-            var center = ol.proj.transform([parseFloat(position.coords.longitude), parseFloat(position.coords.latitude)], 'EPSG:4326', 'EPSG:3857');
-            var accuracy = parseFloat(position.coords.accuracy);
-            if(userPositionMarker === null){
-                // Create User Position
-                point_geom = new ol.geom.Point(center);
-                point_feature = new ol.Feature({
-                    name: "Position",
-                    geometry: point_geom
-                });
-                // Create the accuracy Circle:
-                circle = new ol.geom.Circle(center, accuracy);
-                accuracy_feature = new ol.Feature({
-                    name: "Accuracy",
-                    geometry: circle
-                });
-                userPositionMarker = new ol.layer.Vector({
-                    source: new ol.source.Vector({
-                        features: [point_feature, accuracy_feature]
-                    })
-                });
-                map.addLayer(userPositionMarker);
-            }else{
-                point_geom.setCoordinates(center);
-                circle.setCenter(center);
-                circle.setRadius(accuracy);
-            }
-            if (lockViewToPosition) {
-                // Fit the Extent of the Map to Fit the new Features Exactly
-                map.getView().fit(userPositionMarker.getSource().getExtent(), {padding: [5,5,5,5], duration: 1500});
-            }
-            // Change the color of the Icon so the user knows that the position is tracked:
-            $("#follow-location").addClass("active");
-        }, function(error) {}, options);
-        // Show the Lock View to Position Button
-        $("#lock-location").removeClass("hidden");
-        $("#lock-location > span.info").fadeOut(2000);
-    } else {
-        map.removeLayer(userPositionMarker);
-        userPositionMarker = null;
-        point_geom = null;
-        point_feature = null;
-        circle = null;
-        accuracy_feature = null;
-        navigator.geolocation.clearWatch(id);
-        id = null;
-        // Clear the color of the Icon so the user knows that the position is no longer tracked
-        $("#follow-location").removeClass("active");
-        // Hide the lock View to Position Button
-        $("#lock-location").addClass("hidden");
-        $("#lock-location > span.info").css("display", "");
-    }
-}
-
-function updateCurrentLocation(callback) {
-    var lon = "";
-    var lat = "";
-    if (gps) {
-        navigator.geolocation.getCurrentPosition(function(position) {
-            lon = parseFloat(position.coords.longitude);
-            lat = parseFloat(position.coords.latitude);
-            gpsLocation = [lon, lat];
-            if(typeof callback === "function"){
-                callback();
-            }
-        }, function(error) {
-            checkGPS(callback);
-        });
-
-        
-    } else {
-        return null;
-    }
-}
-
-function toggleViewLock() {
-    if (lockViewToPosition) {
-        lockViewToPosition = false;
-        $("#lock-location").removeClass("active");
-        $("#lock-location > span.info").html("Ansicht freigegeben");
-        $("#lock-location > span.info").css("display", "");
-        $("#lock-location > span.info").fadeOut(2000);
-    } else {
-        lockViewToPosition = true;
-        $("#lock-location").addClass("active");
-        $("#lock-location > span.info").html("Ansicht zentriert");
-        $("#lock-location > span.info").css("display", "");
-        $("#lock-location > span.info").fadeOut(2000);
-    }
-}
-
-function createPopup(lon, lat, html) {
-    var pos = ol.proj.transform([parseFloat(lon), parseFloat(lat)], 'EPSG:4326', 'EPSG:3857');
-    $("#popup-content").html(html);
-    popupOverlay.setPosition(pos);
-}
-
-function buildResultFromData(data){
-    if (typeof data !== "undefined" && typeof data["address"] !== "undefined") {
-            // Success we have an address
-            var address = data["address"];
-
-            var road = getRoad(address);
-            var house_number = getHouseNumber(address);
-            var city = getCity(address);
-            var id = data["place_id"];
-
-            
-
-            var html = "<div class=\"result col-xs-12\">\n";
-
-            // Wir extrahieren noch einen Namen
-            if(typeof data["namedetails"]["name"] !== "undefined"){
-                html += "<p class=\"title\">" + data["namedetails"]["name"] + "</p>\n";
-            }
-
-            var road = getRoad(address);
-            var house_number = getHouseNumber(address);
-            if(road !== ""){
-                html += "<p class=\"address\">" + road;
-                if(house_number !== ""){
-                    html += " " + house_number;
-                }
-                html += "</p>\n";
-            }
-
-            var city = getCity(address);
-            if(city !== ""){
-                html += "<p class=\"city\">" + city + "</p>\n";
-            }
-
-            var phone = "";
-            if(typeof data["extratags"]["contact:phone"] !== "undefined"){
-                phone = data["extratags"]["contact:phone"];
-            }else if(typeof data["extratags"]["phone"] !== "undefined"){
-                phone = data["extratags"]["phone"];
-            }
-            if(phone !== ""){
-                html += "<p class=\"opening-hours\"><a href=\"tel:" + phone + "\" target=_blank><span class=\"glyphicon glyphicon-earphone\"></span> " + phone + "</a></p>\n";
-            }
-
-            if(typeof data["extratags"]["website"] !== "undefined"){
-                var url = data["extratags"]["website"];
-                if(url.lastIndexOf("http", 0) !== 0){
-                    url = "http://" + url;
-                }
-                html += "<p class=\"opening-hours\"><a href=\"" + url + "\" target=_blank><span class=\"glyphicon glyphicon-globe\"></span> " + url + "</a></p>\n";
-            }
-
-            if(typeof data["extratags"]["wikipedia"] !== "undefined"){
-                var url = "https://de.wikipedia.org/wiki/" + data["extratags"]["wikipedia"];
-                html += "<p class=\"opening-hours\"><a href=\"" + url + "\" target=_blank>Wikipedia</a></p>\n";
-            }
-
-            // Add possible Opening Hours:
-            if(typeof data["extratags"]["opening_hours"] !== "undefined"){
-                html += "<p class=\"opening-hours\">" + data["extratags"]["opening_hours"] + "</p>\n";
-            }
-
-            if(typeof data["extratags"]["description"] !== "undefined"){
-                html += "<p class=\"opening-hours\">" + data["extratags"]["description"] + "</p>\n";
-            }
-
-            // Update Address details
-            lon = parseFloat(data["lon"]);
-            lat = parseFloat(data["lat"]);
-            //html += "<div class=\"geo-position container-fluid\"><div class=\"row\">\n";
-            //html += "<div class=\"col-xs-6\">Lon: " + lon + "</div>\n";
-            //html += "<div class=\"col-xs-6\">Lat: " + lat + "</div>\n"; 
-            //html += "</div></div>";
-
-            // Now the two Links
-            var url = "";
-            if(gps){
-                url = "/route/start/foot/gps;"+lon+","+lat;
-            }else{
-                url = "/route/start/foot/"+lon+","+lat;
-            }
-            html += '<a href=\"'+url+'\" class=\"btn btn-default btn-xs\">Route berechnen</a>';
-
-            // And the Link to the MetaGer Search
-            // build the search query
-            var query = "";
-            if(typeof data["namedetails"]["name"] !== "undefined"){
-                query += data["namedetails"]["name"];
-            }
-            query += " " + road;
-            query += " " + city;
-            query = query.trim();
-            if(query.length > 0){
-                var url = 'https://metager.de/meta/meta.ger3?focus=web&eingabe=' + encodeURIComponent(query) + '&encoding=utf8&lang=all';
-                html += '<a href=\"'+url+'\" class=\"btn btn-default btn-xs\" target=_blank>MetaGer Suche</a>';
-            }
-
-            var popup = $(html);
-            return popup;
-            
-        }else{
-            return null;
-        }
-}
-
-function showResearchButton(){
-    if($("#research-button").hasClass("hidden") && $("#search input[name=q]").val() !== ""){
-        $("#research-button").removeClass("hidden");
-    }
-}
-
-function toggleResearchButtonMoveEvent(){
-    if($("#search input[name=q]").val() !== ""){
-        map.un("moveend", toggleResearchButtonMoveEvent);
-        map.on("moveend", showResearchButton);
-    }
-}
-
-function getDistance(p1, p2){
-    var wgs84Sphere = new ol.Sphere(6378137);
-    var dist = wgs84Sphere.haversineDistance(p1,p2);
-    return dist;
-}
-
-Array.prototype.move = function(from, to) {
-    this.splice(to, 0, this.splice(from, 1)[0]);
-};
-var shouldUpdate = true;
-$(document).ready(function(){
-    
-    if(typeof vehicle === "undefined"){
-        map.on("moveend", updateUrl);
-        initStartNavigation();
-    }
-
-    // Initialize research Button
-    var research = $("<div id=\"research-button\" class=\"hidden\"><button type=\"button\" class=\"btn btn-default\">In diesem Bereich erneut Suchen</button></div>")
-    $("#map").append(research);
-    $(research).find("button").off();
-    $(research).find("button").click(function(){
-        $("#doSearch").click();
-    });
-
-    if(typeof center !== "undefined" && typeof zoom !== "undefined" && typeof vehicle === "undefined"){
-        if(typeof query !== "undefined"){
-            $("#search input[name=q]").val(query);
-        }
-        map.un("moveend", updateUrl);
-        map.getView().animate({
-            zoom: parseInt(zoom),
-            center: center,
-            duration: 1500
-        }, function(){
-            setTimeout(function(){
-                map.un("moveend", updateUrl);
-                map.on("moveend", updateUrl);
-                if($("#search input[name=q]").val() !== ""){
-                    $("#doSearch").click();
-                }
-            }, 500); 
-        });
-    }
-
-    $("#search input[name=q]").focusin(function(){
-
-        if($("#search-suggestions").attr("data-status") === "out" || $(document).outerWidth() > 768){
-            return;
-        }
-
-        var history = getHistory();
-
-        if(history.length > 0){
-            $.each(history, function(index, value){
-                if(typeof(value) !== "undefined"){
-                    var suggestion = $('\
-                        <div class="container-fluid suggestion">\
-                            <div class="flex-container">\
-                                <div class="item history">\
-                                    <span class="glyphicon glyphicon-time"></span>\
-                                </div>\
-                                <div class="item">\
-                                    ' + value["name"] + '\
-                                </div>\
-                            </div>\
-                        </div>\
-                        ');
-                    $("#search-suggestions").append(suggestion);
-                    $(suggestion).click(function(){
-                        $("#search input[name=q]").blur();
-                        $("#search input[name=q]").val(value["name"]);
-                        $("#doSearch").click();
-                    });
-                }
-            });
-        }else{
-            return;
-        }
-
-        var resultTogglerVisible = !$("#result-toggler").hasClass("hidden");
-
-        if(resultTogglerVisible){
-            $("#result-toggler").addClass("hidden");
-        }
-
-        if($("#results").attr("data-status") === "out"){
-            toggleResults("in");
-        }
-
-        $("#search-suggestions").animate({top: "0vh"}, 500, function(){
-            $("#search-suggestions").attr("data-status", "out");
-            $("#search-suggestions").css("padding-top", "70px");
-            $("#search input[name=q]").css("border-top-left-radius", 0);
-            $("#exit-suggestions").removeClass("hidden");
-            $("#exit-suggestions").click(function(){
-                $("#exit-suggestions").off();
-                if(resultTogglerVisible){
-                    $("#result-toggler").removeClass("hidden");
-                }
-                $("#search-suggestions").animate({top: "100vh"}, 500, function(){
-                    $("#exit-suggestions").addClass("hidden");
-                    $("#search input[name=q]").css("border-top-left-radius", "8px");
-                    $("#search-suggestions").html("");
-                    $("#search-suggestions").attr("data-status", "");
-                    $("#search-suggestions").css("padding-top", "");
-                });
-            });
-        });
-    });
-
-    $("#search input[name=q]").on("keydown", function(event) {
-        if (event.which == 13){
-            $("#search-addon input[name=q]").blur();
-            $("#doSearch").click();
-        }
-    });
-
-    
-    if(typeof vehicle === "undefined"){
-        // Put the Popstate Event:
-        $(window).unbind('popstate');
-        $(window).bind('popstate', function(event) {
-            var state = event.originalEvent.state;
-            if (state !== null && state["center"] !== undefined && state["zoom"] !== undefined) {
-                center = state["center"].split(",");
-                zoom = state["zoom"];
-                q = state["q"];
-                var shouldSearch = false;
-                var shouldClear = false;
-                if($("#search input[name=q]").val() !== state["q"] && state["q"] !== ""){
-                    shouldSearch = true;
-                }
-                $("#search input[name=q]").val(state["q"]);
-                if(typeof searchResults !== "undefined" && $("#search input[name=q]").val() === ""){
-                    shouldClear = true;
-                }
-                
-                map.un("moveend", updateUrl);
-                map.getView().animate({
-                    zoom: parseInt(zoom),
-                    center: center,
-                    duration: 1500
-                }, function(){
-                    setTimeout(function(){
-                        map.on("moveend", updateUrl);
-                        if(shouldSearch){
-                            $("#doSearch").click();
-                        }else if(shouldClear){
-                            deinitResults();
-                        }
-                    }, 500); 
-                });
-            }else{
-                // Das sieht merkürdig aus und hat ältere Geräte zum Absturz gebracht-
-                //document.location.href = document.location.href;
-            }
-        });
-
-        $("#doSearch").click(function() {
-            deinitStartNavigation();
-            executeSearch();
-        });
-    }
-
-    $("#result-toggler").click(function(){
-        toggleResults();
-    })
-});
-
-function executeSearch(){
-
-    // Leave Search suggestions if they are enabled
-    if($("#search-suggestions").attr("data-status") === "out") {
-        $("#exit-suggestions").click();
-    }
-
-    q = $("#search input[name=q]").val();
-    if(q === ""){
-        $("#search-addon input[name=q]").focus();
-        return;
-    }
-    // we need some Feedback that the search has startet
-    // Depending on the search it could last pretty long
-    // because our servers aren't that strong so the user
-    // has to know what's going on.
-    // Let's make the Input Field readonly
-    $("#search-addon input[name=q]").attr("readonly", true);
-    // Let's hide the search Button and the clear-search button
-    $("#search-addon #doSearch").addClass("hidden");
-    $("#search-addon #clear-search").addClass("hidden");
-    // Let's make a new input-group-addon to cancel the search if it takes too long
-    var cancelSearch = $('\
-        <div class="input-group-addon" id="cancel-search" title="Suche abbrechen">\
-            X\
-        </div> \
-    ');
-    $("#search input[name=q]").after(cancelSearch);
-    // Let's add a Loading animation:
-    var loading = $('\
-        <div class="container-fluid wait-for-search">\
-            <p>\
-                Ergebnisse werden geladen \
-                <img src="/img/ajax-loader.gif" alt="loading..." id="loading-search-results" />\
-            </p>\
-        </div>\
-        ');
-    $("#results").html(loading);
-    toggleResults("out");
-    $("#loading-search-results").load(function(){
-        // Calculate the current Extent of the map
-        var tmpExtent = map.getView().calculateExtent(map.getSize());
-        var extent = ol.proj.transform([tmpExtent[0], tmpExtent[1]], 'EPSG:3857', 'EPSG:4326').concat(ol.proj.transform([tmpExtent[2], tmpExtent[3]], 'EPSG:3857', 'EPSG:4326'));
-
-        var url = '/' + encodeURI(q) + '/' + encodeURI(extent[0]) + '/' + encodeURI(extent[1]) + '/' + encodeURI(extent[2]) + '/' + encodeURI(extent[3]);
-        
-        // Before we go on -> let's remove the current results
-        searchResults = undefined;
-        clearPOIS();
-        $("#clear-search").remove();
-        var markers = [];
-
-        var xhr = $.getScript(url)
-            .fail(function(jqxhr, settings, exception) {
-                console.log(exception);
-                deinitResults();
-            })
-            .done(function(){
-                // We undo the feedback that we created in the beginning
-                $("#results > .wait-for-search").remove();
-                if($("#results").attr("data-status") === "in"){
-                    $("#results").css("max-height", 0);
-                }
-                $("#cancel-search").remove();
-                $("#search-addon #doSearch").removeClass("hidden");
-                $("#search-addon #clear-search").removeClass("hidden");
-                $("#search-addon input[name=q]").attr("readonly", false);
-                if(typeof searchResults === "undefined" || searchResults.length <= 0){
-                    console.log("keine Ergebnisse");
-                    makeError($("#search-addon input[name=q]"), "Keine Ergebnisse gefunden :(");
-                }else{
-                    // Füge diesen Suchbegriff zur History hinzu
-                    // Add the first Result to the LocalStorage if it's the only one.
-                    // Otherwise we will add the search query
-                    if(searchResults.length === 1){
-                        addToHistory(searchResults[0]["display_name"], searchResults[0]["lon"], searchResults[0]["lat"]);
-                    }else{
-                        addToHistory(q, "0.0", "0.0");
-                    }
-                }
-            });
-        $("#cancel-search").click(function(){
-            xhr.abort();
-        });
-    });
-}
-
-function makeError(element, message){
-    $(element).css("border", "3px solid red");
-    $(element).tooltip({
-        placement: 'auto',
-        title: message
-    }).tooltip('show');
-
-    setTimeout(function(){
-        $(element).css("border", "");
-        $(element).tooltip('destroy');
-    }, 5000);
-}
-
-function updateUrl(){
-
-    if(typeof map.getView().getZoom() === "undefined"){
-        // If the Zoom is undefined for this resolution, we will round it so it is valid again.
-        var resolution = map.getView().getResolution() * 10;    // We'll round to one digit
-        resolution = Math.round(resolution) / 10;
-
-        map.getView().setResolution(resolution);
-
-        if(typeof map.getView().getZoom() === "undefined"){
-            // If the zoom is undefined again I can't help
-            return;
-        }     
-    }
-    if(typeof zoom === "undefined"){
-        zoom = map.getView().getZoom();
-    }
-
-    if(typeof center === "undefined"){
-        center = map.getView().getCenter();
-    }
-
-    if(typeof q === "undefined"){
-        q = $("#search input[name=q]").val();
-    }
-
-    if(map.getView().getCenter() === center && zoom === parseInt(map.getView().getZoom()) && $("#search input[name=q]").val() === q){
-        return;
-    }
-
-    center = map.getView().getCenter();
-    if(parseInt(map.getView().getZoom()) !== "NaN"){
-        zoom = parseInt(map.getView().getZoom());
-    }
-    q = $("#search input[name=q]").val();
-
-    var uri = '/map/';
-
-    var query = "";
-    if(typeof q !== "undefined" && q !== ""){
-        query = q;
-        uri += query + "/";
-    }
-
-    uri += center.toString() + "," + zoom;
-
-    var stateObj = {
-        center: center.toString(),
-        zoom: zoom,
-        q: query
-    };
-    // Change URL
-    window.history.pushState(stateObj, '', uri);
-}
-
-function initMap() {
-    popupOverlay = new ol.Overlay( /** @type {olx.OverlayOptions} */ ({
-        element: document.getElementById("popup"),
-        autoPan: true,
-        autoPanAnimation: {
-            duration: 250
-        }
-    }));
-    map = new ol.Map({
+    var map = new ol.Map({
         layers: [
             new ol.layer.Tile({
                 preload: Infinity,
@@ -1988,7 +1291,6 @@ function initMap() {
         }).extend([
             new ol.control.ScaleLine()
         ]),
-        overlays: [popupOverlay],
         view: new ol.View({
             maxZoom: 18,
             minZoom: 6,
@@ -2000,71 +1302,646 @@ function initMap() {
         loadTilesWhileInteracting: true
     });
     map.addControl(new ol.control.ZoomSlider());
-    $("#popup-closer").click(function() {
-        popupOverlay.setPosition(undefined);
+    return map;
+}
+InteractiveMap.prototype.switchModule = function(name, args){
+
+    // Todo remove when development of Route Finder finished
+    //this.module = new RouteFinder(this, [/*[11.576734, 48.136886],*/[9.916052, 52.345042]]);
+    //return;
+
+    this.module = new OfflineModule(this);
+    return;
+
+    if(this.module !== null){
+        // Every Module must implement this method for deinitialization
+        this.module.exit();
+        this.module = null;
+    }
+    switch(name){
+        case "search":
+            this.module = new SearchModule(this);
+            break;
+        case "route-finding":
+            this.module = new RouteFinder(this, [[parseFloat(args.lon), parseFloat(args.lat)]]);
+            break;
+        case "navigatiion":
+            break;
+        case "offline-karten":
+            this.module = new OfflineModule(this);
+            break;
+        default:
+            return;
+    }
+}
+
+function StaticMap() {
+    Map.call(this);
+}
+/**
+ * This Class provides Methods to evaluate the Results that Nominatim gives us
+ * 
+ **/
+function NominatimParser(nominatimResult) {
+    this.nominatimResult = nominatimResult;
+}
+/**
+ * This function creates a HTML Object with the most important Informations of the Result
+ * @param gps - Boolean whether gps in enabled or not (creates)
+ **/
+NominatimParser.prototype.getHTMLResult = function() {
+    var data = this.nominatimResult;
+    if (typeof data !== "undefined" && typeof data["address"] !== "undefined") {
+        // Success we have an address
+        var address = data["address"];
+        var road = this.getRoad(address);
+        var house_number = this.getHouseNumber(address);
+        var city = this.getCity(address);
+        var id = data["place_id"];
+        var html = "<div class=\"result\">\n";
+        html += "<div class=\"result-information\">";
+        // Wir extrahieren noch einen Namen
+        if (typeof data["namedetails"]["name"] !== "undefined") {
+            html += "<div class=\"title\">" + data["namedetails"]["name"] + "</div>\n";
+        }
+        var road = this.getRoad(address);
+        var house_number = this.getHouseNumber(address);
+        if (road !== "") {
+            html += "<div class=\"address\">" + road;
+            if (house_number !== "") {
+                html += " " + house_number;
+            }
+            html += "</div>\n";
+        }
+        var city = this.getCity(address);
+        if (city !== "") {
+            html += "<div class=\"city\">" + city + "</div>\n";
+        }
+        var phone = "";
+        if (typeof data["extratags"]["contact:phone"] !== "undefined") {
+            phone = data["extratags"]["contact:phone"];
+        } else if (typeof data["extratags"]["phone"] !== "undefined") {
+            phone = data["extratags"]["phone"];
+        }
+        if (phone !== "") {
+            html += "<div class=\"phone\"><a href=\"tel:" + phone + "\" onclick=\"event.stopPropagation();\" target=_blank><span class=\"glyphicon glyphicon-earphone\"></span> " + phone + "</a></div>\n";
+        }
+        if (typeof data["extratags"]["website"] !== "undefined") {
+            var url = data["extratags"]["website"];
+            if (url.lastIndexOf("http", 0) !== 0) {
+                url = "http://" + url;
+            }
+            html += "<div class=\"website\"><a href=\"" + url + "\" onclick=\"event.stopPropagation();\" target=_blank><span class=\"glyphicon glyphicon-globe\"></span> " + url + "</a></div>\n";
+        }
+        if (typeof data["extratags"]["wikipedia"] !== "undefined") {
+            var url = "https://de.wikipedia.org/wiki/" + data["extratags"]["wikipedia"];
+            html += "<div class=\"wikipedia\"><a href=\"" + url + "\" onclick=\"event.stopPropagation();\" target=_blank><img src=\"/img/wiki.svg\" alt=\"wikipedia\" width=\"20px\"> Wikipedia</a></div>\n";
+        }
+        // Add possible Opening Hours:
+        if (typeof data["extratags"]["opening_hours"] !== "undefined") {
+            html += "<div class=\"opening-hours\">" + data["extratags"]["opening_hours"] + "</div>\n";
+        }
+        if (typeof data["extratags"]["description"] !== "undefined") {
+            html += "<div class=\"description\">" + data["extratags"]["description"] + "</div>\n";
+        }
+        html += "</div><div class=\"result-actions\">";
+        // Update Address details
+        lon = parseFloat(data["lon"]);
+        lat = parseFloat(data["lat"]);
+        // Now the two Links
+        var url = "";
+        url = "/route/start/foot/" + lon + "," + lat;
+        html += '<a class="start-route-service" data-lon="'+lon+'" data-lat="'+lat+'" href="#" onclick="event.stopPropagation();">Route berechnen</a>';
+        // And the Link to the MetaGer Search
+        // build the search query
+        var query = "";
+        if (typeof data["namedetails"]["name"] !== "undefined") {
+            query += data["namedetails"]["name"];
+        }
+        query += " " + road;
+        query += " " + city;
+        query = query.trim();
+        if (query.length > 0) {
+            var url = 'https://metager.de/meta/meta.ger3?focus=web&eingabe=' + encodeURIComponent(query) + '&encoding=utf8&lang=all';
+            html += '<a href=\"' + url + '\" onclick="event.stopPropagation();" target=_blank>MetaGer Suche</a>';
+        }
+        html += "</div></div>";
+        var popup = $(html);
+        return popup;
+    } else {
+        return null;
+    }
+}
+
+NominatimParser.prototype.getRouteFinderHtml = function(){
+    var data = this.nominatimResult;
+    if (typeof data !== "undefined" && typeof data["address"] !== "undefined") {
+        // Success we have an address
+        var address = data["address"];
+        var road = this.getRoad(address);
+        var house_number = this.getHouseNumber(address);
+        var city = this.getCity(address);
+        var id = data["place_id"];
+        var html = "<div class=\"result\">\n";
+        html += "<div class=\"result-information\">";
+        // Wir extrahieren noch einen Namen
+        if (typeof data["namedetails"]["name"] !== "undefined") {
+            html += "<div class=\"title\">" + data["namedetails"]["name"] + "</div>\n";
+        }
+        var road = this.getRoad(address);
+        var house_number = this.getHouseNumber(address);
+        if (road !== "") {
+            html += "<div class=\"address\">" + road;
+            if (house_number !== "") {
+                html += " " + house_number;
+            }
+            html += "</div>\n";
+        }
+        var city = this.getCity(address);
+        if (city !== "") {
+            html += "<div class=\"city\">" + city + "</div>\n";
+        }
+
+        if (typeof data["extratags"]["description"] !== "undefined") {
+            html += "<div class=\"description\">" + data["extratags"]["description"] + "</div>\n";
+        }
+        html += "</div></div>";
+        var popup = $(html);
+        return popup;
+    } else {
+        return null;
+    }
+}
+
+NominatimParser.prototype.getHTMLAddressDetails = function(){
+    var data = this.nominatimResult;
+    if (typeof data !== "undefined" && typeof data["address"] !== "undefined") {
+        // Success we have an address
+        var address = data["address"];
+        var road = this.getRoad(address);
+        var house_number = this.getHouseNumber(address);
+        var city = this.getCity(address);
+        var id = data["place_id"];
+        var html = "<div class=\"result\">\n";
+        html += "<div class=\"result-information\">";
+        // Wir extrahieren noch einen Namen
+        if (typeof data["namedetails"]["name"] !== "undefined") {
+            html += "<div class=\"title\">" + data["namedetails"]["name"] + "</div>\n";
+        }
+        var road = this.getRoad(address);
+        var house_number = this.getHouseNumber(address);
+        if (road !== "") {
+            html += "<div class=\"address\">" + road;
+            if (house_number !== "") {
+                html += " " + house_number;
+            }
+            html += "</div>\n";
+        }
+        var city = this.getCity(address);
+        if (city !== "") {
+            html += "<div class=\"city\">" + city + "</div>\n";
+        }
+        html += "</div></div>";
+        return html;
+    }else{
+        return null;
+    }
+}
+
+/**
+ * Parsesan OSM-Address-Object for the Road-Name
+ * @param {Array} address
+ * @return {String} roadname
+ */
+NominatimParser.prototype.getRoad = function(address) {
+    var road = "";
+    if (typeof address["road"] !== 'undefined') {
+        road = address["road"];
+    } else if (typeof address["pedestrian"] !== 'undefined') {
+        road = address["pedestrian"];
+    } else if (typeof address["path"] !== 'undefined') {
+        road = address["path"];
+    } else if (typeof address["footway"] !== 'undefined') {
+        road = address["footway"];
+    }
+    return road;
+}
+/**
+ * Parse an OSM-Address-Object for the House Number
+ * @param {Array} address
+ * @return {String} Housenumber
+ */
+NominatimParser.prototype.getHouseNumber = function(address) {
+    var house_number = typeof address["house_number"] !== 'undefined' ? address["house_number"] : "";
+    return house_number;
+}
+/**
+ * Parse an OSM-Address-Object for the City (including Zip-Code)
+ * @param {Array} address
+ * @return {String} City
+ */
+NominatimParser.prototype.getCity = function(address) {
+    var city = typeof address["postcode"] !== 'undefined' ? address["postcode"] + " " : "";
+    if (typeof address["city"] !== "undefined") {
+        city += address["city"];
+    } else if (typeof address["town"] !== "undefined") {
+        city += address["town"];
+    } else if (typeof address["village"] !== "undefined") {
+        city += address["village"];
+    }
+    return city;
+}
+function ReversePositionManager(interactiveMap){
+    // Save the Reference to the map Object
+    this.interactiveMap = interactiveMap;
+
+    // Create the overlay for the map
+    this.positionOverlay = new ol.Overlay( /** @type {olx.OverlayOptions} */ ({
+        element: document.getElementById("popup"),
+        autoPan: true,
+        autoPanAnimation: {
+            duration: 250
+        }
+    }));
+    // Add the Overlay to the map
+    this.interactiveMap.map.addOverlay(this.positionOverlay);
+    // Add the Event Handler for the Click
+    this.setActive(true);
+    // Add the close event for the Popup
+    $("#popup-closer").click({caller: this}, function(event) {
+        event.data.caller.positionOverlay.setPosition(undefined);
         $(this).blur();
         return false;
     });
+
 }
+ReversePositionManager.prototype = Object.create(ReversePositionManager.prototype);
+ReversePositionManager.prototype.constructor = ReversePositionManager;
+
+
 /**
  * This function sends a request to our Nominatim instance and evaluates the given coordinates to an adress
  * @param {Float} lon
  * @param {Float} lat
  * @return {Array} adress
  */
-function getNearest(lon, lat) {
-    var url = "https://maps.metager.de/nominatim/reverse.php?format=json&lat=" + lat + "&lon=" + lon + "&zoom=18&extratags=1&addressdetails=1&namedetails=1";
+ReversePositionManager.prototype.getNearest = function(evt){
+    var pos = this.interactiveMap.map.transformToWorldCoordinates(evt["coordinate"]);
+    var url = "https://maps.metager.de/nominatim/reverse.php?format=json&lat=" + pos[1] + "&lon=" + pos[0] + "&zoom=18&extratags=1&addressdetails=1&namedetails=1";
+    var interactiveMap = this.interactiveMap;
+    var caller = this;
     // Send the Request
     $.get(url, function(data) {
-        var popup = buildResultFromData(data);
-        // And now we can show the Popup where the user clicked
-        createPopup(lon, lat, popup);
+        var popup = new NominatimParser(data).getHTMLResult();
+        $(popup).find("a.start-route-service").click({caller: caller}, function(event){
+            event.data.caller.interactiveMap.switchModule("route-finding", {lon: data["lon"], lat: data["lat"]});
+        });
+        caller.createPopup(interactiveMap.map.transformToMapCoordinates([parseFloat(data["lon"]), parseFloat(data["lat"])]), popup);
     });
 }
 
-function deinitResults() {
-    searchResults = undefined;
-    toggleResults("in");
-    $("#results").html("");
-    $("#result-toggler").addClass("hidden");
-    $("#search input[name=q]").val("");
-    $("#cancel-search").remove();
-    $("#search-addon #doSearch").removeClass("hidden");
-    $("#search-addon #clear-search").removeClass("hidden");
-    $("#search-addon input[name=q]").attr("readonly", false);
-    clearPOIS();
-    q = "";
-    updateUrl();
-    initStartNavigation();
-    map.on("singleclick", mapClickFunction);
-    $("#clear-search").remove();
+ReversePositionManager.prototype.createPopup = function(pos, html) {
+    $("#popup-content").html(html);
+
+    this.positionOverlay.setPosition(pos);
+}
+
+ReversePositionManager.prototype.setActive = function(bool){
+    this.interactiveMap.map.un('singleclick', this.getNearest , this);
+    if(bool){
+        this.interactiveMap.map.on('singleclick', this.getNearest, this);
+    }
+}
+function GpsManager(interactiveMap) {
+    this.map = interactiveMap.map;
+    this.interactiveMap = interactiveMap;
+    this.gps = false // Boolean which declares whether gps is available or not so we don't have to check against the API everytime
+    this.location = null; // Array with Position data of the Last Position we retrieved
+    this.lockViewToPosition = true; // Whether the view should be locked when the current Location is shown.
+    this.id = null; // ID of the process that follow the Location
+    this.userPositionMarker = null; // Marker that displays the user Position
+    this.point_geom = null; // Geomatry of the exact Point of the user
+    this.circle = null; // Geometry of the accuracy of the user position
+    this.options = {
+        enableHighAccuracy: true,
+        maximumAge: 0
+    };
+    this.checkGps(); // This function will set the value of "this.gps" it check gps availability asynchronious
+    // Add the Event Listeners to enable Location Following on the map
+    this.addLocationEventListeners();
+    // Be carefull we will not know if we have GPS or not directly after this constructor
+    // because the validation is done asynchroniously.
+}
+GpsManager.prototype.checkGps = function() {
+    if (navigator.geolocation) {
+        var caller = this;
+        navigator.geolocation.getCurrentPosition(function(position) {
+            caller.toggleGpsLocator(true);
+            caller.location = [position.coords.longitude, position.coords.latitude];
+            caller.accuracy = position.coords.accuracy;
+
+            caller.gps = true;
+            caller.enableGpsFeatures();
+        }, function(error) {
+            caller.gps = false;
+            caller.toggleGpsLocator(false);
+            caller.toggleGpsWarning();
+            caller.disableGpsFeatures();
+        }, {
+            enableHighAccuracy: true,
+            maximumAge: 0
+        });
+    } else {
+        this.gps = false;
+        this.toggleGpsLocator(false);
+        this.toggleGpsWarning();
+        this.disableGpsFeatures();
+    }
+}
+GpsManager.prototype.enableGpsFeatures = function() {
+    this.interactiveMap.module.enableGps();
+}
+GpsManager.prototype.disableGpsFeatures = function() {
+    this.interactiveMap.module.disableGps();
+}
+/**
+ * Toggles the Map Feature (GpsLocation)
+ * It's a button on the map to display your own Position
+ * @param visible - Boolean whether GPS is available or not
+ **/
+GpsManager.prototype.toggleGpsLocator = function(visible) {
+    if (visible) {
+        $("#location-tool").removeClass("hidden");
+        $("#start-navigation > a").attr("href", "/route/start/foot/gps;");
+    } else {
+        $("#location-tool").addClass("hidden");
+        $("#start-navigation > a").attr("href", "/route/start/foot");
+    }
+}
+/**
+ * If the retrieval of GPS Position fails on mobile devices we will show a small warning for a 
+ * period of time.
+ **/
+GpsManager.prototype.toggleGpsWarning = function() {
+    $("#gps-error").addClass("visible-xs");
+    $("#gps-error").removeClass("hidden");
+    setTimeout(function() {
+        $("#gps-error").addClass("hidden");
+        $("#gps-error").removeClass("visible-xs");
+    }, 5000);
+}
+GpsManager.prototype.addLocationEventListeners = function() {
+    $("#follow-location > span.button").click({
+        caller: this
+    }, function(event) {
+        event.data.caller.followLocation();
+    });
+    $("#lock-location > span.button").click({
+        caller: this
+    }, function(event) {
+        var current = event.data.caller.lockViewToPosition;
+        if (current) {
+            $("#location-tool #lock-location").removeClass("active");
+        } else {
+            $("#location-tool #lock-location").addClass("active");
+        }
+        event.data.caller.lockViewToPosition = !event.data.caller.lockViewToPosition;
+    });
+}
+GpsManager.prototype.followLocation = function() {
+    // Element to be displayed at the user-location
+    var el = $('<span id="user-position" class="glyphicon glyphicon-record" style="color: #2881cc;"></span>');
+    if (this.lockViewToPosition) $("#lock-location").addClass("active");
+    else $("#lock-location").removeClass("active");
+    if (this.id === null) {
+        var caller = this;
+        this.id = navigator.geolocation.watchPosition(function(position) {
+            var center = caller.map.transformToMapCoordinates([parseFloat(position.coords.longitude), parseFloat(position.coords.latitude)]);
+            var accuracy = parseFloat(position.coords.accuracy);
+            console.log(accuracy);
+            if (caller.userPositionMarker === null) {
+                // Create User Position
+                caller.point_geom = new ol.geom.Point(center);
+                point_feature = new ol.Feature({
+                    name: "Position",
+                    geometry: caller.point_geom
+                });
+                // Create the accuracy Circle:
+                caller.circle = new ol.geom.Circle(center, accuracy);
+                accuracy_feature = new ol.Feature({
+                    name: "Accuracy",
+                    geometry: caller.circle
+                });
+                caller.userPositionMarker = new ol.layer.Vector({
+                    source: new ol.source.Vector({
+                        features: [point_feature, accuracy_feature]
+                    })
+                });
+                caller.map.addLayer(caller.userPositionMarker);
+            } else {
+                caller.point_geom.setCoordinates(center);
+                caller.circle.setCenter(center);
+                caller.circle.setRadius(accuracy);
+            }
+            if (caller.lockViewToPosition) {
+                // Fit the Extent of the Map to Fit the new Features Exactly
+                caller.map.getView().fit(caller.userPositionMarker.getSource().getExtent(), {
+                    padding: [5, 5, 5, 5],
+                    duration: 600
+                });
+            }
+            // Change the color of the Icon so the user knows that the position is tracked:
+            $("#follow-location").addClass("active");
+        }, function(error) {}, this.options);
+        // Show the Lock View to Position Button
+        $("#lock-location").removeClass("hidden");
+        $("#lock-location > span.info").fadeOut(2000);
+    } else {
+        this.map.removeLayer(this.userPositionMarker);
+        this.userPositionMarker = null;
+        this.point_geom = null;
+        this.circle = null;
+        navigator.geolocation.clearWatch(this.id);
+        this.id = null;
+        // Clear the color of the Icon so the user knows that the position is no longer tracked
+        $("#follow-location").removeClass("active");
+        // Hide the lock View to Position Button
+        $("#lock-location").addClass("hidden");
+        $("#lock-location > span.info").css("display", "");
+    }
+}
+
+function SearchModule(interactiveMap){
+	this.interactiveMap = interactiveMap;	
+	// Initialize the search Interface
+	this.initializeInterface();
+	// Add the Listeners
+	this.addSearchListeners();
+	// Add Options Menu
+	this.addOptionsMenu();
+}
+
+SearchModule.prototype.initializeInterface = function(){
+	$("#search-addon").show('slow');
+}
+
+SearchModule.prototype.addOptionsMenu = function(){
+	var caller = this;
+	$("#options > ul > li").click(function(){
+		caller.interactiveMap.switchModule('offline-karten');
+	});
+}
+
+SearchModule.prototype.addSearchListeners = function(){
+	// When the searchfield got focussed
+	// Mainly just displays the history
+	$("#search-addon").focusin({caller: this}, function(event){
+		event.data.caller.focusSearchInput();
+	});
+
+	$("#search").submit({caller: this}, function(event){
+		event.data.caller.startSearch(event);
+		return false;
+	});
+}
+
+SearchModule.prototype.removeSearchListeners = function(){
+	$("#search-addon").off();
+	$("#search").off();
+}
+
+SearchModule.prototype.startSearch = function(event){
+	this.query = $("#search input[name=q]").val();
+	var caller = this;
+	// Conditions for not executing the search
+	if(this.query === ""){
+		$("#search input[name=q]").focus();
+		return;
+	}
+
+	if(this.results !== null && this.results !== undefined){
+		this.results.deleteSearch();
+		this.results = null;
+	}
+
+	var lockSearchFunctions = function(){
+		// Prevent Additional searches until this one finishes
+		$("#search button[type=submit]").attr("disabled", true);
+		$("#search input[name=q]").attr("readonly", true);
+
+	    // Let's add a Loading animation:
+	    $(".results .wait-for-search").show('fast');
+
+	    // Let's make a new input-group-addon to cancel the search if it takes too long
+	    var cancelSearch = $('\
+	        <div class="input-group-addon" id="cancel-search" title="Suche abbrechen">\
+	            X\
+	        </div> \
+	    ');
+	    $("#search input[name=q]").after(cancelSearch);
+
+	};
+	var unlockSearchFunctions = function(){
+		// Prevent Additional searches until this one finishes
+		$("#search button[type=submit]").attr("disabled", false);
+		$("#search input[name=q]").attr("readonly", false);
+
+	    // Let's add a Loading animation:
+	    $(".results .wait-for-search").hide('fast');
+
+	    $("#search #cancel-search").remove();
+	};
+
+	// Generate the Url for the Search Results
+	var map = this.interactiveMap.map;
+	var tmpExtent = map.getView().calculateExtent(map.getSize());
+	var extent = map.transformToWorldCoordinates([tmpExtent[0], tmpExtent[1]]).concat(map.transformToWorldCoordinates([tmpExtent[2], tmpExtent[3]]));
+	var url = '/' + encodeURI(this.query) + '/' + encodeURI(String(extent[0])) + '/' + encodeURI(String(extent[1])) + '/' + encodeURI(String(extent[2])) + '/' + encodeURI(String(extent[3]));
+	lockSearchFunctions();	
+	// Query the Search:
+	$.get(url, function(data){
+		caller.results = new Results(caller.interactiveMap, data, caller.query);
+		//caller.updateInterface();
+	})
+	.always(function(){
+		unlockSearchFunctions();
+	});	
 
 }
 
+SearchModule.prototype.enableGps = function(){
+    this.interactiveMap.map.getView().setCenter(this.interactiveMap.map.transformToMapCoordinates(this.interactiveMap.GpsManager.location));
+    this.interactiveMap.map.getView().setZoom(12);
+}
 
-function getHistory(withGeoPosition) {
-    if(withGeoPosition === null){
-        withGeoPosition = false;
-    }
-    var präfix = "place-search:";
+SearchModule.prototype.disableGps = function(){
+	
+}
+
+SearchModule.prototype.focusSearchInput = function(){
+	return;
+	// Read out the locally stored History
+	var history = (new LocalHistory()).getFullHistory();
+
+	var caller = this;
+	// Add the History entries to the search suggestions:
+	var oldHeight = $("#search-addon .results").height();
+	// Clear the History Container
+	$("#search-addon .results .history-container").html("");
+	$.each(history, function(index, value){
+		
+		var res = "";
+		if(typeof value === "object"){
+			res =(new NominatimParser(value)).getHTMLResult().html();
+		}else if(typeof value === "string"){
+			res = value;
+		}
+		var resHtml = $('\
+                        <div class="container-fluid suggestion">\
+                            <div class="flex-container">\
+                                <div class="item history">\
+                                    <span class="glyphicon glyphicon-time"></span>\
+                                </div>\
+                                <div class="item result">\
+                                    ' + res + '\
+                                </div>\
+                            </div>\
+                        </div>\
+                        ');
+		$("#search-addon .results .history-container").append(resHtml);
+	});
+	var newHeight = $("#search-addon .results").height();
+
+	this.adjustResultBoxHeight(oldHeight, newHeight);
+}
+
+SearchModule.prototype.exit = function(){
+	if(this.results !== null && this.results !== undefined)	this.results.deleteSearch();
+	$("#popup-closer").click();
+	this.removeSearchListeners();
+	$("#search-addon").hide('slow');
+}
+
+function LocalHistory(){
+    this.präfix = "place-search:";
+	this.history = this.readHistory();
+}
+
+LocalHistory.prototype.readHistory = function(){
+    var präfix = this.präfix;
     var result = [];
     if (localStorage) {
         var reg = new RegExp("^" + präfix, '');
+        var caller = this;
         $.each(localStorage, function(key, value) {
-            if (key.match(reg) !== null && value.match(/^\d+;\d+\.{0,1}\d*,\d+\.{0,1}\d*$/) !== null) {
-                var match = value.match(/([\d]+?);([\d\.]+),([\d\.]+)/);
+            if (key.match(reg) !== null) {
+                // Search Results are stored in Base64 encoded Strings
+                var match = key.match(/:([\d]+?)/);
                 var count = parseInt(match[1]);
-                var lon = parseFloat(match[2]);
-                var lat = parseFloat(match[3]);
-                var name = atob(key.replace(präfix, ''));
-                if(!withGeoPosition || (lon !== 0 && lat !== 0)){
-                    result.push({
-                        name: name,
-                        count: count,
-                        lon: lon,
-                        lat: lat
-                    });
-                }
+                var res = caller.b64DecodeUnicode(value);
+                res = JSON.parse(res);
+                res.count = count;
+                result.push(res);
             }
         });
         result.sort(function(a, b) {
@@ -2074,985 +1951,1818 @@ function getHistory(withGeoPosition) {
     return result;
 }
 
-function saveHistory(history, präfix) {
-    if (localStorage) {
-        // Das abspeichern der neuen History verläuft in 2 Schritten:
-        // 1. Löschen der vorhanden History
-        // 2. Hinzufügen der neuen History
-        // 1. Löschen der vorhandenen History
-        clearHistory(präfix);
-        // 2. Hinzufügen der neuen History
-        $.each(history, function(index, value) {
+LocalHistory.prototype.getFullHistory = function(){
+	return this.history;
+}
+
+LocalHistory.prototype.clearHistory = function() {
+    if(localStorage){
+        var präfix = this.präfix;
+        $.each(this.history, function(index, value){
             var key = präfix + btoa(value.name);
-            var val = value.count + ";" + value.lon + "," + value.lat;
-            localStorage.setItem(key, val);
+            localStorage.removeItem(key);
         });
-    }
-}
-
-function clearHistory(präfix) {
-    var oldhistory = getHistory();
-    $.each(oldhistory, function(index, value) {
-        var key = präfix + btoa(value.name);
-        localStorage.removeItem(key);
-    });
-}
-
-function addToHistory(name, lon, lat) {
-    if (localStorage) {
-        var präfix = "place-search:";
-        var key = btoa(name);
-        var historyLimit = 10;
-        // Let's get the sorted List of Results
-        var history = getHistory();
-        // Check if item exists:
-        var item = localStorage.getItem(präfix + key);
-        if (item === null) {
-            // Item ist noch nicht in der History. Es wird an die erste Stelle gesetzt
-            if (history.length >= historyLimit) {
-                // Zuerst das letzte Element entfernen, da unsere History voll ist
-                history.pop();
-            }
-            // Nun fügen wir das neue Element hinzu:
-            history.unshift({
-                name: name,
-                count: 10,
-                lon: lon,
-                lat: lat
-            });
-        } else {
-            // Item ist bereits in der History. Es wird einen Platz nach oben gepackt.
-            var itemIndex = parseInt(item.match(/^\d+/)[0]);
-            // Der angezeigte Index ist eine Zahl zwischen 1 und 10 wobei 10 das erste Element ist und 1 das letzte
-            // Wir konvertieren diese Zahl zum Array-Index
-            itemIndex = Math.abs(itemIndex - 10);
-            // Wir verschieben das Array Element jetzt um einen Platz nach vorne, also z.B: Element an stelle 4 kommt an stelle 3 etc.
-            if(itemIndex > 0){
-                history.move(itemIndex, itemIndex - 1);
-            }
-        }
-        // Jetzt müssen wir noch den Count Parameter für jedes Element aktualisieren:
-        var newHistory = [];
-        $.each(history, function(index, value) {
-            var c = historyLimit - index;
-            newHistory.push({
-                name: value.name,
-                count: c,
-                lon: value.lon,
-                lat: value.lat
-            });
-        });
-        saveHistory(newHistory, präfix);
-    }
-}
-/*
- * Different things need to be done to be able to find the points to route to
- * First thinkg would be to prepare the Results Div
- */
-var vectorLayerRoutePreview;
-var markers = [];
-var autoChooseVehicle = true;
-var findRouteInitialized = false;
-var paddingRight = null;
-function start(){
-
-    // The GPS Location is tricky
-    // It takes time on the one hand and waits for approval of sharing the Location on the other hand
-    // Under some circumstances the following scenario can occure:
-    // The User wants to derive a route from his own Position
-    // We have to wait for the geolocation API to finish but in case of a failure of retrieving Location data we need to do something
-    // So check here wheter a GPS Location is needed (one waypoint is "gps") AND the GPS Position isn't ready
-    var needGPS = false;
-    deinitStartNavigation();
-    $.each(waypoints, function(index, value){
-        if(value === "gps"){
-            needGPS = true;
-            return;
-        }
-    });
-    if((needGPS && !gps) || findRouteInitialized){
-        // If this is the case we will simply return here.
-        // If the geolocation API got triggered, then another call to this function will
-        // happen, when the gpsLocation is available
-        return;
+        return true;
     }else{
-        findRouteInitialized = true;
+        return false;
     }
-    // Put the Popstate Event:
-    $(window).unbind('popstate');
-    $(window).bind('popstate', function(event) {
-        var state = event.originalEvent.state;
-        autoChooseVehicle = false;
-        if (state !== null && state.url !== undefined) {
-            document.location.href = state["url"];
-        } else if (state !== null && state["vehicle"] !== undefined && state["waypoints"] !== undefined) {
-            vehicle = state["vehicle"];
-            waypoints = clone(state["waypoints"]);
-            initRouteFinder();
-        } else {
-            waypoints = [];
-            initRouteFinder();
-        }
-    });
-    deinitSearchBox();
-
-    refreshUrl();
-
-    map.un("singleclick", mapClickFunction);
-    map.on('singleclick', function(evt) {
-        var pos = evt["coordinate"];
-        addWaypoint(pos);
-    });
-
-    map.un("moveend", updateUrl);
-
-    if (getWayPointLength() >= 1) {
-        var points = [];
-        $.each(waypoints, function(index, value){
-            if(value === 'gps'){
-                points.push(gpsLocation);
-            }else{
-                points.push(value);
-            }
-        });
-    }
-};
-
-function addWaypoint(pos) {
-    pos = ol.proj.transform(pos, 'EPSG:3857', 'EPSG:4326');
-    $.each(waypoints, function(index, value) {
-        if (value === '') {
-            waypoints[index] = pos;
-            refreshUrl();
-            return false;
-        }
-    });
 }
 
-function refreshUrl() {
-    var uri = '/route/start/' + vehicle + '/';
-    $.each(waypoints, function(index, value) {
-        uri += value.toString() + ";";
-    });
-    uri = uri.replace(/;$/, '');
-    var stateObj = {
-        waypoints: clone(waypoints),
-        vehicle: vehicle
-    };
-    // Change URL
-    window.history.pushState(stateObj, '', uri);
-    initRouteFinder();
+LocalHistory.prototype.b64EncodeUnicode = function(str){
+    return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, function(match, p1) {
+        return String.fromCharCode('0x' + p1);
+    }));
 }
 
-function changeVehicle(newVehicle) {
-    var uri = '/route/start/' + newVehicle + '/';
-    vehicle = newVehicle;
-    refreshUrl();
+LocalHistory.prototype.b64DecodeUnicode = function(str) {
+    return decodeURIComponent(Array.prototype.map.call(atob(str), function(c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
 }
 
-function initRouteFinder() {
-    // To be consistent for multiple calls we need to remove eventually existing interfaces
-    $("#vehicle-chooser").remove();
-    $("#route-content").remove();
-
-    $("#results").html("");
-    map.removeLayer(vectorLayerRoutePreview);
-    // Remove Existing Markers
-    clearMarkers();
-    var vehicleChooser = $("<div id=\"vehicle-chooser\">\
-            <label class=\"radio-inline\" title=\"Fußgänger\">\
-              <input type=\"radio\" name=\"vehicle\" value=\"foot\"> <div><img src=\"/img/silhouette-walk.png\" height=\"20px\" /></div>\
-            </label>\
-            <label class=\"radio-inline\" title=\"Fahrrad\">\
-              <input type=\"radio\" name=\"vehicle\" value=\"bicycle\"> <div><img src=\"/img/bike.png\" height=\"20px\" /></div>\
-            </label>\
-            <label class=\"radio-inline\" title=\"Auto\">\
-              <input type=\"radio\" name=\"vehicle\" value=\"car\"> <div><img src=\"/img/car.png\" height=\"20px\" /></div>\
-            </label>\
-            <button type=\"button\" class=\"close\" aria-label=\"Close\" title=\"Routenplanung abbrechen\">\
-              <span aria-hidden=\"true\">&times;</span>\
-            </button>\
-        </div>\
-        ");
-    $(vehicleChooser).find(".close").click(function(){
-        document.location.href = "/";
-    });
-    $("#search-addon").prepend(vehicleChooser);
-    var routeContent = $("<div id=\"route-content\" class=\"container-fluid\"></div>");
-    $("#results").append(routeContent);
-    // Select the correct checkbox:
-    $("#vehicle-chooser input[value=" + vehicle + "]").prop("checked", true);
-    // Add the changed Listener to the Radio Buttons
-    $(vehicleChooser).find("input[type=radio]").off();
-    $(vehicleChooser).find("input[type=radio]").change(function() {
-        autoChooseVehicle = false;
-        changeVehicle($("input[type=radio]:checked").val());
-    });
-    // Let's check for existing waypoints
-    if (typeof waypoints !== "undefined") {
-        if (waypoints.length === 0) {
-            waypoints.unshift('', '');
-        } else if (waypoints.length === 1) {
-            waypoints.unshift('');
-        }
-        var firstEmpty = false;
-        var waypointHtml = $('<ul id="waypoint-container" class="row"></ul>');
-        if (waypoints.length >= 1) {
-            if(waypoints[0] === ""){
-                html = $("<div class=\"container-fluid new-waypoint-box\"><p>Startpunkt angeben:\
-                    <button type=\"button\" class=\"\" \
-                        data-html=\"true\"\
-                        data-trigger=\"hover\"\
-                        data-toggle=\"popover\"\
-                        data-placement=\"bottom\"\
-                        data-container=\"body\"\
-                        title=\"Wegpunkt definieren\" \
-                        data-content=\"Sie können neue Wegpunkte auf 2 Arten definieren:<ol><li>Klicken Sie einfach auf der Karte auf den Punkt, den Sie einfügen möchten.</li><li>Sie können nach Orten Suchen indem Sie ihre Suchworte in das Eingabefeld eintragen und entweder Enter drücken, oder auf das kleine Lupensymbol klicken. Wählen Sie dann einfach das passende Ergebnis durch Klick aus.</li></ol>\">\
-                        <span class=\"glyphicon glyphicon-question-sign\"></span>\
-                    </button></p><input id=\"0\" class=\"form-control\" placeholder=\"Klicke auf die Karte um diesen Wegpunkt einzufügen.\" value=\"\"></input></div>");
-                addSearchEvent($(html).find("input"));
-                $("#route-content").append(html);
-                
-                firstEmpty = true;
-            }
-            $.each(waypoints, function(index, value) {
-                var html;
-                if (typeof value[0] !== "undefined" || value === 'gps') {
-                    var chr = String.fromCharCode(65 + index);
-                    // So now the Pin
-                    var el = $('<span id="' + chr + '" class="marker">' + chr + '</span>');
-                    html= $('\
-                        <li id="' + index + '" class="waypoint-list-item container-fluid" title="' + value[0] + '">\
-                            <div class="row">\
-                                <div class="waypoint-marker col-xs-2"></div>\
-                                <div class="adress-name col-xs-8">' + value[0] + '</div>\
-                                <div class="delete-waypoint col-xs-2" data-id="' + index + '" title="Wegpunkt löschen"><a href="javascript:deleteWaypoint('+index+');"><span class="glyphicon glyphicon-trash"></span></a></div>\
-                            </div>\
-                        </li>\
-                        ');
-                    $(html).find(".waypoint-marker").append(el);
-                    // Add the correct value:
-                    var lon = "";
-                    var lat = "";
-                    if (value === 'gps') {
-                        var pos = gpsLocation;
-                        lon = pos[0];
-                        lat = pos[1];
-                        positionToAdress('gps', $(html).find(".adress-name"));
-                    } else {
-                        lon = value[0];
-                        lat = value[1];
-                        positionToAdress([lat, lon], $(html).find(".adress-name"));
-                    }
-                    
-                    addPositionMarker(lon, lat, index);
-                    $(waypointHtml).append(html);
-                } else {
-                    /*
-                    
-                    addSearchEvent(html);
-                    */
-                }
-                
-
-            });
-            $("#route-content").append(waypointHtml);
-            if(waypoints[waypoints.length-1] === ""){
-                if (!firstEmpty) {
-                    html = $("<div class=\"container-fluid new-waypoint-box\"><p>Ziel angeben:\
-                    <button type=\"button\" class=\"\" \
-                        data-html=\"true\"\
-                        data-trigger=\"hover\"\
-                        data-toggle=\"popover\"\
-                        data-placement=\"bottom\"\
-                        data-container=\"body\"\
-                        title=\"Wegpunkt definieren\" \
-                        data-content=\"Sie können neue Wegpunkte auf 2 Arten definieren:<ol><li>Klicken Sie einfach auf der Karte auf den Punkt, den Sie einfügen möchten.</li><li>Sie können nach Orten Suchen indem Sie ihre Suchworte in das Eingabefeld eintragen und entweder Enter drücken, oder auf das kleine Lupensymbol klicken. Wählen Sie dann einfach das passende Ergebnis durch Klick aus.</li></ol>\">\
-                        <span class=\"glyphicon glyphicon-question-sign\"></span>\
-                    </button></p><input id=\"" + (waypoints.length-1) + "\" class=\"form-control\" placeholder=\"Klicke auf die Karte um diesen Wegpunkt einzufügen.\" value=\"\"></input></div>");
-                    firstEmpty = true;
-                } else {
-                    html = $("<div class=\"container-fluid new-waypoint-box\"><p>Wegpunkt hinzufügen:\
-                    <button type=\"button\" class=\"\" \
-                        data-html=\"true\"\
-                        data-trigger=\"hover\"\
-                        data-toggle=\"popover\"\
-                        data-placement=\"bottom\"\
-                        data-container=\"body\"\
-                        title=\"Wegpunkt definieren\" \
-                        data-content=\"Sie können neue Wegpunkte auf 2 Arten definieren:<ol><li>Klicken Sie einfach auf der Karte auf den Punkt, den Sie einfügen möchten.</li><li>Sie können nach Orten Suchen indem Sie ihre Suchworte in das Eingabefeld eintragen und entweder Enter drücken, oder auf das kleine Lupensymbol klicken. Wählen Sie dann einfach das passende Ergebnis durch Klick aus.</li></ol>\">\
-                        <span class=\"glyphicon glyphicon-question-sign\"></span>\
-                    </button></p><input id=\"" + (waypoints.length-1) + "\" class=\"form-control\" value=\"\"></input></div>");
-                }
-                addSearchEvent($(html).find("input"));
-                $("#route-content").append(html);
-            }
-            // Enable the Popoversfor this element:
-            $("#route-content button[data-toggle=popover]").popover();
-        }
-        
-    }
-    // Describes the number of unfilled waypoints
-    var unfilled = 0;
-    if (waypoints[0] === '') {
-        unfilled++;
-    }
-    if (waypoints[waypoints.length - 1] === '') {
-        unfilled++;
-    }
-    if (typeof waypoints !== "undefined" && (waypoints.length - unfilled) >= 2 ) {
-        var from = waypoints[0][0] + "," + waypoints[0][1];
-        var lastIndex = waypoints.length - 1;
-        var to = waypoints[lastIndex][0] + "," + waypoints[lastIndex][1];
-        var points = "";
-        $.each(waypoints, function(index, value) {
-            if (value === '' || typeof value[0] === "undefined") {
-                return;
-            } else {
-                points += value.toString() + ";";
-            }
-        });
-        points = points.replace(/;+$/, '');
-        var startButton = $("<div class=\"col-xs-6\"><a id=\"calc-route\" href=\"/route/" + vehicle + "/" + points + "\" class=\"\">Route berechnen</a></div>");
-        var addWayPoint = $("<div class=\"col-xs-6\"><button type=\"button\" id=\"add-waypoint\" class=\"\">Wegpunkt hinzufügen</a></div>");
-        var buttons = $("<div id=\"find-route-options\" class=\"container-fluid\"><div class=\"row\"></div></div>");
-        $(buttons).find(".row").append(startButton);
-        $(buttons).find(".row").append(addWayPoint);
-        $("#route-content").append(buttons);
-        // Add the Listener for adding Waypoints
-        $("#add-waypoint").click(function() {
-            clearMarkers();
-            var newWaypoints = [];
-            $.each(waypoints, function(index, value){
-                if(index === 0){
-                    newWaypoints.push(value);
-                }else if(index > 0 && value !== ""){
-                    newWaypoints.push(value);
-                }
-            });
-            newWaypoints.push('');
-            waypoints = newWaypoints;
-            refreshUrl();
-        });
-        // We should add a Place to display Informations About the Route
-        var routeInformation = $('<div id="route-information" class="row"><div id="length" class="col-xs-6"></div><div id="duration" class="col-xs-6"></div></div>')
-        $("#route-content").prepend(routeInformation);
-    }
-    generatePreviewRoute();
-    addDragAndDrop();
-    toggleResults("out");
+function Results(map, data, query){
+	this.interactiveMap = map;
+	this.results = data;
+	this.query = query;
+	this.markerOverlays = [];
+	this.updateInterface();
 }
 
-function deleteWaypoint(index){
-    waypoints[index] = "";
-    refreshUrl();
+Results.prototype.deleteSearch = function(animationSpeed){
+	// Activate Reverse Geocoding
+	this.interactiveMap.reversePositionManager.setActive(true);
+	if(animationSpeed === null){
+		animationSpeed = "slow";
+	}
+	$("#search-addon .results .results-container").hide(animationSpeed, function(){
+		$("#search-addon .results .results-container").html("");
+	});
+	$("#search-addon .results .history-container").hide(animationSpeed, function(){
+		$("#search-addon .results .history-container").html("");
+	});
+	$("#search-addon #delete-search").remove();
+	$("#search-addon #search input[name=q]").val("");
+	
+	if($(window).outerWidth() <= 767){
+			$("#search-addon .results .mobiles-window").remove();
+			$("#search-addon #show-list").remove();
+			// The Search box got focussed on a mobile Let's get more Space
+			$("#search-addon").animate({"margin": "15px 15px 0 15px"}, 'slow');
+			$("#search-addon .results").css("border-radius", "0 0 15px 15px");
+			$("#search-addon .results").css("max-height", "91vh");
+			$("#search-addon .results").css("background-color", "white");
+			// Show Zoombar on mobiles in results view
+			$(".ol-zoom, .ol-zoomslider").show();
+	}
+	this.removeResultMarker();
+}
+
+Results.prototype.removeResultMarker = function(){
+	var map = this.interactiveMap.map;
+	$.each(this.markerOverlays, function(index, value){
+		map.removeOverlay(value);
+	});
+	this.markerOverlays = [];
+}
+
+/**
+ * Updates the User Interface if there are any Search results saved in this Module
+ * It prints all Markers and geometries for the search results and updates the results list
+**/
+Results.prototype.updateInterface = function(){
+	if(this.results.length > 0){
+		this.deleteSearch(0);
+		$("#search input[name=q]").val(this.query);
+		// Disable Reverse Geocoding on click
+		this.interactiveMap.reversePositionManager.setActive(false);
+		// First add those Results to the Results List
+		$("#search-addon .results .results-container").html("");
+		$("#search-addon .results .mobiles-window").remove();
+		var caller = this;
+		$.each(this.results, function(index, value){
+			var res = (new NominatimParser(value)).getHTMLResult().html();
+			var resHtml = $('\
+							<div class="container-fluid suggestion" data-resultNumber="'+index+'">\
+	                            <div class="flex-container">\
+	                                <div class="item history">\
+	                                    <span class="marker" style="filter: hue-rotate(' + value["huerotate"] + 'deg); font-size: 16px;">' + (index+1) + '</span>\
+	                                </div>\
+	                                <div class="item result">\
+	                                    ' + res + '\
+	                                </div>\
+	                            </div>\
+	                        </div>\
+							');
+			$("#search-addon .results .results-container").append(resHtml);
+			if(caller.results.length > 1){
+				$(resHtml).click({caller: caller}, function(event){
+					event.data.caller.focusResult($(this).attr("data-resultNumber"));
+				});
+			}
+		});
+		$("#search-addon .results .results-container .start-route-service").click({caller: caller}, function(){
+			caller.interactiveMap.switchModule("route-finding", {lat: $(this).attr("data-lat"), lon: $(this).attr("data-lon")});
+		});
+		
+		$("#search-addon .results .results-container").show('slow', function(){
+			$("#search-addon .results .results-container").attr("data-status", "out");
+			if($(window).outerWidth() <= 767){
+				// On Mobiles we need a window to look through to the map
+				$("#search-addon .results .results-container").before("<div class=\"mobiles-window\"></div>");
+				$("#search-addon .results .mobiles-window").click({caller: caller}, function(event){
+					event.data.caller.mobilesWindowClick();
+				});
+				// The Search box got focussed on a mobile Let's get more Space
+				$("#search-addon").animate({"margin": 0}, 'slow', function(){
+					$("#search-addon .results").css("border-radius", 0);
+					$("#search-addon .results").css("max-height", "95vh");
+					$("#search-addon .results").css("background-color", "transparent");
+
+					// Hide Zoombar on mobiles in results view
+					$(".ol-zoom, .ol-zoomslider").hide();
+
+					var height = $(window).outerHeight() - $(".results").outerHeight() - $("#search").outerHeight();
+					height = Math.max(height, 175);
+					$(".results .mobiles-window").css("height", height + "px");
+				});
+			}
+			// Let's make a new input-group-addon to cancel the search if it takes too long
+			var cancelSearch = $('\
+			    <div class="input-group-addon" id="delete-search" title="Suche abbrechen">\
+			        X\
+			    </div> \
+			');
+			$("#search input[name=q]").after(cancelSearch);
+			$(cancelSearch).click({caller: caller}, function(event){
+				event.data.caller.deleteSearch();
+			});
+			caller.updateResultMarker();
+			caller.updateMapExtent();
+		});
+	}
+}
+
+Results.prototype.focusResult = function(index){
+	var results = this.results;
+	if(typeof results[index] !== "undefined"){
+		var newResults = results[index];
+		this.results = [newResults];
+		this.updateInterface();
+	}
+}
+
+Results.prototype.updateResultMarker = function(){
+	var caller = this;
+	if(this.markerOverlays.length > 0){
+		$.each(this.markerOverlays, function(index, overlay){
+			caller.interactiveMap.map.removeOverlay(overlay);
+		});
+		this.markerOverlays = [];
+	}
+	
+	$.each(this.results, function(index, value){
+		var el = $('<span id="index" class="marker" data-resultNumber="'+index+'" style="filter: hue-rotate(' + value["huerotate"] + 'deg)">' + (index+1) + '</span>');
+		if(caller.results.length > 1){
+			$(el).click({caller: caller}, function(event){
+				event.data.caller.focusResult($(this).attr("data-resultNumber"));
+			});
+		}
+		var overlay = new ol.Overlay({
+			position: caller.interactiveMap.map.transformToMapCoordinates([parseFloat(value.lon), parseFloat(value.lat)]),
+			element: el.get(0),
+			offset: [-12, -45],
+			stopEvent: false,
+		});
+		caller.interactiveMap.map.addOverlay(overlay);
+		caller.markerOverlays.push(overlay);
+	});
+}
+
+
+
+Results.prototype.mobilesWindowClick = function(){
+	// Hide the Results Panel
+	$(".results .results-container, .results .history-container").hide("fast");
+	var caller = this;
+	$(".results .mobiles-window").hide("fast", function(){
+		// Add the Possibility to come back to the list
+		var showList = $('\
+			<div id="show-list" class="container">\
+				Liste anzeigen\
+			</div>');
+		$("#search-addon .results").append(showList);
+		$(showList).click({caller: caller}, function(event){
+			$("#show-list").hide('fast', function(){
+				$("#show-list").remove();
+			});
+			$(".results .results-container").show("fast");
+			$(".results .mobiles-window").show("fast", function(){
+				event.data.caller.updateMapExtent();
+			});
+		});
+		var padding = [
+			$("#search-addon").outerHeight(true) + 25,
+			25,
+			25,
+			25
+		];
+		caller.updateMapExtent(padding);
+	});
+}
+
+Results.prototype.updateMapExtent = function(initPadding){
+	if(this.results.length <= 0){
+		return;
+	}
+	var caller = this;
+	var extent = [null, null, null, null];
+	$.each(this.results, function(index, res){
+		// We just focus on those results that have all the terms in the search query in it
+		var valid = true;
+		var words = caller.query.split(/\W+/);
+		$.each(words, function(index, value){
+			if(res.display_name.toLowerCase().indexOf(value.toLowerCase()) === -1){
+				valid = false;
+			}
+		});
+		if(!valid) return true;
+		var lon = parseFloat(res.lon);
+		var lat = parseFloat(res.lat);
+		if(extent[0] === null || extent[0] > lon){
+			extent[0] = lon;
+		}
+		if(extent[1] === null || extent[1] > lat){
+			extent[1] = lat;
+		}
+		if(extent[2] === null || extent[2] < lon){
+			extent[2] = lon;
+		}
+		if(extent[3] === null || extent[3] < lat){
+			extent[3] = lat;
+		}
+	});
+
+	extent = caller.interactiveMap.map.transformToMapCoordinates([extent[0], extent[1]]).concat(caller.interactiveMap.map.transformToMapCoordinates([extent[2], extent[3]]));
+
+	// Let's find out in what space of the map we need to fit this in:
+	// If Screen is not mobile the search results are 
+	var padding = [25,25,25,25];
+	if(initPadding !== undefined){
+		padding = initPadding;
+	}else if($(window).outerWidth() <= 767){
+		// Padding Top:
+		padding[0] = $("#search").outerHeight(true) + 15;
+		// Padding Bottom:
+		padding[2] = $(window).outerHeight(true) - $("#search").outerHeight(true) - $(".results .mobiles-window").outerHeight(true);
+	}else{
+		var paddingRight = 0;
+		paddingRight += $("#search-addon").outerWidth(true);
+		padding[1] = paddingRight;
+	}
+	caller.interactiveMap.map.getView().fit(extent, {duration: 600, padding: padding});
+	
+}
+/**
+ * Class RouteFinder
+ * This is a module that enables the map to create a Route with multiple Waypoints and chose the desired vehicle
+ * @param interactiveMap - an instance of the current interactiveMap Object
+ * @param waypoints - An Array of waypoints [[lon,lat], ...] to start of with
+**/
+function RouteFinder(interactiveMap, waypoints){
+	this.interactiveMap = interactiveMap;
+	this.waypoints = [];
+	this.waypointsLength = waypoints.length;
+	this.results = null;
+	this.appendNewWaypointForm();
+
+	var caller = this;
+	$.each(waypoints, function(index, value){
+		caller.addWaypoint(value[0], value[1], undefined, undefined, false);
+	});	
+
+	if(this.interactiveMap.GpsManager.gps && this.interactiveMap.GpsManager.accuracy < 500 && this.waypoints.length <= 1){
+		this.addWaypoint(undefined, undefined, undefined, this.interactiveMap.GpsManager, true);
+	}
+
+	// Show the interface
+	var caller = this;
+	$("#route-finder-addon").show('slow', function(){
+		caller.adjustMapView();
+		caller.updateMobilesWindow();
+	});
+	// Add the Click Event Handler on the mobiles-window
+	$("#route-finder-addon #waypoint-list-container .mobiles-window").click({caller: this}, function(event){
+		event.data.caller.mobilesWindowClick();
+	});
+	// Add the Click Event Handler on the Map
+	this.interactiveMap.map.on("singleclick", this.mapClick, this);
+
+	// Disable The Click Event for the map
+	this.interactiveMap.reversePositionManager.setActive(false);
+
+	// Enable Click Event for the Exit Button
+	$("#route-finder-addon #vehicle-chooser button.close").click({caller: this}, function(event){
+		caller.interactiveMap.switchModule("search");
+	});
+
+	// Disable The Zoom Bar. We won't need it now
+	$(".ol-zoom, .ol-zoomslider").hide();
+
+
 }
 
 /*
- * Function to convert lat/lon into an adress String and Put it into the value attribute of the given input-object
- * @param{float} lon
- * @param{float} lat
- * @apram{Input-Object} obj
- */
-function positionToAdress(pos, obj) {
+ * this methos is Called by the GPS-Mager once it has access to a GPS Position
+*/
+RouteFinder.prototype.enableGps = function(){
+	if(this.waypoints.length <= 1 && this.interactiveMap.GpsManager.accuracy < 500){
+		// If there is one or no Waypoint defined Yet we gonna automatically add the Current Position
+		// As a Waypoint
+		this.addWaypoint(undefined, undefined, undefined, this.interactiveMap.GpsManager, true);
+	}
+}
+
+RouteFinder.prototype.adjustMapView = function(padding){
+	if(this.waypoints.length === 1){
+		// When there is only one Waypoint defined, we're gonna zoom onto it
+		var point = [this.waypoints[0].lon, this.waypoints[0].lat];
+		// Animate the View change:
+		this.interactiveMap.map.getView().animate({center: this.interactiveMap.map.transformToMapCoordinates(point), zoom: 12, rotation: 0, duration: 750});
+	}else if(this.route !== undefined){
+		this.route.updateMapExtent(padding);
+	}
+}
+
+/**
+ * This Function either takes a lat/lon Position to add a waypoint
+ * Or it takes a finished NominatimParser Object which will leave out the Network Request 
+ * that would be needed to convert lat/lon into a concrete Waypoint
+ * @return is a boolean whether the waypoint was added successfully or not.
+**/
+RouteFinder.prototype.addWaypoint = function(lon, lat, nominatimParser, gpsManager, autoPosition){
+	var waypoint = null;
+	var index = -1;
+	if(autoPosition === undefined) autoPosition = true;
+	// We check where to put our new Waypoint
+	//  If there is no Waypoint yet we will just push it to the list
+	if((this.waypoints.length === 0 || this.waypoints.length === 1) && autoPosition){
+		index = 0;
+	}else {
+		index = this.waypoints.length;
+	}
+	if(lat !== undefined && lon !== undefined){
+		var caller = this;
+		waypoint = new Waypoint(lon, lat, nominatimParser, gpsManager, index, this.interactiveMap.map, function(waypoint){
+			caller.addWaypointInterface(waypoint);
+		});
+	}else if(nominatimParser !== undefined){
+		var caller = this;
+		waypoint = new Waypoint(undefined, undefined, nominatimParser, gpsManager, index, this.interactiveMap.map, function(waypoint){
+			caller.addWaypointInterface(waypoint);
+		});
+	}else if(gpsManager !== undefined){
+		var caller = this;
+		waypoint = new Waypoint(undefined, undefined, nominatimParser, gpsManager, index, this.interactiveMap.map, function(waypoint){
+			caller.addWaypointInterface(waypoint);
+		});
+	}else{
+		return false;
+	}
+	if(index === 0){
+		this.waypoints.unshift(waypoint);
+	}else{
+		this.waypoints.push(waypoint);
+	}
+	// So we now have a correct list of Waypoints but we need to tell them their new Index, too
+	$.each(this.waypoints, function(index, waypoint){
+		waypoint.changeIndex(index);
+	});
+
+	// There was a Waypoint added we need to update the screen
+	if($("#route-finder-addon > form").length >= 1){
+		var caller = this;
+		$("#route-finder-addon > form").hide('slow', function(){
+			$(this).remove();
+			caller.appendNewWaypointForm();
+			caller.updateMobilesWindow();
+		});
+	}
+
+	// If there are more than two Waypoints defined, we can calculate the route
+	this.calculateRoute();
+
+	// Make the List sortable
+	var caller = this;
+	$("#waypoint-list").sortable({
+		handle: ".drag",
+		items: "> li.wp",
+		axis: "y",
+		start: function(event, ui){
+			$("#waypoint-list > .route-description").hide("fast", function(){
+				caller.updateMobilesWindow();
+				caller.adjustMapView();
+			});
+			
+		},
+		stop: function(event, ui){
+			$("#waypoint-list > .route-description").show("fast", function(){
+				caller.updateMobilesWindow();
+				caller.adjustMapView();
+			});
+		},
+		update: function( event, ui ){
+			caller.waypointsResorted();
+		}
+	});
+}
+
+RouteFinder.prototype.waypointsResorted = function(){
+	// The Waypoints got resorted by dragging which means that the ui has changed and we need to apply that to the waypoints in this object
+	var newWaypoints = [];
+	var caller = this;
+	$("#route-finder-addon #waypoint-list > li.wp").each(function(index, value){
+		var currentPos = parseInt($(value).attr("data-index"));
+		newWaypoints.push(caller.waypoints[currentPos]);
+	});
+	this.waypoints = newWaypoints;
+	// So we now have a correct list of Waypoints but we need to tell them their new Index, too
+	$.each(this.waypoints, function(index, waypoint){
+		waypoint.changeIndex(index);
+	});
+	this.calculateRoute();
+}
+
+RouteFinder.prototype.calculateRoute = function(vehicle){
+	if(typeof this.route !== "undefined"){
+		this.route.exit();
+		$("#waypoint-list .route-description").remove();
+		this.updateMobilesWindow();
+		this.adjustMapView();
+	}
+	if(this.waypoints.length >= 2){
+		var caller = this;
+		this.route = new Route(this.waypoints, vehicle, this.interactiveMap, function(){
+			caller.addLegDescriptions();
+		});
+	}
+}
+
+RouteFinder.prototype.addLegDescriptions = function(){
+	$("#waypoint-list > li.route-description").remove();
+	var waypoints = $("#waypoint-list > li");
+	var caller = this;
+	$.each(waypoints, function(index, value){
+		if((caller.route.route.routes[caller.route.route.activeRoute].legs.length - 1) >= index){
+			var leg = caller.route.legs[index];
+			var legHtml = leg.generateRouteDescriptionHtml();
+			var descrHtml = $('<li class="route-description"></li>');
+			$(descrHtml).append(legHtml);
+			$(value).after(descrHtml);
+		}
+	});
+	this.updateMobilesWindow();
+	this.adjustMapView();
+}
+
+RouteFinder.prototype.addWaypointInterface = function(waypoint){
+	console.log("test");
+	var waypointHtml = waypoint.getHtml();
+	if(waypoint.index === 0){
+		$("#route-finder-addon #waypoint-list").prepend(waypointHtml);
+	}else{
+		$("#route-finder-addon #waypoint-list").append(waypointHtml);	
+	}
+
+	$(waypointHtml).find(".delete-waypoint").click({caller: this}, function(event){
+		event.data.caller.removeWaypoint(parseInt($(this).attr("data-index")));
+	});	
+	this.interactiveMap.map.addOverlay(waypoint.marker);
+	this.updateMobilesWindow();
+}
+
+RouteFinder.prototype.removeWaypoint = function(index){
+	var waypoint = this.waypoints[index];
+	// Remove The Marker from the map
+	this.interactiveMap.map.removeOverlay(waypoint.marker);
+	// Remove The Waypoint from the Waypoint List (Interface)
+	$("#waypoint-list li[data-index=" + index + "]").remove();
+	// Remove the Waypoint from the internal list
+	this.waypoints.splice(index, 1);
+	$.each(this.waypoints, function(index, value){
+		value.changeIndex(index);
+	});
+	this.updateMobilesWindow();
+	this.calculateRoute();
+	this.adjustMapView();
+}
+
+RouteFinder.prototype.mapClick = function(event){
+	this.exitSearch();
+	var pos = this.interactiveMap.map.transformToWorldCoordinates(event.coordinate);
+	$("#route-finder-addon #waypoint-list-container").show("slow");
+	$("#route-finder-addon #vehicle-chooser").show("slow");
+	var caller = this;
+	$("#route-finder-addon > form").show("slow", function(){
+		caller.updateMobilesWindow();
+		caller.addWaypoint(pos[0], pos[1], undefined, undefined, true);
+	});
+	$("#route-finder-addon .results #show-list").remove();
+	
+}
+
+RouteFinder.prototype.mobilesWindowClick = function(){
+	// Hide the Interface
+	$("#route-finder-addon #waypoint-list-container").hide("slow");
+	$("#route-finder-addon #vehicle-chooser").hide("slow");
+	var caller = this;
+	$("#route-finder-addon > form").hide("slow", function(){
+		// Add the Possibility to come back to the list
+		var showList = $('\
+			<div id="show-list" class="container">\
+				Liste anzeigen\
+			</div>');
+		$("#route-finder-addon .results").append(showList);
+		$(showList).click({caller: caller}, function(event){
+			$("#route-finder-addon #waypoint-list-container").show("slow");
+			$("#route-finder-addon #vehicle-chooser").show("slow");
+			$("#route-finder-addon > form").show("slow", function(){
+				event.data.caller.updateMobilesWindow();
+				event.data.caller.adjustMapView();
+			});
+			$("#route-finder-addon .results #show-list").remove();
+		});
+	});
+
+	this.adjustMapView([25,25,25,25]);
+}
+
+RouteFinder.prototype.updateMobilesWindow = function(){
+	if($(window).outerWidth() <= 767){
+		// On Mobiles we need a window to look through to the map
+		var height = $(window).outerHeight() - $("#route-finder-addon #vehicle-chooser").outerHeight() - $("#route-finder-addon > form").outerHeight() - $("#route-finder-addon #waypoint-list-container #waypoint-list").outerHeight() - $("#route-finder-addon #waypoint-list-container .route-information").outerHeight();
+		height = Math.max(height, 175);
+		$("#route-finder-addon #waypoint-list-container > .mobiles-window").css("height", height + "px");
+	}
+}
+
+RouteFinder.prototype.appendNewWaypointForm = function(){
+	// If there is only one waypoint yet we will make the user define a start point
+	if(this.waypoints.length <= 1){
+		$("#route-finder-addon .results").before(this.generateNewWaypointForm("Startpunkt angeben:"));
+	}else{
+		$("#route-finder-addon .results").before(this.generateNewWaypointForm("Wegpunkt hinzufügen:"));
+	}
+}
+
+RouteFinder.prototype.generateNewWaypointForm = function(text){
+	if(text === undefined){
+		text = "Neuen Wegpunkt angeben:";
+	}
+	var startPointHtml = $('\
+			<form>\
+			<div class="form-group new-waypoint-form">\
+                <div class="input-group">\
+					<input type="text" class="form-control" id="start-point" autocomplete="off" required placeholder="' + text + '">\
+					<span class="input-group-addon"><button type="submit"><span class="glyphicon glyphicon-search"></span></button></span>\
+					<span class="input-group-addon"><button type="button"\
+						data-html="true"\
+                        data-trigger="hover"\
+                        data-toggle="popover"\
+                        data-placement="bottom"\
+                        data-container="body"\
+                        title="Wegpunkt definieren" \
+                        data-content="Sie können neue Wegpunkte auf 2 Arten definieren:<ol><li>Klicken Sie einfach auf der Karte auf den Punkt, den Sie einfügen möchten.</li><li>Sie können nach Orten Suchen indem Sie ihre Suchworte in das Eingabefeld eintragen und entweder Enter drücken, oder auf das kleine Lupensymbol klicken. Wählen Sie dann einfach das passende Ergebnis durch Klick aus.</li></ol>"\
+					><span class="glyphicon glyphicon-question-sign"</button>\
+				</div>\
+			</div>\
+			</form>\
+			');
+		// Enable the search power on the form element
+		$($(startPointHtml)[0]).submit({caller: this}, function(event){
+			var query = $(this).find("input[type=text]").val();
+			event.data.caller.executeSearch(query);
+			return false;
+		});
+		// Enable the Popover
+		$(startPointHtml).find("button[data-toggle=popover]").popover();
+		// Make it execute Searches:
+		$(startPointHtml).find("input[type=text]").focusin({caller: this}, function(event){
+			event.data.caller.enterSearch();
+		})
+	return startPointHtml;
+		
+}
+
+RouteFinder.prototype.executeSearch = function(query){
+	// Generate the Url for the Search Results
+	$("#route-finder-addon .wait-for-search").show('fast');
+	var map = this.interactiveMap.map;
+	var tmpExtent = map.getView().calculateExtent(map.getSize());
+	var extent = map.transformToWorldCoordinates([tmpExtent[0], tmpExtent[1]]).concat(map.transformToWorldCoordinates([tmpExtent[2], tmpExtent[3]]));
+	var url = '/' + encodeURI(query) + '/' + encodeURI(String(extent[0])) + '/' + encodeURI(String(extent[1])) + '/' + encodeURI(String(extent[2])) + '/' + encodeURI(String(extent[3]));
+	// Query the Search:
+	var results = null;
+	var caller = this;
+	$.get(url, function(data){
+		if(caller.results !== null && caller.results !== undefined) caller.results.deleteSearch();
+		caller.results = new RouteFinderSearchResults(caller.interactiveMap, data, query);
+	})
+	.always(function(){
+		$("#route-finder-addon .wait-for-search").hide('fast');
+	});	
+}
+
+RouteFinder.prototype.enterSearch = function(){
+	$("#route-finder-addon #vehicle-chooser").hide("slow");
+	$("#route-finder-addon #waypoint-list-container #waypoint-list").hide("slow");
+	$("#route-finder-addon #waypoint-list-container .mobiles-window").hide('slow');
+	$("#route-finder-addon #waypoint-list-container .route-information").hide("slow");
+	var caller = this;
+
+	var cancelSearch = $('\
+		<span class="input-group-addon" id="cancel-search" title="Suche abbrechen">X</span>\
+	');
+	$("#route-finder-addon #cancel-search").remove();
+	$("#route-finder-addon input[type=text]").before(cancelSearch);
+	$(cancelSearch).click({caller: caller}, function(event){
+		event.data.caller.exitSearch();
+	});
+
+}
+
+RouteFinder.prototype.exitSearch = function(nominatimParser){
+	$("#route-finder-addon #vehicle-chooser").show("slow");
+	$("#route-finder-addon #waypoint-list-container .route-information").show("slow");
+	$("#route-finder-addon #waypoint-list-container #waypoint-list").show("slow", function(){
+		$("#route-finder-addon #cancel-search").remove();
+	});
+	var caller = this;
+	$("#route-finder-addon #waypoint-list-container .mobiles-window").show('slow', function(){
+		caller.adjustMapView();
+	});
+	$("#route-finder-addon .wait-for-search").hide('fast');
+	if(this.results !== null){
+		this.results.deleteSearch();
+		this.results = null;
+	}
+	$("#route-finder-addon input[type=text]").val("");
+
+	// If this method has a valid Nominatim Parser Object as argument
+	// then the Search was successfull and we can remove the Search Box
+	if(nominatimParser !== undefined){
+		this.addWaypoint(undefined, undefined, nominatimParser);
+	}
+
+	
+}
+
+RouteFinder.prototype.exit = function(){
+	$("#route-finder-addon").hide();
+	$("#route-finder-addon > form").remove();
+	while(this.waypoints.length > 0){
+		this.removeWaypoint(0);
+	}
+
+	// Remove Route Information
+	$("#route-finder-addon #waypoint-list-container .route-information .length").html("");
+	$("#route-finder-addon #waypoint-list-container .route-information .duration").html("");
+
+	if(this.route !== null && this.route !== undefined){
+		this.route.exit();
+	}
+
+	$("#route-finder-addon #waypoint-list-container .mobiles-window").off();
+	$("#route-finder-addon #vehicle-chooser button.close").off();
+	this.interactiveMap.map.un("singleclick", this.mapClick, this);
+	this.interactiveMap.reversePositionManager.setActive(true);
+	$(".ol-zoom, .ol-zoomslider").show();
+}
+
+
+/**
+ * This Class takes a GeoPosition and a callback in it's constructor
+ * It will then evaluate the Position into an Object with a name etc which will require an Ajax call
+ * If a callback is given this Class will call it when the Position is evaluated with an Instance of this object as first argument 
+**/
+function Waypoint(lon, lat, nominatimParser, gpsManager, index, map, callback){
+	this.evaluated = false;
+	this.callback = callback;
+	this.resultHtml = null;
+	this.index = index;
+	this.charCode = String.fromCharCode(97 + index).toUpperCase();
+	console.log(nominatimParser);
+	if(lon !== undefined && lat !== undefined){
+		this.lon = parseFloat(lon);
+		this.lat = parseFloat(lat);
+	}else if(nominatimParser !== undefined){
+		this.lon = parseFloat(nominatimParser.nominatimResult.lon);
+		this.lat = parseFloat(nominatimParser.nominatimResult.lat);
+		this.data = nominatimParser;
+		this.evaluated = true;
+		console.log("nope");
+	}else if(gpsManager !== undefined){
+		this.lon = parseFloat(gpsManager.location[0]);
+		this.lat = parseFloat(gpsManager.location[1]);
+		this.data = gpsManager;
+		this.evaluated = true;
+		console.log("baba");
+	}else{
+		console.log("nope");
+		return;
+	}
+	this.marker = new ol.Overlay({
+			position: map.transformToMapCoordinates([this.lon, this.lat]),
+			element: $('<span class="marker" data-resultNumber="'+index+'">' + this.charCode + '</span>').get(0),
+			offset: [-12, -45],
+			stopEvent: false,
+	});
+	if(this.callback === undefined){
+		this.callback = null;
+	}
+
+	if(nominatimParser !== undefined || gpsManager !== undefined){
+		if(typeof callback === "function"){
+			callback(this);
+		} 
+	}else{
+		this.positionToAdress();
+	}
+}
+
+Waypoint.prototype.changeIndex = function(newIndex){
+	this.index = newIndex;
+	this.charCode = String.fromCharCode(97 + newIndex).toUpperCase();
+	$(this.resultHtml).find(".marker").html(this.charCode);
+	$(this.resultHtml).attr("data-index", newIndex);
+	$(this.resultHtml).find(".delete-waypoint").attr("data-index", newIndex);
+	this.marker.setElement($('<span class="marker" data-resultNumber="'+this.index+'">' + this.charCode + '</span>').get(0));
+}
+
+Waypoint.prototype.positionToAdress = function() {
+	var pos = [this.lon, this.lat];
     if (pos === 'gps') {
-        obj.html('Eigener Standort');
-        obj.attr('title', 'Eigener Standort');
+        //obj.html('Eigener Standort');
+        //obj.attr('title', 'Eigener Standort');
     } else {
-        var url = "https://maps.metager.de/nominatim/reverse.php?format=json&lat=" + pos[0] + "&lon=" + pos[1] + "&zoom=18";
+    	var url = "/reverse/" + pos[0] + "/" + pos[1];
+        //var url = "https://maps.metager.de/nominatim/reverse.php?format=json&lat=" + pos[1] + "&lon=" + pos[0] + "&zoom=18";
+        var caller = this;
         $.get(url, function(data) {
-            if (typeof data !== "undefined" && typeof data["display_name"] !== "undefined") {
-                obj.html(data["display_name"]);
-                obj.attr("title", data["display_name"]);
-            }
+        	caller.data = new NominatimParser(data);
+        	caller.evaluated = true;
+
+        	if(typeof caller.callback === "function"){
+        		caller.callback(caller);
+        	}
         });
     }
 }
 
-function addPositionMarker(lon, lat, index) {
-    // This will work upto an index of 25
-    // Caharacter Representation of the index:
-    var chr = String.fromCharCode(65 + index);
-    // So now the Pin
-    var el = $('<span id="' + chr + '" class="marker">' + chr + '</span>');
-    var pos = ol.proj.transform([parseFloat(lon), parseFloat(lat)], 'EPSG:4326', 'EPSG:3857');
-    markers.push(addMarker(el, pos));
+Waypoint.prototype.getHtml = function() {
+	if(this.evaluated){
+		if(this.resultHtml === null){
+			console.log(this.index);
+			var description = typeof this.data.getHTMLAddressDetails === "function" ? this.data.getHTMLAddressDetails() : "Eigene Position";
+			this.resultHtml = $('\
+			<li class="wp" data-index="' + this.index + '">\
+				<div class="waypoint">\
+					<div class="drag">\
+						<img src="/img/anfasser.png" width="30px" alt="drag here" />\
+					</div>\
+					<div class="marker">\
+						' + this.charCode + '\
+					</div>\
+					<div class="description">\
+						' + description + '\
+					</div>\
+					<div class="delete-waypoint" data-index="' + this.index + '">\
+						<span class="glyphicon glyphicon-trash"></span>\
+					</div>\
+				</div>\
+			</li>\
+			');
+		}
+		
+		return this.resultHtml;
+	}else{
+		return "Not Ready Yet";
+	}
 }
-/*
- * Clears all Markers which are on the map
- */
-function clearMarkers() {
-    $.each(markers, function(index, value) {
-        map.removeOverlay(value);
-    });
-    removeTemporarayMarker();
-    markers = [];
-    markerPositions = [];
+function RouteFinderSearchResults(map, data, query){
+	this.interactiveMap = map;
+	this.results = data;
+	this.query = query;
+	this.markerOverlays = [];
+	this.updateInterface();
 }
-/*
- * Generates Parameter to the Route until this point using the global waypoints variable
- * @return{String} QueryParameter
- */
-function generateBase64Parameter() {
-    if (typeof waypoints === "undefined") {
-        return null;
-    } else {
-        var newWayPoints = [];
-        $.each(waypoints, function(index, value) {
-            if (value !== '') {
-                newWayPoints.push(value);
-            }
-        });
-        var points = btoa(waypoints.toString());
-        return points;
-    }
-}
-/*
- * This Function generates an Overview of the Route that will be calculated
- * and prints it on the map
- */
-function generatePreviewRoute() {
 
-    
+RouteFinderSearchResults.prototype.updateInterface = function(){
+	if(this.results.length > 0){
+
+		this.deleteSearch();
+		var caller = this;
+		$.each(this.results, function(index, value){
+			var res = (new NominatimParser(value)).getRouteFinderHtml().html();
+			var resHtml = $('\
+							<div class="container-fluid suggestion" data-resultNumber="'+index+'">\
+	                            <div class="flex-container">\
+	                                <div class="item history">\
+	                                    <span class="marker" style="filter: hue-rotate(' + value["huerotate"] + 'deg); font-size: 16px;">' + (index+1) + '</span>\
+	                                </div>\
+	                                <div class="item result">\
+	                                    ' + res + '\
+	                                </div>\
+	                            </div>\
+	                        </div>\
+							');
+			$("#route-finder-addon .results .results-container").append(resHtml);
+			$(resHtml).click({caller: caller}, function(event){
+				event.data.caller.interactiveMap.module.exitSearch(new NominatimParser(value));
+			});
+		});
+		var caller = this;
+		$("#route-finder-addon .results .results-container").show('slow', function(){
+			if($(window).outerWidth() <= 767){
+				// On Mobiles we need a window to look through to the map
+				$("#route-finder-addon .results .results-container").before("<div class=\"mobiles-window\"></div>");
+				$("#route-finder-addon .results .mobiles-window").click({caller: caller}, function(event){
+					event.data.caller.mobilesWindowClick();
+				});
+
+				var height = $(window).outerHeight() - $("#route-finder-addon .results .results-container").outerHeight() - $("#route-finder-addon > form").outerHeight();
+				height = Math.max(height, 175);
+				$("#route-finder-addon .results .mobiles-window").css("height", height + "px");
+			}
+			caller.updateResultMarker();
+			caller.updateMapExtent();
+		});
+	}
+}
+
+RouteFinderSearchResults.prototype.mobilesWindowClick = function(){
+	// Optimize the Interface for Full Screen View
+	$("#route-finder-addon .results .mobiles-window").hide("slow");
+	var caller = this;
+	$("#route-finder-addon .results .results-container").hide("slow", function(){
+		// Add the Possibility to come back to the list
+		var showList = $('\
+			<div id="show-list" class="container">\
+				Liste anzeigen\
+			</div>');
+		$("#route-finder-addon .results").append(showList);
+		$(showList).click({caller: caller}, function(event){
+			$("#show-list").hide('fast', function(){
+				$("#show-list").remove();
+			});
+			$("#route-finder-addon .results .results-container").show("slow");
+			$("#route-finder-addon .results .mobiles-window").show("slow", function(){
+				event.data.caller.updateMapExtent();
+			});
+		});
+
+		var paddingTop = $("#route-finder-addon form").outerHeight() + $("#route-finder-addon #show-list").outerHeight() + 50;
+		caller.updateMapExtent([paddingTop, 50, 50, 50]);
+	});
+
+}
+
+RouteFinderSearchResults.prototype.deleteSearch = function(){
+	$("#route-finder-addon .results .results-container").html("");
+	$("#route-finder-addon .results .mobiles-window").remove();
+	$("#show-list").remove();
+	var caller = this;
+	$.each(this.markerOverlays, function(index, value){
+		caller.interactiveMap.map.removeOverlay(value);
+	});
+	this.markerOverlays = [];
+
+}
+
+RouteFinderSearchResults.prototype.updateResultMarker = function(){
+	var caller = this;
+	if(this.markerOverlays.length > 0){
+		$.each(this.markerOverlays, function(index, overlay){
+			caller.interactiveMap.map.removeOverlay(overlay);
+		});
+		this.markerOverlays = [];
+	}
+
+	// Rem
+	
+	$.each(this.results, function(index, value){
+		var el = $('<span id="index" class="marker" data-resultNumber="'+index+'" style="filter: hue-rotate(' + value["huerotate"] + 'deg)">' + (index+1) + '</span>');
+		$(el).click({caller: caller}, function(event){
+			event.data.caller.interactiveMap.module.exitSearch(new NominatimParser(value));
+		});
+		var overlay = new ol.Overlay({
+			position: caller.interactiveMap.map.transformToMapCoordinates([parseFloat(value.lon), parseFloat(value.lat)]),
+			element: el.get(0),
+			offset: [-12, -45],
+			stopEvent: false,
+		});
+		caller.interactiveMap.map.addOverlay(overlay);
+		caller.markerOverlays.push(overlay);
+	});
+}
+
+RouteFinderSearchResults.prototype.updateMapExtent = function(initPadding){
+	if(this.results.length <= 0){
+		return;
+	}
+	var caller = this;
+	var extent = [null, null, null, null];
+	$.each(this.results, function(index, res){
+		// We just focus on those results that have all the terms in the search query in it
+		var valid = true;
+		var words = caller.query.split(/\W+/);
+		$.each(words, function(index, value){
+			if(res.display_name.toLowerCase().indexOf(value.toLowerCase()) === -1){
+				valid = false;
+			}
+		});
+		if(!valid) return true;
+		var lon = parseFloat(res.lon);
+		var lat = parseFloat(res.lat);
+		if(extent[0] === null || extent[0] > lon){
+			extent[0] = lon;
+		}
+		if(extent[1] === null || extent[1] > lat){
+			extent[1] = lat;
+		}
+		if(extent[2] === null || extent[2] < lon){
+			extent[2] = lon;
+		}
+		if(extent[3] === null || extent[3] < lat){
+			extent[3] = lat;
+		}
+	});
+
+	extent = caller.interactiveMap.map.transformToMapCoordinates([extent[0], extent[1]]).concat(caller.interactiveMap.map.transformToMapCoordinates([extent[2], extent[3]]));
+
+	// Let's find out in what space of the map we need to fit this in:
+	// If Screen is not mobile the search results are 
+	var padding = [66,25,25,25];
+	if(initPadding !== undefined){
+		padding = initPadding;
+	}else if($(window).outerWidth() <= 767){
+		// Padding Top:
+		padding[0] += $("#route-finder-addon > form").outerHeight(true);
+		// Padding Bottom:
+		padding[2] += $(window).outerHeight(true) - $("#route-finder-addon > form").outerHeight(true) - $("#route-finder-addon .results .mobiles-window").outerHeight(true);
+	}else{
+		var paddingRight = 0;
+		paddingRight += $("#route-finder-addon").outerWidth(true);
+		padding[1] += paddingRight;
+	}
+	caller.interactiveMap.map.getView().fit(extent, {duration: 600, padding: padding});
+	
+}
+function Route(waypoints, vehicle, interactiveMap, callback){
+	this.waypoints = waypoints;
+	this.callback = callback;
+	this.interactiveMap = interactiveMap;
+	this.informationOverlays = [];
+	if(vehicle === undefined){
+		this.vehicle = this.estimateVehicle();
+	}else{
+		this.vehicle = vehicle;
+	}
+	this.legs = [];	// Value is set in calculateRoute()
+	this.route = this.calculateRoute();	
+
+	this.addVehicleChangedEvent();
+
+}
+
+Route.prototype.switchActiveRoute = function(index){
+	this.route.activeRoute = index;
+	this.legs = this.extractLegs();
+}
+
+Route.prototype.extractLegs = function(){
+	var result = [];
+	var caller = this;
+	$.each(this.route.routes[this.route.activeRoute].legs, function(index, value){
+		result.push(new Leg(value, caller));
+	});
+	return result;
+}
+
+Route.prototype.addVehicleChangedEvent = function(){
+	$("#route-finder-addon #vehicle-chooser input").change({caller: this}, function(event){
+		event.data.caller.vehicle = $(this).attr("value");
+		event.data.caller.deleteRoute();
+		event.data.caller.interactiveMap.module.calculateRoute(event.data.caller.vehicle);
+	});
+}
+
+Route.prototype.estimateVehicle = function(){
+	// This Function estimates the required vehicle for the route
+	// All Distances < 2km will be by foot
+	// All Distances < 10km by bike
+	// All Distances >= 10km by car
+	// Let's calculate the distance between Waypoints
+	var distance = this.estimateRouteDistance();
+	if(distance < 2000) return "foot";
+	else if(distance < 10000) return "bicycle";
+	else return "car";
+}
+
+Route.prototype.estimateRouteDistance = function(){
+	// We will calculate the distance between every two waypoints
+	var wgs84Sphere = new ol.Sphere(6378137);
+	var caller= this;
+	var distance = 0;
+	$.each(this.waypoints, function(index, value){
+		if(caller.waypoints[index+1] === undefined) return 0;
+		var c1 = [value.lon, value.lat];
+		var c2 = [caller.waypoints[index+1].lon, caller.waypoints[index+1].lat];
+		distance += wgs84Sphere.haversineDistance(c1,c2);
+	});
+	return distance;
+}
+
+Route.prototype.calculateRoute = function(){
+	if(this.waypoints.length >= 2){
+		var url = "";
+		$.each(this.waypoints, function(index, value){
+			url += value.lon + "," + value.lat + ";";
+		});
+		url = url.replace(/;+$/, '');
+
+		url = "/route/find/" + this.vehicle + "/" + url;
+
+		var caller = this;
+		$.get(url, function(data){
+			caller.route = data;
+			caller.route.activeRoute = 0;
+			console.log(caller.route);
+			caller.printRoute();
+			caller.updateVehicle();
+			caller.updateRouteInformation();
+			caller.updateMapExtent();
+			// Save the legs
+			caller.legs = caller.extractLegs();
+			if(typeof caller.callback === "function"){
+				caller.callback();
+			}
+		});
+
+
+	}
+}
+
+Route.prototype.updateMapExtent = function(initPadding){
+	if(this.geom !== undefined){
+		var padding = [66,25,25,25];
+		if(initPadding !== undefined){
+			padding = initPadding;
+		}else if($(window).outerWidth() <= 767){
+			// Padding Top:
+			padding[0] += $("#route-finder-addon > form").outerHeight(true);
+			padding[0] += $("#route-finder-addon > #vehicle-chooser").outerHeight(true);
+			// Padding Bottom:
+			padding[2] += $(window).outerHeight(true) - $("#route-finder-addon > form").outerHeight(true) - $("#route-finder-addon > #vehicle-chooser").outerHeight(true) - $("#route-finder-addon #waypoint-list-container .mobiles-window").outerHeight(true);
+		}else{
+			var paddingRight = 0;
+			paddingRight += $("#route-finder-addon").outerWidth(true);
+			padding[1] += paddingRight;
+		}
+		this.interactiveMap.map.getView().fit(this.geom, {
+			duration: 750,
+			padding: padding
+		});
+	}
+}
+
+Route.prototype.updateRouteInformation = function(){
+	var length = this.route.routes[this.route.activeRoute].distance;
+	var distanceString = this.distanceString(length);
+	$("#route-finder-addon #waypoint-list-container .route-information .length").html(distanceString);
+
+	var duration = this.route.routes[this.route.activeRoute].duration;
+	var durationString = this.durationString(duration);
+	$("#route-finder-addon #waypoint-list-container .route-information .duration").html(durationString);
+
+	this.interactiveMap.module.updateMobilesWindow();
+}
+
+Route.prototype.distanceString = function(length){
+	var result = "";
+	length = Math.floor(length);
+
+	if(length > 10000){
+		// We will only display full km
+		result = Math.round(length/1000) + " km";
+	}else if(length > 2000){
+		// We will display every 100m
+		result = (Math.round(length/100) / 10) + "km";
+	}else if(length > 1000){
+		// We will display every 50m
+		length /= 10;
+		length = Math.ceil(length/5) * 5;
+		length /= 100;
+		result = length + " km";
+	}else if(length > 500){
+		// We will display every 50m but in m instead of km
+		length /= 10;
+		length = Math.ceil(length/5) * 5;
+		length *= 10;
+		result = length + " m";
+	}else{
+		// We will display every 10m but in m instead of km
+		length = Math.ceil(length / 10) * 10;
+		result = length + " m";
+	}
+
+	return result;
+}
+
+Route.prototype.durationString = function(duration){
+	duration = Math.abs(duration);
+	duration = Math.floor(duration);
+	var result = "";
+	if(duration >= 3600){
+		var hours = Math.floor(duration / 3600);
+		var minutes = Math.round((duration % 3600) / 60);
+
+		result += hours + " Std " + minutes + " Min";
+	}else{
+		var minutes = Math.round((duration % 3600) / 60);
+
+		result += minutes + " Min";
+	}
+	return result;
+}
+
+Route.prototype.updateVehicle = function(){
+	// Uncheck the current vehicle
+	$("#vehicle-chooser input[checked]").prop("checked", false);
+	// Check the new one
+	$("#vehicle-chooser input[value=" + this.vehicle + "]").prop("checked", true);
+}
+
+Route.prototype.printRoute = function(){
+	this.deleteRoute();
+
     var vectorS = new ol.source.Vector();
-    var routeLineStyle = new ol.style.Style({
+    
+    // Geometry of the active route
+    var  geojson = this.route.routes[this.route.activeRoute].geometry;
+	this.geom = (new ol.format.GeoJSON()).readGeometry(geojson, {
+              	'dataProjection': 'EPSG:4326',
+                'featureProjection': 'EPSG:3857'
+            });
+
+
+    // Let's print alternative routes, first
+    if(this.route.routes.length > 1){
+    	var alternativerouteLineStyle = new ol.style.Style({
+	        stroke: new ol.style.Stroke({
+	            color: 'rgb(121,121,121)',
+	            width: 5
+	        }),
+	        fill: new ol.style.Fill({
+	            color: 'rgba(121,121,121,.03)'
+	        })
+	    });
+	    var alternativerouteLineHoverStyle = new ol.style.Style({
+	        stroke: new ol.style.Stroke({
+	            color: 'rgb(255,0,0)',
+	            width: 5
+	        }),
+	        fill: new ol.style.Fill({
+	            color: 'rgba(255,0,0,.03)'
+	        })
+	    });
+    	for(var i = 0; i < this.route.routes.length; i++){
+    		if(i === this.route.activeRoute) continue;
+    		var  altgeojson = this.route.routes[i].geometry;
+    		var geom = (new ol.format.GeoJSON()).readGeometry(altgeojson, {
+              	'dataProjection': 'EPSG:4326',
+                'featureProjection': 'EPSG:3857'
+            });
+		    var feature = new ol.Feature({
+		        'geometry': geom
+		    });
+		    feature.setStyle(alternativerouteLineStyle);
+		    vectorS.addFeature(feature);
+
+		    // For each alternative Route we will create a popup saying how much longer that route 
+		    // would need to drive
+		    // The most complicated part about that is to calculate the correct position for this information
+		    var pos = this.calculateAlternativeRoutePopupPosition(this.route.routes[i]);
+		    var time = this.route.routes[i].duration - this.route.routes[this.route.activeRoute].duration;
+		    var timeString = this.durationString(time);
+		    var informationOverlay = new ol.Overlay({
+		    	element: $('\
+		    		<div id="popup" class="ol-popup alternative-route" title="Klicken zum Auswählen der Alternativroute.">\
+		    			<div id="popup-content">\
+		    				<font color="' + (time > 0 ? "red" : "green") + '">' + (time > 0 ? "+" : "-") + timeString + '</font> <br /> <nobr>' + this.route.routes[i].legs[0].summary + '</nobr>\
+		    			</div>\
+		    		</div>').get(0),
+		    	autopan: false,
+		    	position: pos
+		    });
+		    $(informationOverlay.getElement()).mouseover({feature: feature}, function(event){
+		    	event.data.feature.setStyle(alternativerouteLineHoverStyle);
+		    });
+		    $(informationOverlay.getElement()).mouseout({feature: feature}, function(event){
+		    	event.data.feature.setStyle(alternativerouteLineStyle);
+		    });
+		    $(informationOverlay.getElement()).click({caller: this, index: i}, function(event){
+		    	event.data.caller.switchActiveRoute(event.data.index);
+		    	event.data.caller.printRoute();	
+		    	event.data.caller.updateRouteInformation();	  
+		    	event.data.caller.interactiveMap.module.addLegDescriptions(); 
+		    });
+		    this.interactiveMap.map.addOverlay(informationOverlay);
+		    this.informationOverlays.push(informationOverlay);
+    	}
+    }
+
+    // This is gonna be the main route
+	var routeLineStyle = new ol.style.Style({
         stroke: new ol.style.Stroke({
-            color: 'rgb(255,0,0)',
+            color: 'rgb(255,128,0)',
             width: 5
         }),
         fill: new ol.style.Fill({
-            color: 'rgba(255,0,0,.03)'
+            color: 'rgba(255,128,0,.03)'
         })
     });
-    var countLoggedWaypoints = 0;
-    $.each(waypoints, function(index, value){
-        if(value !== ""){
-            countLoggedWaypoints++;
-        }
+
+	
+    var feature = new ol.Feature({
+        'geometry': this.geom
     });
-    // We give adjust the view so the route is not under the result list
-    paddingRight = 0;
-    if(parseInt( $(document).outerWidth()) > 768 && $("#results").attr("data-status") === "out" ){
-        paddingRight = $("#search-addon").outerWidth();
-    }
-    if (countLoggedWaypoints < 2 ) {
-        if(countLoggedWaypoints === 1){
-            // Let's Zoom into this point
-            var point = null;
-            $.each(waypoints, function(index, value){
-                if(value !== ""){
-                    point = value;
-                    return false;
-                }
-            });
-            if(point === "gps"){
-                point = gpsLocation;
-            }
-            point = ol.proj.transform(point, 'EPSG:4326', 'EPSG:3857');
-            map.getView().animate({
-                center: point,
-                zoom: 15,
-                duration: 1500,
-                padding: [5, paddingRight, 5, 5]
-            });
-        }
-        return;
-    } else {
-        var points = "";
-        $.each(waypoints, function(index, value) {
-            if (value === '' || typeof value[0] === "undefined") {
-                return;
-            } else {
-                if (value === 'gps') {
-                    points += gpsLocation.toString() + ";";
-                } else {
-                    points += value.toString() + ";";
-                }
-            }
-        });
-        points = points.replace(/;+$/, '');
-        // At this Point we can only Route between 2 Points so we have all the Information needed
-        var url = '/route/preview/' + vehicle + '/' + points;
-        // The Rest will be handled Asynchronious
-        $.get(url, function(data) {
-            var geojson = data["geojson"];
-            var duration = data["duration"];
-            var distance = data["distance"];
+    feature.setStyle(routeLineStyle);
+    vectorS.addFeature(feature);
 
-            $("#route-information #length").html(parseDistance(distance));
-            $("#route-information #duration").html(parseDuration(duration));
-
-            var geom = (new ol.format.GeoJSON()).readGeometry(geojson, {
-                'dataProjection': 'EPSG:4326',
-                'featureProjection': 'EPSG:3857'
-            });
-            var feature = new ol.Feature({
-                'geometry': geom
-            });
-            feature.setStyle(routeLineStyle);
-            vectorS.addFeature(feature);
-            map.removeLayer(vectorLayerRoutePreview);
-            vectorLayerRoutePreview = null;
-            vectorLayerRoutePreview = new ol.layer.Vector({
-                source: vectorS
-            });
-    
-            map.addLayer(vectorLayerRoutePreview);
-
-            if(autoChooseVehicle){
-                // We change the vehicle to the probably best fitting
-                var prevVehicle = vehicle;
-                if(distance < 2000){
-                    vehicle = "foot";
-                }else if(distance < 10000){
-                    vehicle = "bicycle";
-                }else{
-                    vehicle = "car";
-                }
-                if(prevVehicle !== vehicle){
-                    refreshUrl();
-                }
-            }
-
-            map.getView().fit(geom, {
-                duration: 1500,
-                padding: [5, (paddingRight + 20), 5, 6],
-                maxZoom: 18,
-            });
-        });
-    }
-
-    
-}
-
-function parseDistance(distance) {
-    distance = parseFloat(distance);
-    distance /= 1000;
-    var km = Math.round(distance * 10) / 10;
-    return km + " km";
-}
-
-function parseDuration(duration) {
-    duration = Math.floor(parseFloat(duration));
-    var hours = 0;
-    if (duration > 3600) {
-        hours = Math.floor(duration / 3600);
-        duration = duration % 3600;
-    }
-    var minute = 0;
-    if (duration > 60) {
-        minute = Math.round(duration / 60);
-        duration = duration % 60;
-    }
-    var result = "";
-    if (hours > 0) {
-        result += hours + " Std.";
-    }
-    if (minute > 0) {
-        result += " " + minute + " Min.";
-    }
-    return result;
-}
-/*
- * This functions appends the drag and drop event for all waypoints
- * This allows us to switch the Position of the waypoints
- */
-function addDragAndDrop() {
-    // We will add Drag and Drop only if there are enough Waypoints to reorder:
-    var count = $("#waypoint-container > li").length;
-    if(count < 2){
-        return;
-    }
-    $("#waypoint-container").before('<div id="rearange-info">Sortiere die Wegpunkte mit Drag \'n Drop</div>');
-    $( "#waypoint-container" ).sortable({
-        cancel: ".delete-waypoint",
-        items: ">li",
-        update: function(event, ui){
-            var draggedId = parseInt(ui.item.attr("id"));
-            var newPos = null;
-            $("#waypoint-container > li").each(function(index, value){
-                var id = parseInt($(value).attr("id"));
-                if(draggedId === id){
-                    newPos = index;
-                    return false;
-                }
-            });
-            if(newPos !== null){
-                waypoints.move(draggedId, newPos);
-                refreshUrl();
-            }
-        }
+    this.vectorLayerRoutePreview = new ol.layer.Vector({
+        source: vectorS
     });
-    $( "#waypoint-container" ).disableSelection();
+    
+    this.interactiveMap.map.addLayer(this.vectorLayerRoutePreview);
 }
 
-/* 
- * This Function adds the Search Event to the input Box to allow searching for any Waypoint
- * @param element{Object} Input-Field that needs the Listeners to be attached
- */
-function addSearchEvent(element) {
+/**
+ * This Function takes an alternative Route as an argument.
+ * It will then compare that route to the currently active route
+ * and determine all parts of the route of the alternative route that are
+ * different to the currently active one.
+ * From all calculated parts It'll take the longest one and calculate the Point
+ * that is exactly in the center of that route part.
+ * This will be the Position where we will display the Information for this alternative Route
+**/
+Route.prototype.calculateAlternativeRoutePopupPosition = function(alternativeRoute){
+	var parts = [];
+	var tmpLineString = undefined;
 
-    if($(document).outerWidth() > 768){
-        addSearchEventDesktop(element);
+	// We will use copies of the array because we will delete a whole ton of waypoints from it.
+	// Because that will significantly speed up our process
+	var ar1 = alternativeRoute.geometry.coordinates.slice();
+	var caller = this;
+	var pos = [];
+	$.each(ar1, function(index, value){
+		if(value[0] !== caller.route.routes[caller.route.activeRoute].geometry.coordinates[index][0] || value[1] !== caller.route.routes[caller.route.activeRoute].geometry.coordinates[index][1] ){
+			pos = caller.interactiveMap.map.transformToMapCoordinates(value.slice());
+			return false;
+		}
+	});
+
+	return pos;
+}
+
+Route.prototype.deleteRoute = function(){
+	if(this.vectorLayerRoutePreview !== undefined){
+		this.interactiveMap.map.removeLayer(this.vectorLayerRoutePreview);
+		this.vectorLayerRoutePreview = undefined;
+		this.geom = undefined;
+	}
+	if(this.informationOverlays !== undefined && this.informationOverlays.length > 0){
+		var caller = this;
+		$.each(this.informationOverlays, function(index, value){
+			$(value).off();
+			caller.interactiveMap.map.removeOverlay(value);
+		});
+		this.informationOverlays = [];
+	}
+}
+
+Route.prototype.exit = function(){
+	this.deleteRoute();
+	// Remove the change Listener
+	$("#route-finder-addon #vehicle-chooser input").off();
+}
+function Leg(legJson, route){
+	this.route = route;
+	this.json = legJson;
+	this.hash = md5(JSON.stringify(this.json));
+	this.steps = [];
+	var caller = this;
+	$.each(this.json.steps, function(index, value){
+		var nextStreet = undefined;
+		if(caller.json.steps.length > (index+1) && caller.json.steps[index+1].name !== undefined) 
+			nextStreet = caller.json.steps[index+1].name;
+		caller.steps.push(new Step(value, nextStreet));
+	});
+}
+
+Leg.prototype.generateRouteDescriptionHtml = function(){
+	var summary = this.json.summary;
+	summary = summary.replace(",", " , ");
+	sumamry = summary.replace(/\s+/, " ");
+	summary = summary.replace(",", "und");
+	var result = $('\
+		<button class="btn btn-primary leg-description-toggle" type="button" data-toggle="collapse" data-target="#' + this.hash + '" aria-expanded="false" aria-controls="collapseExample">\
+		  <div class="summary">\
+		  	über ' + summary + '\
+		  </div>\
+		  <div class="information">\
+		  	<div class="dur">\
+		  		' + this.route.durationString(this.json.duration) + '\
+		  	</div>\
+		  	<div class="dist">\
+		  		' + this.route.distanceString(this.json.distance) + '\
+		  	</div>\
+		  </div>\
+		</button>\
+		<div class="collapse" id="' + this.hash + '">\
+		  <ul>\
+		  </ul>\
+		</div>\
+		');
+	var caller = this;
+	$.each(this.steps, function(index, value){
+		$($(result).get(2)).find(">ul").append($('<li><div><img src="' + value.parseImg() + '" alt=" " /></div><div class="step-string">' + value.toString() + '</div><div class="step-length">' + caller.route.distanceString(value.json.distance) + '</div></li>'));
+	})
+	return result;
+}
+function Step(stepJson, nextStreet){
+	this.json = stepJson;
+	this.nextStreet = nextStreet;
+}
+
+
+// Converts this Step into a String(German)
+Step.prototype.toString = function(){
+	return this.parseManeuver();
+}
+
+
+
+Step.prototype.parseManeuver = function() {
+    var stepString = "";
+    var maneuver = this.json.maneuver;
+    var type = maneuver["type"];
+    var modifier = maneuver["modifier"];
+
+    var targetStreet = "";
+    if(typeof this.json.name !== "undefined" && typeof this.json.ref !== "undefined"){
+        targetStreet = this.makeTrafficSigns(this.json.ref + ":" + this.json.name);
+    }else if(typeof this.json.ref !== "undefined" && typeof this.json.name === "undefined"){
+    	targetStreet = this.makeTrafficSigns(this.json.ref + ":");
+    }else if(typeof this.json.ref === "undefined" && typeof this.json.name !== "undefined"){
+        targetStreet = this.json.name;
+    }
+    if(typeof targetStreet === "undefined"){
+        targetStreet = "";
+    }
+
+    var destinations = this.json.destinations;
+    if(typeof destinations !== "undefined"){
+        destinations = destinations.trim();
+        destinations = this.makeTrafficSigns(destinations);
     }else{
-        addSearchEventMobile(element);
+        destinations = "";
     }
-}
+    
+    switch (type) {
+        case "depart":
+            var direction = this.parseBearing(maneuver["bearing_after"]);
+            var start = this.json.name;
 
-function addSearchEventMobile(element){
-    $(element).focusin(function(){
-        // Create a new Input Field for searches
-        var input = $('\
-            <form accept-charset="UTF-8" class="form-inline" onsubmit="return false;">\
-                <div class="form-group">\
-                    <div class="input-group">\
-                        <div class="input-group-addon" id="exit-suggestions">\
-                            <span class="glyphicon glyphicon-arrow-left">\
-                            </span>\
-                        </div>\
-                        <input class="form-control" name="query" placeholder="Karten durchsuchen..." type="text" autocomplete="off" value="' + $(element).val() + '"/>\
-                        <div class="input-group-addon" id="search-for-suggestions">\
-                            <button type="submit" class="glyphicon glyphicon-search">\
-                            </button>\
-                        </div>\
-                    </div>\
-                </div>\
-            </form>');
-        $("#search-suggestions").append(input);
-        $("#search-addon").css("display", "none");
-
-        if(gps){
-            var suggestion = $('\
-                <div class="container-fluid suggestion">\
-                     <div class="flex-container">\
-                        <div class="item history">\
-                            <img src="/img/marker-icon.png" />\
-                        </div>\
-                        <div class="item">\
-                            Eigene Position\
-                        </div>\
-                    </div>\
-                </div>\
-            ');
-            $("#search-suggestions").append(suggestion);
-            $(suggestion).click(function(){
-                
-                $("#search-suggestions").animate({top: "100vh"}, 500, function(){
-                    $("#search-addon").css("display", "");
-                    $("#search-suggestions").html("");
-                    $("#search-suggestions").attr("data-status", "");
-
-                    var id = $(element).attr("id");
-                    waypoints[id] = 'gps';
-                    refreshUrl();
-                });
-            });
-        }
-
-        var history = getHistory(true);
-
-        if(history.length > 0){
-            $.each(history, function(index, value){
-                if(typeof(value) !== "undefined"){
-                    var distance = "";
-                    if(gps){
-                        // If we have a gps Position we can show the proximate distance to the object:
-                        var pos = [parseFloat(value["lon"]), parseFloat(value["lat"])];
-                        var dist = getDistance(gpsLocation, pos);
-                        distance = "<p class=\"dist\">~" + parseDistance(dist) + "</p>";
-                    }
-                    var suggestion = $('\
-                        <div class="container-fluid suggestion">\
-                            <div class="flex-container">\
-                                <div class="item history">\
-                                    <span class="glyphicon glyphicon-time"></span>\
-                                    ' + distance + '\
-                                </div>\
-                                <div class="item">\
-                                    ' + value["name"] + '\
-                                </div>\
-                            </div>\
-                        </div>\
-                        ');
-                    $("#search-suggestions").append(suggestion);
-                    $(suggestion).click(function(){
-                        $("#search-suggestions").animate({top: "100vh"}, 500, function(){
-                            $("#search-addon").css("display", "");
-                            $("#search-suggestions").html("");
-                            $("#search-suggestions").attr("data-status", "");
-
-                            addToHistory(value["name"], value["lon"], value["lat"]);
-
-                            var id = $(element).attr("id");
-                            waypoints[id] = [parseFloat(value["lon"]), parseFloat(value["lat"])];
-                            refreshUrl();
-                        });
-                    });
-                }
-            });
-        }
-
-        $("#search-suggestions form").submit(function(evt){
-            // The user has probably entered something to search for
-            // Make form readonly and disable additional searches while we execute the search
-            console.log("haha");
-            $("#search-suggestions input[name=query]").attr("readonly", "");
-            $("#search-suggestions input[name=query]").blur();
-            $("#search-suggestions button[type=submit]").attr("disabled", "");
-
-            $("#sr").remove();
-
-            var freeSearchField = function(){
-                $("#search-suggestions input[name=query]").removeAttr("readonly");
-                $("#search-suggestions button[type=submit]").removeAttr("disabled");
-                $("#loading").remove();
-            };
-
-
-            // Fetch the query:
-            var q = $("#search-suggestions input[name=query]").val();
-            if(q === ""){
-                freeSearchField();
-                makeError($("#search-suggestions input[name=query]"), "Bitte Sucheingabe ergänzen!");
-                $("#search-suggestions input[name=query]").focus();
-                return;
-            }
-
-            $(this).after('\
-                <div id="loading" class="container-fluid suggestion">\
-                    <div class="flex-container">\
-                        <div class="item">\
-                            <img src="/img/ajax-loader.gif" alt="loading..." />\
-                            Lade Suchergebnisse vom Server...\
-                        </div>\
-                    </div>\
-                </div>');
-            $(this).after('\
-                <div id="sr">\
-                </div>');
-
-            // Prepare the URL
-            var url = "/route/search/" + encodeURI(q);
-            var xhr = $.get(url, function(data){
-                if(data.length === 0){
-                    makeError($("#search-suggestions input[name=query]"), "Keine Ergebnisse gefunden.");
-                }
-                $.each(data, function(index, value){
-                    var distance = "";
-                    if(gps){
-                        // If we have a gps Position we can show the proximate distance to the object:
-                        var pos = [parseFloat(value["lon"]), parseFloat(value["lat"])];
-                        var dist = getDistance(gpsLocation, pos);
-                        distance = "<p class=\"dist\">~" + parseDistance(dist) + "</p>";
-                        console.log(distance);
-                    }
-                    var res = $('\
-                        <div class="container-fluid suggestion result">\
-                            <div class="flex-container">\
-                                <div class="item history">\
-                                    ' + (index+1) + '\
-                                    ' + distance + '\
-                                </div>\
-                                <div class="item">'
-                                     + buildResultFromData(value).html() + '\
-                                </div>\
-                            </div>\
-                        </div>');
-                    $("#search-suggestions #sr").append(res);
-                    $(res).click(function(){
-                        $("#search-suggestions").animate({top: "100vh"}, 500, function(){
-                            $("#search-addon").css("display", "");
-                            $("#search-suggestions").html("");
-                            $("#search-suggestions").attr("data-status", "");
-
-                            addToHistory(value["display_name"], value["lon"], value["lat"]);
-
-                            var id = $(element).attr("id");
-                            waypoints[id] = [parseFloat(value["lon"]), parseFloat(value["lat"])];
-                            refreshUrl();
-                        });
-                    });
-                });
-                $("#search-suggestions .result a.btn").remove();
-            })
-            .always(function(){
-                freeSearchField();
-            });
-
-
-        });
-
-        $("#search-suggestions").css("padding-top", "15px");
-        $("#search-suggestions").animate({top: "0vh"}, 500, function(){
-            $("#search-suggestions").attr("data-status", "out");
-            $("#search-suggestions input[name=query]").focus();
-            $("#exit-suggestions").click(function(){
-                $("#search-suggestions").animate({top: "100vh"}, 500, function(){
-                    $("#search-addon").css("display", "");
-                    $("#search-suggestions").html("");
-                    $("#search-suggestions").css("padding-top", "");
-                    $("#search-suggestions").attr("data-status", "");
-                });
-            });
-        });
-        
-    });
-}
-
-function addSearchEventDesktop(element){
-    $(element).focusin(function() {
-        
-        $(element).css("border", "");
-        $(element).tooltip("destroy");
-        var history = getHistory(true);
-        if (gps || history.length > 0) {
-            var sr = $("<div id=\"search-results\"></div>");
-            if (gps) {
-                var res = $("<ul class=\"list list-unstyled\"></ul>");
-                var ownPosition = $("<li><img src=\"/img/marker-icon.png\" /> Eigene Position</li>");
-                $(ownPosition).mousedown(function() {
-                    var id = $(element).attr("id");
-                    waypoints[id] = 'gps';
-                    refreshUrl();
-                });
-                $(res).append(ownPosition);
-                $(sr).append(res);
-            }
-            if (history.length > 0) {
-                $(sr).append("<h5>Ergebnisse aus der <a href=\"/help/history\" target=\"_blank\">History</a></h5>");
-                var res = $("<ul class=\"list list-unstyled\"></ul>");
-                $.each(history, function(index, value) {
-                    var r = $("<li>" + value.name + "</li>");
-                    $(r).mousedown(function() {
-                        var id = $(element).attr("id");
-                        waypoints[id] = [value.lon, value.lat];
-                        addToHistory(value.name, value.lon, value.lat);
-                        refreshUrl();
-                    });
-                    $(res).append(r);
-                });
-                $(sr).append(res);
-            }
-            $(element).after(sr);
-            $(element).unbind("keyup");
-            $(element).keyup(function() {
-                var val = escapeRegExp($(this).val());
-                var reg = new RegExp(val, 'i');
-                // Hide all Elements where the String does not match and unhide all where it matches:
-                $("#search-results li").each(function(index, value) {
-                    var name = $(value).html();
-                    var el = $("#search-results li")[index];
-                    if (name.match(reg) !== null) {
-                        $(el).removeClass("hidden");
-                    } else {
-                        $(el).addClass("hidden");
-                    }
-                });
-            });
-        }
-        var searchButton = $("<a tab-index=\"-1\" class=\"search-btn btn btn-default btn-sm\"><span class=\"glyphicon glyphicon-search\"></span></a>");
-        // Remove possibly existing search Buttons:
-        $(element).parent().find(".search-btn").remove();
-        $(element).after(searchButton);
-        var placeholder = $(element).attr("placeholder");
-        $(element).attr("placeholder", "Suchworte eingeben");
-        $(element).keypress(function(e) {
-            if (e.which == 13) {
-                $(searchButton).click();
-            }
-        });
-        $(searchButton).mousedown(function(evt) {
-            evt.preventDefault();
-        });
-        $(searchButton).click(function() {
-            $("#search-results").remove();
-            var searchResults = $("<div id=\"search-results\"><div class=\"loader\"><img src=\"/img/ajax-loader.gif\" /></div></div>");
-            $(element).after(searchResults);
-            var id = $(element).attr("id");
-            var query = $(element).val();
-            var url = "/route/search/" + encodeURI(query);
-            $.getJSON(url, function(data) {
-                var results = $("<ul class=\"list list-unstyled\"></ul>");
-                $.each(data, function(index, value) {
-                    var result = $("<li>" + value["display_name"] + "</li>");
-                    $(results).append(result);
-                    $(result).mousedown(function(evt) {
-                        addToHistory(value["display_name"], value["lon"], value["lat"]);
-                        waypoints[id] = [parseFloat(value["lon"]), parseFloat(value["lat"])];
-                        refreshUrl();
-                    });
-                    $(result).mouseover(function() {
-                        addTemporaryMarker(value["lon"], value["lat"]);
-                    });
-                    $(result).mouseout(function() {
-                        removeTemporarayMarker();
-                    });
-                });
-                $(searchResults).find(".loader").remove();
-                $(searchResults).append("<h5>Suchergebnisse für: \"" + query + "\"</h5>");
-                $(searchResults).append(results);
-            });
-        });
-        $(element).focusout(function(evt) {
-            $("#search-results").remove();
-            $(element).off();
-            if($(element).val() !== ""){
-                $(element).css("border", "3px solid #c9302c");
-                $(element).tooltip({
-                    "title": "Sie haben noch keine Suche durchgeführt. Klicken Sie auf die Lupe und wählen eins der Ergebnisse aus um diesen Wegpunkt hinzuzufügen.",
-                    "trigger": "manual",
-                    "placement": "auto"
-                }).tooltip("show");
+            if(typeof start !== "undefined"){
+                stepString = "Auf " + start + " nach " + direction;
             }else{
-                $(".search-btn").remove();
+                stepString = "Starte Richtung " + direction;
             }
-            //$(element).val("");
-            addSearchEvent(element);
-            $(element).attr("placeholder", placeholder);
-            
-        });
-    });
-}
 
-function escapeRegExp(str) {
-    return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
-}
-
-var marker = null;
-function addTemporaryMarker(lon, lat) {
-    // So now the Pin
-    var el = $('<span class="marker"></span>');
-    var pos = ol.proj.transform([parseFloat(lon), parseFloat(lat)], 'EPSG:4326', 'EPSG:3857');
-    if (marker !== null) {
-        map.removeOverlay(marker);
-        marker = null;
+            var nextStreet = this.nextStreet;
+            if (typeof nextStreet !== "undefined" && nextStreet !== start) {
+                stepString += " Richtung " + nextStreet + " starten";
+            }
+            break;
+        case "continue":
+            var mod = parseModifier(maneuver["modifier"]);
+            if(mod === "Uturn"){
+            	stepString = "Einen " + mod + " machen um <<TARGETSTREET>> zu kommen";
+            }else{
+            	stepString = mod + " einordnen um <<TARGETSTREET>> zu kommen";
+            }
+            break;
+        case "roundabout turn":
+        case "end of road":
+        case "turn":
+            var direction = "";
+            if (maneuver["modifier"] === "uturn") {
+                stepString = "Bei " + targetStreet + " wenden";
+            } else {
+                var modifier = parseModifier(maneuver["modifier"]);
+                if (modifier !== "Weiter") {
+                    modifier += " abbiegen";
+                }
+                stepString = modifier;
+                stepString += " <<TARGETSTREET>>"
+            }
+            break;
+        case "roundabout":
+        case "rotary":
+            stepString = "Im Kreisverkehr ";
+            if (maneuver["exit"] !== null) {
+                stepString += "die ";
+                switch (parseInt(maneuver["exit"])) {
+                    case 1:
+                        stepString += "erste ";
+                        break;
+                    case 2:
+                        stepString += "zweite ";
+                        break;
+                    case 3:
+                        stepString += "dritte ";
+                        break;
+                    case 4:
+                        stepString += "vierte ";
+                        break;
+                    case 5:
+                        stepString += "fünfte ";
+                        break;
+                    case 6:
+                        stepString += "sechste ";
+                        break;
+                    case 7:
+                        stepString += "siebte ";
+                        break;
+                    case 8:
+                        stepString += "achte ";
+                        break;
+                    case 9:
+                        stepString += "neunte ";
+                        break;
+                }
+                stepString += "Ausfahrt nehmen <<TARGETSTREET>>"
+            }
+            break;
+        case "arrive":
+            var mod = parseModifier(modifier);
+            if (mod === undefined) {
+                stepString = "Sie haben das Ziel erreicht";
+            } else {
+                stepString = "Das Ziel befindet sich " + mod;
+            }
+            break;
+        case "new name":
+            stepString = "Weiter <<TARGETSTREET>>";
+            break;
+        case "merge":
+            var mod = parseModifier(modifier);
+            stepString = mod + " auffahren <<TARGETSTREET>>";
+            break;
+        case "off ramp":
+        case "fork":
+            var mod = parseModifier(modifier);
+            stepString = mod + " halten <<TARGETSTREET>>";
+            break;
+        case "on ramp":
+            var mod = parseModifier(modifier);
+            stepString = mod + " auffahren <<TARGETSTREET>>";
+            break;
+        case "use lane":
+            switch(modifier){
+                case "left":
+                    stepString = "Linke ";
+                    break;
+                case "right":
+                    stepString = "Rechte ";
+                    break;
+                case "middle":
+                case "center":
+                    stepString = "Mittlere ";
+                    break;
+                default:
+            }
+            if(stepString !== ""){
+                stepString += "Spur verwenden <<TARGETSTREET>>";
+            }
+            break;
+        default:
+            console.log(this.json);
+            stepString = "Konnte diesen Schritt nicht zu einem String auswerten";
     }
-    marker = addMarker(el, pos);
-}
 
-function removeTemporarayMarker() {
-    if (marker !== null) {
-        map.removeOverlay(marker);
-        marker = null;
+    
+    // Die Anweisung kann nun noch erweitert werden, um eine Straße auf der weiter gefahren wird, oder um eine Richtung
+    if(typeof targetStreet !== "undefined" && targetStreet.length > 0){
+    	stepString = stepString.replace("<<TARGETSTREET>>", "auf " + targetStreet);
+    }else if(typeof destinations !== "undefined" && destinations.length > 0){
+    	stepString = stepString.replace("<<TARGETSTREET>>", "Richtung " + destinations);
+    }else{
+    	stepString = stepString.replace("<<TARGETSTREET>>", "");
     }
+	
+    return stepString;
 }
 
-function clone(obj) {
-    if (null == obj || "object" != typeof obj) return obj;
-    var copy = obj.constructor();
-    for (var attr in obj) {
-        if (obj.hasOwnProperty(attr)) copy[attr] = clone(obj[attr]);
+Step.prototype.parseImg = function() {
+	var step = this.json;
+    switch (step["maneuver"]["type"]) {
+        case "depart":
+        case "new name":
+            return "/img/straight.png";
+        case "roundabout turn":
+        case "continue":
+        case "end of road":
+        case "turn":
+            switch (step["maneuver"]["modifier"]) {
+                case "left":
+                    return "/img/turn-left.png";
+                case "sharp left":
+                    return "/img/turn-sharp-left.png";
+                case "right":
+                    return "/img/turn-right.png";
+                case "sharp right":
+                    return "/img/turn-sharp-right.png";
+                case "uturn":
+                    return "/img/uturn.png";
+                case "slight right":
+                    return "/img/fork-slight-right.png";
+                case "slight left":
+                    return "/img/fork-slight-left.png";
+                case "straight":
+                    return "/img/straight.png";
+                default:
+            }
+            break;
+        case "roundabout":
+        case "rotary":
+            return "/img/roundabout.png";
+        case "on ramp":
+            return "/img/auffahren.png";
+        case "merge":
+        case "off ramp":
+        case "fork":
+            switch (step["maneuver"]["modifier"]) {
+                case "left":
+                    return "/img/fork-left.png";
+                case "right":
+                    return "/img/fork-right.png";
+                case "slight right":
+                    return "/img/fork-slight-right.png";
+                case "slight left":
+                    return "/img/fork-slight-left.png";
+                case "straight":
+                    return "/img/straight.png";
+                default:
+            }
+        default:
     }
-    return copy;
+    return "";
 }
 
-function getWayPointLength(){
-    var count = 0;
-    $.each(waypoints, function(index, value){
-        if(value !== ''){
-            count++;
+Step.prototype.makeTrafficSigns = function(destinations){
+    var tmp = "";
+        while(destinations.length > 0){
+            // Let's check what kind of destination we have:
+            if(destinations.match(/^[^,]+?:/)){
+                var track = destinations.substring(0, destinations.indexOf(":")).trim();
+                track = track.split(/;/g);
+                destinations = destinations.substr(destinations.indexOf(":") + 1);
+                // No we get the destinations of this track an make them to a traffic sign
+                var tmpDests = [];
+                while(destinations.match(/^[^,]+/) !== null){
+                    if(destinations.indexOf(",") !== -1){
+                        tmpDests.push(destinations.substring(0, destinations.indexOf(",")));
+                        destinations = destinations.substring(destinations.indexOf(",")+1);
+                    }else{
+                        tmpDests.push(destinations);
+                        destinations = "";
+                    }
+                }
+                // Generate Output from the generated data
+                var tmpClass = "";
+                if(track[0].indexOf("A ") === 0){
+                    tmpClass = "autobahn";
+                }else if(track[0].trim().match(/^\w{0,3}\s*\d/) !== null 
+                    || track[0].trim().match(/^Ring\s\d+/) !== null)
+                    {
+                    tmpClass = "landstrasse";
+                }
+                tmp += "<span class=\"" + tmpClass + " schild\">";
+                $.each(track, function(index, value){
+                    tmp += "<span class=\"highway-number\">" + value + "</span>";
+                });
+                tmp += " <span class=\"dests\">" +tmpDests + "</span></span>";
+            }else{
+                if(destinations.match(/^\w+?,/)){
+                    tmp += destinations.substring(0, destinations.indexOf(","));
+                    destinations = destinations.substring(destinations.indexOf(",")+1);
+                }else if(destinations.match(/^\w+?;/)){
+                    tmp += destinations.substring(0, destinations.indexOf(";"));
+                    destinations = destinations.substring(destinations.indexOf(";")+1);
+                }else{
+                    tmp += destinations;
+                    destinations = "";
+                }
+            }
         }
-    });
-    return count;
+        return tmp;
 }
-//# sourceMappingURL=findRoute.js.map
+
+function parseModifier(modifier) {
+    var direction = "";
+    switch (modifier) {
+        case undefined:
+            direction = undefined;
+            break;
+        case "sharp right":
+            direction = "Scharf rechts";
+            break;
+        case "right":
+            direction = "Rechts";
+            break;
+        case "slight right":
+            direction = "Leicht rechts";
+            break;
+        case "straight":
+            direction = "Weiter";
+            break;
+        case "slight left":
+            direction = "Leicht links";
+            break;
+        case "left":
+            direction = "Links";
+            break;
+        case "sharp left":
+            direction = "Scharf links";
+            break;
+        case "uturn":
+        	direction = "Uturn";
+        	break;
+        default:
+            direction = "Konnte Richtungs-Modifizierer nicht auswerten: " + modifier;
+    }
+    return direction;
+}
+
+Step.prototype.parseBearing = function(bearing) {
+    bearing = parseFloat(bearing);
+    if ((bearing >= 0 && bearing < 22.5) || bearing >= 337.5) {
+        return "Norden";
+    } else if (bearing >= 22.5 && bearing < 67.5) {
+        return "Nordosten";
+    } else if (bearing >= 67.5 && bearing < 112.5) {
+        return "Osten";
+    } else if (bearing >= 112.5 && bearing < 157.5) {
+        return "Südosten";
+    } else if (bearing >= 157.5 && bearing < 202.5) {
+        return "Süden";
+    } else if (bearing >= 202.5 && bearing < 247.5) {
+        return "Südwesten";
+    } else if (bearing >= 247.5 && bearing < 292.5) {
+        return "Westen";
+    } else if (bearing >= 292.5 && bearing < 337.5) {
+        return "Nordwesten";
+    }
+}
+function OfflineManager(interactiveMap){
+	this.interactiveMap = interactiveMap;
+
+	this.registerSW();
+}
+
+OfflineManager.prototype.registerSW = function(){
+	navigator.serviceWorker.register('/cache-sw.js', {
+		scope: '/'
+	});
+}
+function OfflineModule(interactiveMap){
+	this.interactiveMap = interactiveMap;
+
+	this.initializeInterface();
+	this.addListeners();
+}
+
+OfflineModule.prototype.addListeners = function(){
+	var caller = this;
+	$("#offline-addon .add-area").click(function(){
+		caller.startAreaSelection();
+	});
+}
+
+OfflineModule.prototype.areaSelected = function(){
+	// This next job is gonna be quite tricky
+	// We need to get the exact boundings of the rectangle that shows the selected area
+	// To do so we need to get the Pixel coordinates of the top-left and the bottom-right corner
+	// This is gonna be the result
+	var p1 = p2 = 0;
+	// Let's begin with the top-left
+	// X-Value
+	var x = $("body > #selector > rect.selected-area").attr("x");
+	// This value is a string and percentage i.e. "12.5%"
+	// Cut the "%" and parse the float
+	x = parseFloat(x.substring(0, x.indexOf("%")));
+	// Now we need to know how much pixels that value is
+	// The box is the same height/width as the screen so that's quite easy
+	x = ($(window).outerWidth() / 100) * x;
+	// Y-Value: Same method as with the x value
+	var y = $("body > #selector > rect.selected-area").attr("y");
+	y = parseFloat(y.substring(0, y.indexOf("%")));
+	y = ($(window).outerHeight() / 100) * y;
+	p1 = [x, y];
+	p1 = this.interactiveMap.map.getCoordinateFromPixel(p1);
+	p1 = this.interactiveMap.map.transformToWorldCoordinates(p1);
+
+	// Now The Bottom Right Point. It's gonna be the same method 
+	// X-Value
+	var x = $("body > #selector > rect.selected-area").attr("x");
+	x = parseFloat(x.substring(0, x.indexOf("%")));
+	// We need to add the width to this value
+	var width = $("body > #selector > rect.selected-area").attr("width");
+	width = parseFloat(width.substring(0, width.indexOf("%")));
+	x += width;
+	// Now we need to know how much pixels that value is
+	// The box is the same height/width as the screen so that's quite easy
+	x = ($(window).outerWidth() / 100) * x;
+	// Y-Value: Same method as with the x value
+	var y = $("body > #selector > rect.selected-area").attr("y");
+	y = parseFloat(y.substring(0, y.indexOf("%")));
+	// We need to add the width to this value
+	var height = $("body > #selector > rect.selected-area").attr("height");
+	height = parseFloat(height.substring(0, height.indexOf("%")));
+	y += height;
+	// Now we need to know how much pixels that value is
+	// The box is the same height/width as the screen so that's quite easy
+	y = ($(window).outerHeight() / 100) * y;
+	p2 = [x,y];
+	p2 = this.interactiveMap.map.getCoordinateFromPixel(p2);
+	p2 = this.interactiveMap.map.transformToWorldCoordinates(p2);
+	console.log(p1,p2);
+}
+
+OfflineModule.prototype.startAreaSelection = function(){
+	$("#offline-addon .results").hide("slow");
+	var svg = $('\
+			<svg id="selector">\
+				<rect width="100%" height="12.5%" x="0" y="0" stroke="" fill="rgb(231, 231, 231);" stroke-width="4" fill-opacity=".7"></rect>\
+  				<rect width="12.5%" height="87.5%" x="0" y="12.5%" stroke="" fill="rgb(231, 231, 231);" stroke-width="4" fill-opacity=".7"></rect>\
+  				<rect width="87.5%" height="12.5%" x="12.5%" y="87.5%" stroke="" fill="rgb(231, 231, 231);" stroke-width="4" fill-opacity=".7"></rect>\
+  				<rect width="12.5%" height="75%" x="87.5%" y="12.5%" stroke="" fill="rgb(231, 231, 231);" stroke-width="4" fill-opacity=".7"></rect>\
+  				<rect class="selected-area" width="75%" height="75%" x="12.5%" y="12.5%" stroke="rgb(255,128,0)" stroke-width="4" fill="transparent"></rect>\
+			</svg>\
+			<div id="selector-accept"><span class="glyphicon glyphicon-ok"></span></div>');
+	$("body").append(svg);
+	var caller = this;
+	$("body > #selector-accept").click(function(){
+		caller.areaSelected();
+	});
+	$("#offline-addon").animate({margin: 0, width: "100%"}, 'slow', function(){
+		$("body > #selector, body > #selector-accept").show('slow');
+	});
+}
+
+OfflineModule.prototype.endAreaSelection = function(){
+	$("#offline-addon .results").show("slow");
+}
+
+OfflineModule.prototype.initializeInterface = function(){
+	// Hide everything from Map that is not needed:
+	$(".ol-zoom, .ol-zoomslider").hide("slow");
+	this.interactiveMap.reversePositionManager.setActive(false);
+	$("#offline-addon").show("slow");
+}
+
+OfflineModule.prototype.exit = function(){
+	// Show everything again that got hidden on intialization
+	$(".ol-zoom, .ol-zoomslider").show("slow");
+	this.interactiveMap.reversePositionManager.setActive(true);
+	$("#offline-addon").hide("slow");
+}
+
+OfflineModule.prototype.enableGps = function(){
+
+}
+
+OfflineModule.prototype.disableGps = function(){
+
+}
+$(document).ready(function() {
+    var map = new InteractiveMap();
+
+    var height = (typeof window.outerHeight != 'undefined')?Math.max(window.outerHeight, $(window).height()):$(window).height();
+
+    $("div.map").css("max-height", height);
+    $("body").css("max-height", height);
+    $("body").css("overflow", "hidden");
+});
+//# sourceMappingURL=map.js.map
