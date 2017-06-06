@@ -87,8 +87,8 @@ InteractiveMap.prototype.switchModule = function(name, args){
     //this.module = new RouteFinder(this, [/*[11.576734, 48.136886],*/[9.916052, 52.345042]]);
     //return;
 
-    this.module = new OfflineModule(this);
-    return;
+    //this.module = new OfflineModule(this);
+    //return;
 
     if(this.module !== null){
         // Every Module must implement this method for deinitialization
