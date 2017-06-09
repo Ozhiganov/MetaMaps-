@@ -59,8 +59,37 @@ OfflineModule.prototype.areaSelected = function(){
 	p2 = [x,y];
 	p2 = this.interactiveMap.map.getCoordinateFromPixel(p2);
 	p2 = this.interactiveMap.map.transformToWorldCoordinates(p2);
-	console.log(p1,p2);
+
+
+	// Now we need to get the Tile Numbers for the specified coordinates on the current zoom Level
+	// This is needes so we can correct the lat lon to be exactly on the edge of a tile
+	var targetZoom = 9;
+	var xTile = this.long2tile(p1[0], targetZoom);
+	var yTile = this.lat2tile(p1[1], targetZoom);
+
+	p1 =[xTile, yTile];
+	console.log("P1", p1);
+
+	// And convert that tile back to coordinates
+	p1 = [ this.tile2long(p1[0], targetZoom), this.tile2lat(p1[1], targetZoom)];
+	console.log(p1);
+	xTile = this.long2tile(p2[0], targetZoom) + 1;
+	yTile = this.lat2tile(p2[1], targetZoom) + 1;
+
+	p2 =[xTile, yTile];
+	console.log("P2", p2);
+	p2 = [ this.tile2long(p2[0], targetZoom), this.tile2lat(p2[1], targetZoom)];
+	console.log(p1, p2);
+	
+	// We now have the exact Bounding Box of the selected area that got widened to the next tile border of zoom level 9 (from where on we will render offline data)
+	
+
 }
+
+OfflineModule.prototype.long2tile = function(lon,zoom) { return (Math.floor((lon+180)/360*Math.pow(2,zoom))); }
+OfflineModule.prototype.lat2tile = function(lat,zoom)  { return (Math.floor((1-Math.log(Math.tan(lat*Math.PI/180) + 1/Math.cos(lat*Math.PI/180))/Math.PI)/2 *Math.pow(2,zoom))); }
+OfflineModule.prototype.tile2long = function(x,z) { return (x/Math.pow(2,z)*360-180); }
+OfflineModule.prototype.tile2lat = function(y,z) { var n=Math.PI-2*Math.PI*y/Math.pow(2,z); return (180/Math.PI*Math.atan(0.5*(Math.exp(n)-Math.exp(-n)))); }
 
 OfflineModule.prototype.startAreaSelection = function(){
 	$("#offline-addon .results").hide("slow");
@@ -81,6 +110,15 @@ OfflineModule.prototype.startAreaSelection = function(){
 	$("#offline-addon").animate({margin: 0, width: "100%"}, 'slow', function(){
 		$("body > #selector, body > #selector-accept").show('slow');
 	});
+
+	// We need to constrain the zoom of the map to help the user selecting the right area
+	// Min Zoom is gonna be 9; Max Zoom Remains 18
+	var currentZoom = this.interactiveMap.map.getView().getZoom();
+	// If the current Zoom is lower we will change that:
+	if(currentZoom < 9){
+		this.interactiveMap.map.getView().setMinZoom(9);
+		this.interactiveMap.map.getView().animate({zoom: 9});
+	}
 }
 
 OfflineModule.prototype.endAreaSelection = function(){

@@ -10,10 +10,10 @@ function InteractiveMap() {
     // Initialize the GPS Module
     this.GpsManager = new GpsManager(this); 
     // Initialize Offline Data with Service worker
-    this.OfflineManager = new OfflineManager(this);
+    //this.OfflineManager = new OfflineManager(this);
     // The default Module is the search Module
     // Let's start that:
-    this.switchModule("search");
+    this.switchModule("offline-karten");
 }
 InteractiveMap.prototype = Object.create(Map.prototype);
 InteractiveMap.prototype.constructor = InteractiveMap;
@@ -39,26 +39,55 @@ InteractiveMap.prototype.initMap = function() {
     ol.Map.prototype.transformToWorldCoordinates = function(point) {
         return ol.proj.transform(point, 'EPSG:3857', 'EPSG:4326');
     }
+    var source = null;
+    if(typeof android === "undefined"){
+        // We are not serving this for the app so we'll use our regular Tile-Serve
+        source = new ol.source.OSM({
+                        attributions: [
+                            new ol.Attribution({
+                                html: '&copy; ' + '<a href="https://metager.de/">MetaGer.de</a>'
+                            }),
+                            new ol.Attribution({
+                                html: '| <a href="https://metager.de/impressum">Impressum</a>'
+                            }),
+                            new ol.Attribution({
+                                html: '| &copy; ' + '<a href="http://nominatim.openstreetmap.org/">Nominatim</a>'
+                            }),
+                            ol.source.OSM.ATTRIBUTION,
+                        ],
+                        url: 'https://maps.metager.de/osm_tiles/{z}/{x}/{y}.png'
+                    });
+    }else{
+        // This is for our Android App we'll use another Tile-Server that has it's cache Disabled
+        // The App will Cache the Tiles for us that's why we don't need the browser to do it.
+        source = new ol.source.OSM({
+                        attributions: [
+                            new ol.Attribution({
+                                html: '&copy; ' + '<a href="https://metager.de/">MetaGer.de</a>'
+                            }),
+                            new ol.Attribution({
+                                html: '| <a href="https://metager.de/impressum">Impressum</a>'
+                            }),
+                            new ol.Attribution({
+                                html: '| &copy; ' + '<a href="http://nominatim.openstreetmap.org/">Nominatim</a>'
+                            }),
+                            ol.source.OSM.ATTRIBUTION,
+                        ],
+                        url: 'https://tiles.metager.de/osm_tiles/{z}/{x}/{y}.png'
+                    });
+    }
     var map = new ol.Map({
         layers: [
             new ol.layer.Tile({
                 preload: Infinity,
-                source: new ol.source.OSM({
-                    attributions: [
-                        new ol.Attribution({
-                            html: '&copy; ' + '<a href="https://metager.de/">MetaGer.de</a>'
-                        }),
-                        new ol.Attribution({
-                            html: '| <a href="https://metager.de/impressum">Impressum</a>'
-                        }),
-                        new ol.Attribution({
-                            html: '| &copy; ' + '<a href="http://nominatim.openstreetmap.org/">Nominatim</a>'
-                        }),
-                        ol.source.OSM.ATTRIBUTION,
-                    ],
-                    url: 'https://maps.metager.de/osm_tiles/{z}/{x}/{y}.png'
+                source: source
+            }),
+            new ol.layer.Tile({
+                source: new ol.source.TileDebug({
+                  projection: 'EPSG:3857',
+                  tileGrid:  source.getTileGrid()
                 })
-            })
+              })
         ],
         target: 'map',
         controls: ol.control.defaults({
@@ -82,13 +111,6 @@ InteractiveMap.prototype.initMap = function() {
     return map;
 }
 InteractiveMap.prototype.switchModule = function(name, args){
-
-    // Todo remove when development of Route Finder finished
-    //this.module = new RouteFinder(this, [/*[11.576734, 48.136886],*/[9.916052, 52.345042]]);
-    //return;
-
-    this.module = new OfflineModule(this);
-    return;
 
     if(this.module !== null){
         // Every Module must implement this method for deinitialization

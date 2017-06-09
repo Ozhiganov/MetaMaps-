@@ -1,5 +1,6 @@
+var map = null;
 $(document).ready(function() {
-    var map = new InteractiveMap();
+    map = new InteractiveMap();
 
     var height = (typeof window.outerHeight != 'undefined')?Math.max(window.outerHeight, $(window).height()):$(window).height();
 
