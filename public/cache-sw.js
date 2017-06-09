@@ -37,13 +37,38 @@ function precache() {
  * If not then it'll fetch the Tile but won't put it into the cache
 */
 function fromTileCache(request){
-	return caches.open(CACHE_TILES).then(function(cache){
-		return cache.match(request).then(function(matching){
-			if(matching) return matching;
 
-			return fetch(request);
+	
+
+	if(typeof android === "undefined"){
+		console.log("Nicht in der App");
+		return caches.open(CACHE_TILES).then(function(cache){
+			return cache.match(request).then(function(matching){
+				if(matching) return matching;
+				return fetch(request);
+			});
 		});
-	});
+    }else{
+    	var matches = request.url.match(/\/(\d+)\/(\d+)\/(\d+)\.png/i);
+
+		var x = parseInt(matches[2]);
+		var y = parseInt(matches[3]);
+		var z = parseInt(matches[1]);
+    	var pngContent = android.generateTile(x,y,z);
+
+    	// We retrieved some PNG content as String from the APP
+    	// Let's generate a response of of that and return it:
+    	return new Response(pngContent, {
+    		headers: {
+    			'access-control-allow-origin': '*',
+    			'cache-control': 'max-age=14685',
+    			'content-length': pngContent.length + "",
+    			'content-type': 'image/png'
+    		}
+    	});
+    }
+
+	
 }
 
 function fromCache(request) {
