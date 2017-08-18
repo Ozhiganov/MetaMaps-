@@ -2866,7 +2866,7 @@ RouteFinder.prototype.mobilesWindowClick = function(){
 			<div id="show-list" class="container">\
 				Liste anzeigen\
 			</div>');
-		$("#route-finder-addon .results").append(showList);
+		$("#route-finder-addon").prepend(showList);
 		$(showList).click({caller: caller}, function(event){
 			$("#route-finder-addon #waypoint-list-container").show("slow");
 			$("#route-finder-addon #vehicle-chooser").show("slow");
@@ -2874,7 +2874,7 @@ RouteFinder.prototype.mobilesWindowClick = function(){
 				event.data.caller.updateMobilesWindow();
 				event.data.caller.adjustMapView();
 			});
-			$("#route-finder-addon .results #show-list").remove();
+			$("#route-finder-addon #show-list").remove();
 		});
 	});
 
