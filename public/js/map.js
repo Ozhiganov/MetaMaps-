@@ -1897,6 +1897,7 @@ function SearchModule(interactiveMap, query){
 	this.interactiveMap = interactiveMap;	
 	// Initialize History Objects
 	this.searchHistory = new LocalHistory("suche");
+	this.resultsHistory = new LocalHistory("results");
 	// Initialize the search Interface
 	this.initializeInterface();
 	// Add the History Items to the Interface
@@ -1912,7 +1913,7 @@ function SearchModule(interactiveMap, query){
 		// Update the user Interface with this search
 		$("#search input[name=q]").val(query);
 		// And trigger the event
-		this.startSearch(false);
+		this.startSearch(true);
 		this.updatePastSearchContainer();
 	}else{
 		this.updateURL();
@@ -2015,9 +2016,9 @@ SearchModule.prototype.startSearch = function(moveMap){
 	// Query the Search:
 	$.get(url, $.proxy(function(data){
 		if(typeof moveMap == "boolean")
-			this.results = new Results(this.interactiveMap, data, this.query, moveMap);
+			this.results = new Results(this.interactiveMap, data, this.query, moveMap, this.resultsHistory);
 		else
-			this.results = new Results(this.interactiveMap, data, this.query);
+			this.results = new Results(this.interactiveMap, data, this.query, undefined, this.resultsHistory);
 		if(data.length > 0){
 			this.updateURL();
 			// This was a succesfull
@@ -2117,7 +2118,7 @@ SearchModule.prototype.popUrl = function(e){
 			}	
 			// We will go back to the last Position
 			if(typeof state.query != "undefined"){
-				this.results = new Results(this.interactiveMap, state.data, state.query, false);
+				this.results = new Results(this.interactiveMap, state.data, state.query, false, this.resultsHistory);
 			}
 			this.interactiveMap.map.getView().animate({
 				center: this.interactiveMap.map.transformToMapCoordinates(state.pos),
@@ -2276,10 +2277,11 @@ LocalHistory.prototype.b64DecodeUnicode = function(str) {
     }).join(''));
 }
 
-function Results(map, data, query, moveMap){
+function Results(map, data, query, moveMap, resultsHistory){
 	this.interactiveMap = map;
 	this.results = data;
 	this.query = query;
+	this.resultsHistory = resultsHistory;
 	if(typeof moveMap == "boolean"){
 		this.moveMap = moveMap;
 	}else{
@@ -2359,13 +2361,14 @@ Results.prototype.updateInterface = function(){
 			}
 		});
 		$("#search-addon .results .results-container .start-route-service").each($.proxy(function(index, value){
-			(new LocalHistory("results")).addItem(this.results[index]);
+			$(value).click($.proxy(function(event){
+				this.resultsHistory.addItem(this.results[index]);
+			}, this));
 		}, this));
 		$("#search-addon .results .results-container .start-route-service").click({caller: caller}, function(){
 			// We will add this result to the Local History 
 			caller.interactiveMap.switchModule("route-finding", {waypoints: [[parseFloat($(this).attr("data-lon")), parseFloat($(this).attr("data-lat"))]]});
 		});
-		
 		$("#search-addon .results .results-container").show('slow', function(){
 			$("#search-addon .results .results-container").attr("data-status", "out");
 			if($(window).outerWidth() <= 767){

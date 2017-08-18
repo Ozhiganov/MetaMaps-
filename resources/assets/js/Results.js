@@ -1,8 +1,9 @@
 
-function Results(map, data, query, moveMap){
+function Results(map, data, query, moveMap, resultsHistory){
 	this.interactiveMap = map;
 	this.results = data;
 	this.query = query;
+	this.resultsHistory = resultsHistory;
 	if(typeof moveMap == "boolean"){
 		this.moveMap = moveMap;
 	}else{
@@ -82,13 +83,14 @@ Results.prototype.updateInterface = function(){
 			}
 		});
 		$("#search-addon .results .results-container .start-route-service").each($.proxy(function(index, value){
-			(new LocalHistory("results")).addItem(this.results[index]);
+			$(value).click($.proxy(function(event){
+				this.resultsHistory.addItem(this.results[index]);
+			}, this));
 		}, this));
 		$("#search-addon .results .results-container .start-route-service").click({caller: caller}, function(){
 			// We will add this result to the Local History 
 			caller.interactiveMap.switchModule("route-finding", {waypoints: [[parseFloat($(this).attr("data-lon")), parseFloat($(this).attr("data-lat"))]]});
 		});
-		
 		$("#search-addon .results .results-container").show('slow', function(){
 			$("#search-addon .results .results-container").attr("data-status", "out");
 			if($(window).outerWidth() <= 767){

@@ -2,6 +2,7 @@ function SearchModule(interactiveMap, query){
 	this.interactiveMap = interactiveMap;	
 	// Initialize History Objects
 	this.searchHistory = new LocalHistory("suche");
+	this.resultsHistory = new LocalHistory("results");
 	// Initialize the search Interface
 	this.initializeInterface();
 	// Add the History Items to the Interface
@@ -17,7 +18,7 @@ function SearchModule(interactiveMap, query){
 		// Update the user Interface with this search
 		$("#search input[name=q]").val(query);
 		// And trigger the event
-		this.startSearch(false);
+		this.startSearch(true);
 		this.updatePastSearchContainer();
 	}else{
 		this.updateURL();
@@ -120,9 +121,9 @@ SearchModule.prototype.startSearch = function(moveMap){
 	// Query the Search:
 	$.get(url, $.proxy(function(data){
 		if(typeof moveMap == "boolean")
-			this.results = new Results(this.interactiveMap, data, this.query, moveMap);
+			this.results = new Results(this.interactiveMap, data, this.query, moveMap, this.resultsHistory);
 		else
-			this.results = new Results(this.interactiveMap, data, this.query);
+			this.results = new Results(this.interactiveMap, data, this.query, undefined, this.resultsHistory);
 		if(data.length > 0){
 			this.updateURL();
 			// This was a succesfull
@@ -222,7 +223,7 @@ SearchModule.prototype.popUrl = function(e){
 			}	
 			// We will go back to the last Position
 			if(typeof state.query != "undefined"){
-				this.results = new Results(this.interactiveMap, state.data, state.query, false);
+				this.results = new Results(this.interactiveMap, state.data, state.query, false, this.resultsHistory);
 			}
 			this.interactiveMap.map.getView().animate({
 				center: this.interactiveMap.map.transformToMapCoordinates(state.pos),
