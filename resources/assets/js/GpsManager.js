@@ -1,7 +1,7 @@
 function GpsManager(interactiveMap) {
     this.map = interactiveMap.map;
     this.interactiveMap = interactiveMap;
-    this.gps = false // Boolean which declares whether gps is available or not so we don't have to check against the API everytime
+    this.gps = null // Boolean which declares whether gps is available or not so we don't have to check against the API everytime
     this.location = null; // Array with Position data of the Last Position we retrieved
     this.lockViewToPosition = true; // Whether the view should be locked when the current Location is shown.
     this.id = null; // ID of the process that follow the Location
@@ -18,6 +18,17 @@ function GpsManager(interactiveMap) {
     // Be carefull we will not know if we have GPS or not directly after this constructor
     // because the validation is done asynchroniously.
 }
+
+GpsManager.prototype.constructor = GpsManager;
+
+GpsManager.prototype.loadingGps = function(){
+    // Returns a boolean so you can check whether this Manager is finished loading Gps
+    if(this.gps == null)
+        return true;
+    else
+        return false;
+}
+
 GpsManager.prototype.checkGps = function() {
     if (navigator.geolocation) {
         var caller = this;
@@ -44,11 +55,19 @@ GpsManager.prototype.checkGps = function() {
         this.disableGpsFeatures();
     }
 }
+
+// The GpsManager can call the predefined Functions of the current module
+// If it finishes too fast with fetching the position it can cause troubles thats why we add a timeout
 GpsManager.prototype.enableGpsFeatures = function() {
-    this.interactiveMap.module.enableGps();
+    window.setTimeout($.proxy(function(){
+        this.interactiveMap.module.enableGps()
+    }, this), 100);
+    //setTimeout(this.interactiveMap.module.enableGps(), 10000);
 }
 GpsManager.prototype.disableGpsFeatures = function() {
-    this.interactiveMap.module.disableGps();
+    window.setTimeout($.proxy(function(){
+        this.interactiveMap.module.disableGps();
+    }, this), 100);
 }
 /**
  * Toggles the Map Feature (GpsLocation)
@@ -94,6 +113,37 @@ GpsManager.prototype.addLocationEventListeners = function() {
         event.data.caller.lockViewToPosition = !event.data.caller.lockViewToPosition;
     });
 }
+
+GpsManager.prototype.stopWatch = function(){
+    if(typeof this.followId != "undefined"){
+        navigator.geolocation.clearWatch(this.followId);
+        this.followId = undefined;
+        console.log("Watch stopped");
+    }
+}
+
+GpsManager.prototype.watchPosition = function(callback, options){
+    if(typeof options == "undefined"){
+        var options = {
+            enableHighAccuracy: true,
+            maximumAge: 3000
+        };
+    }
+    if(typeof callback != "function")
+        return;
+    this.followId = navigator.geolocation.watchPosition($.proxy(function(position){
+        this.location[0] = parseFloat(position.coords.longitude);
+        this.location[1] = parseFloat(position.coords.latitude);
+        this.accuracy = parseFloat(position.coords.accuracy);
+        this.timestamp = Math.floor(position.timestamp / 1000);
+        callback(position);
+    }, this), function(error) {
+            // Follow Location couldn't be started. Abort now
+            deinitAssistent();
+        }, options);
+    console.log(this.followId);
+}
+
 GpsManager.prototype.followLocation = function() {
     // Element to be displayed at the user-location
     var el = $('<span id="user-position" class="glyphicon glyphicon-record" style="color: #2881cc;"></span>');

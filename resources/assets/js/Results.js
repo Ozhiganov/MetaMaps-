@@ -1,8 +1,13 @@
 
-function Results(map, data, query){
+function Results(map, data, query, moveMap){
 	this.interactiveMap = map;
 	this.results = data;
 	this.query = query;
+	if(typeof moveMap == "boolean"){
+		this.moveMap = moveMap;
+	}else{
+		this.moveMap = true;
+	}
 	this.markerOverlays = [];
 	this.updateInterface();
 }
@@ -15,9 +20,6 @@ Results.prototype.deleteSearch = function(animationSpeed){
 	}
 	$("#search-addon .results .results-container").hide(animationSpeed, function(){
 		$("#search-addon .results .results-container").html("");
-	});
-	$("#search-addon .results .history-container").hide(animationSpeed, function(){
-		$("#search-addon .results .history-container").html("");
 	});
 	$("#search-addon #delete-search").remove();
 	$("#search-addon #search input[name=q]").val("");
@@ -79,8 +81,12 @@ Results.prototype.updateInterface = function(){
 				});
 			}
 		});
+		$("#search-addon .results .results-container .start-route-service").each($.proxy(function(index, value){
+			(new LocalHistory("results")).addItem(this.results[index]);
+		}, this));
 		$("#search-addon .results .results-container .start-route-service").click({caller: caller}, function(){
-			caller.interactiveMap.switchModule("route-finding", {lat: $(this).attr("data-lat"), lon: $(this).attr("data-lon")});
+			// We will add this result to the Local History 
+			caller.interactiveMap.switchModule("route-finding", {waypoints: [[parseFloat($(this).attr("data-lon")), parseFloat($(this).attr("data-lat"))]]});
 		});
 		
 		$("#search-addon .results .results-container").show('slow', function(){
@@ -92,7 +98,7 @@ Results.prototype.updateInterface = function(){
 					event.data.caller.mobilesWindowClick();
 				});
 				// The Search box got focussed on a mobile Let's get more Space
-				$("#search-addon").animate({"margin": 0}, 'slow', function(){
+				$("#search-addon").animate({"margin": 0}, 'slow', $.proxy(function(){
 					$("#search-addon .results").css("border-radius", 0);
 					$("#search-addon .results").css("max-height", "95vh");
 					$("#search-addon .results").css("background-color", "transparent");
@@ -103,7 +109,12 @@ Results.prototype.updateInterface = function(){
 					var height = $(window).outerHeight() - $(".results").outerHeight() - $("#search").outerHeight();
 					height = Math.max(height, 175);
 					$(".results .mobiles-window").css("height", height + "px");
-				});
+					this.updateResultMarker();
+					this.updateMapExtent();
+				}, caller));
+			}else{
+				caller.updateResultMarker();
+					caller.updateMapExtent();
 			}
 			// Let's make a new input-group-addon to cancel the search if it takes too long
 			var cancelSearch = $('\
@@ -115,8 +126,6 @@ Results.prototype.updateInterface = function(){
 			$(cancelSearch).click({caller: caller}, function(event){
 				event.data.caller.deleteSearch();
 			});
-			caller.updateResultMarker();
-			caller.updateMapExtent();
 		});
 	}
 }
@@ -161,7 +170,7 @@ Results.prototype.updateResultMarker = function(){
 
 Results.prototype.mobilesWindowClick = function(){
 	// Hide the Results Panel
-	$(".results .results-container, .results .history-container").hide("fast");
+	$(".results .results-container").hide("fast");
 	var caller = this;
 	$(".results .mobiles-window").hide("fast", function(){
 		// Add the Possibility to come back to the list
@@ -190,7 +199,7 @@ Results.prototype.mobilesWindowClick = function(){
 }
 
 Results.prototype.updateMapExtent = function(initPadding){
-	if(this.results.length <= 0){
+	if(this.results.length <= 0 || !this.moveMap){
 		return;
 	}
 	var caller = this;

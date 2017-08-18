@@ -15,6 +15,8 @@ Route::get('/', function () {
 
 });
 
+Route::get('download/{minx}/{miny}/{maxx}/{maxy}/{zoomstart}/{zoomend}', 'DownloadController@downloadArea');
+
 Route::group(['prefix' => 'map'], function () {
     Route::get('/', function () {
         return view('map')->with('scripts', [elixir('js/mapSearch.js')])->with('css', [elixir('css/general.css'), elixir('css/mapSearch.css'), elixir('css/routing.css')]);
@@ -24,7 +26,8 @@ Route::group(['prefix' => 'map'], function () {
         if (sizeof($positionData) === 3) {
             $center = [$positionData[0], $positionData[1]];
             $zoom   = $positionData[2];
-            return view('map')->with('boundings', 'false')->with('getPosition', 'true')->with('scripts', [elixir('js/mapSearch.js')])->with('css', [elixir('css/mapSearch.css')])->with("vars", ["center" => $center, "zoom" => $zoom]);
+            return view('map')->with('scripts', [elixir('js/mapSearch.js')])->with('css', [elixir('css/general.css'), elixir('css/mapSearch.css'), elixir('css/routing.css')])
+                ->with("vars", ["center" => $center, "zoom" => $zoom]);
         } else {
             return redirect('/');
         }
@@ -34,7 +37,8 @@ Route::group(['prefix' => 'map'], function () {
         if (sizeof($positionData) === 3) {
             $center = [$positionData[0], $positionData[1]];
             $zoom   = $positionData[2];
-            return view('map')->with('boundings', 'false')->with('getPosition', 'true')->with('scripts', [elixir('js/mapSearch.js')])->with('css', [elixir('css/mapSearch.css')])->with("vars", ["center" => $center, "zoom" => $zoom, "query" => $search]);
+            return view('map')->with('scripts', [elixir('js/mapSearch.js')])->with('css', [elixir('css/general.css'), elixir('css/mapSearch.css'), elixir('css/routing.css')])
+                ->with("vars", ["center" => $center, "zoom" => $zoom, "query" => $search]);
         } else {
             return redirect('/');
         }
@@ -65,24 +69,24 @@ Route::group(['prefix' => 'route'], function () {
     Route::get('find/{vehicle}/{points}/{startBearing?}', 'RoutingController@routingGeoJson');
     Route::get('match/{vehicle}/{points}/{timestamp}/{radiuses}', 'RoutingController@match');
     Route::get('start/{vehicle}/{points?}', function ($vehicle, $points = "") {
-        $waypoints = [];
+        $waypoints = "[]";
         if ($points !== "") {
             // Let's Convert
             $points = explode(";", $points);
+            $waypoints = "[";
             foreach ($points as $index => $value) {
-                if ($value === '') {
-                    $waypoints[] = '';
-                } elseif ($value === "gps") {
-                    $waypoints[] = 'gps';
+                if ($value === "gps") {
+                    $waypoints .= '["gps"],';
                 } else {
                     $pos         = explode(',', $value);
-                    $pos[0]      = floatval($pos[0]);
-                    $pos[1]      = floatval($pos[1]);
-                    $waypoints[] = $pos;
+                    $waypoints .= "[" . $pos[0] . "," . $pos[1] . "],";
                 }
             }
+            $waypoints = rtrim($waypoints, ",");
+            $waypoints .= "]";
         }
-        return response(view('map')->with('boundings', 'false')->with('getPosition', 'true')->with('scripts', [elixir('js/findRoute.js')])->with("vars", ["waypoints" => $waypoints, 'vehicle' => $vehicle])->with('css', [elixir('css/routing.css')]))->header('Vary', 'Accept');
+        return view('map')->with('scripts', [elixir('js/mapSearch.js')])->with('css', [elixir('css/general.css'), elixir('css/mapSearch.css'), elixir('css/routing.css')])
+                ->with("vars", ["waypoints" => $waypoints, 'vehicle' => $vehicle]);
     });
     Route::get('search/{search}', function ($search) {
         $url      = "https://maps.metager.de/nominatim/search.php?q=" . urlencode($search) . "&limit=5&polygon_geojson=0&format=json&dedupe=1&extratags=1&addressdetails=1&namedetails=1";
@@ -105,3 +109,51 @@ Route::get('{search}', 'SearchController@search');
 Route::group(['prefix' => 'metager'], function () {
     Route::get('{search}', 'SearchController@iframeSearch');
 });
+
+Route::get('tile_cache/{z}/{x}/{y}.png', function($z, $x, $y){
+
+    // The request is sent we'll wait up to 10 seconds for the png to be generated
+    $filepath =  public_path() . DIRECTORY_SEPARATOR . "tiles" . DIRECTORY_SEPARATOR . $z . DIRECTORY_SEPARATOR . $x . DIRECTORY_SEPARATOR . "$y.png";
+
+    if(!file_exists($filepath)){
+        // We do not have the requested Tile generated yet
+        // Let's send a request to out generator service
+        $tempdir = sys_get_temp_dir() . DIRECTORY_SEPARATOR . "tile_requests" . DIRECTORY_SEPARATOR . "$z-$x-$y.request";
+        touch($tempdir);
+
+    
+        $startTime = microtime(true);
+        while(file_exists($tempdir) && !file_exists($filepath)){
+            if((microtime(true) - $startTime) > 10){
+                break;
+            } 
+            usleep(5000);
+        }
+        while(true){
+            if((microtime(true) - $startTime) > 10){
+                break;
+            } 
+            usleep(5000);
+            try{
+                if(imagecreatefrompng($filepath) !== FALSE)
+                    break;
+            }catch(\ErrorException $e){
+                continue;
+            }
+        }
+    }
+    if(file_exists($filepath)){
+
+        $content = file_get_contents($filepath);
+        $response = Response::make($content, 200);
+        $response->header('Content-Type', 'image/png');
+        $response->header('Cache-Control', 'max-age=0, no-cache, no-store, must-revalidate');
+        $response->header('Pragma', 'no-cache');
+        $response->header('Expires', 'Wed, 11 Jan 1984 05:00:00 GMT');
+        return $response;
+    }else{
+        abort(404, "File not Found");
+    }
+});
+
+

@@ -71,7 +71,7 @@ NominatimParser.prototype.getHTMLResult = function() {
         // Now the two Links
         var url = "";
         url = "/route/start/foot/" + lon + "," + lat;
-        html += '<a class="start-route-service" data-lon="'+lon+'" data-lat="'+lat+'" href="#" onclick="event.stopPropagation();">Route berechnen</a>';
+        html += '<a class="start-route-service" data-lon="'+lon+'" data-lat="'+lat+'" href="javascript:void(0);" onclick="event.stopPropagation();">Route berechnen</a>';
         // And the Link to the MetaGer Search
         // build the search query
         var query = "";

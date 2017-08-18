@@ -41,7 +41,7 @@ ReversePositionManager.prototype.getNearest = function(evt){
     $.get(url, function(data) {
         var popup = new NominatimParser(data).getHTMLResult();
         $(popup).find("a.start-route-service").click({caller: caller}, function(event){
-            event.data.caller.interactiveMap.switchModule("route-finding", {lon: data["lon"], lat: data["lat"]});
+            event.data.caller.interactiveMap.switchModule("route-finding", {waypoints: [[data["lon"], data["lat"]]]});
         });
         caller.createPopup(interactiveMap.map.transformToMapCoordinates([parseFloat(data["lon"]), parseFloat(data["lat"])]), popup);
     });

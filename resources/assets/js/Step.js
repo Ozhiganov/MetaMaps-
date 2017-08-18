@@ -18,19 +18,19 @@ Step.prototype.parseManeuver = function() {
     var modifier = maneuver["modifier"];
 
     var targetStreet = "";
-    if(typeof this.json.name !== "undefined" && typeof this.json.ref !== "undefined"){
+    if(typeof this.json.name != "undefined" && typeof this.json.ref != "undefined"){
         targetStreet = this.makeTrafficSigns(this.json.ref + ":" + this.json.name);
-    }else if(typeof this.json.ref !== "undefined" && typeof this.json.name === "undefined"){
+    }else if(typeof this.json.ref != "undefined" && typeof this.json.name == "undefined"){
     	targetStreet = this.makeTrafficSigns(this.json.ref + ":");
-    }else if(typeof this.json.ref === "undefined" && typeof this.json.name !== "undefined"){
+    }else if(typeof this.json.ref == "undefined" && typeof this.json.name != "undefined"){
         targetStreet = this.json.name;
     }
-    if(typeof targetStreet === "undefined"){
+    if(typeof targetStreet == "undefined"){
         targetStreet = "";
     }
 
     var destinations = this.json.destinations;
-    if(typeof destinations !== "undefined"){
+    if(typeof destinations != "undefined"){
         destinations = destinations.trim();
         destinations = this.makeTrafficSigns(destinations);
     }else{
@@ -42,20 +42,20 @@ Step.prototype.parseManeuver = function() {
             var direction = this.parseBearing(maneuver["bearing_after"]);
             var start = this.json.name;
 
-            if(typeof start !== "undefined"){
+            if(typeof start != "undefined"){
                 stepString = "Auf " + start + " nach " + direction;
             }else{
                 stepString = "Starte Richtung " + direction;
             }
 
             var nextStreet = this.nextStreet;
-            if (typeof nextStreet !== "undefined" && nextStreet !== start) {
+            if (typeof nextStreet != "undefined" && nextStreet != start) {
                 stepString += " Richtung " + nextStreet + " starten";
             }
             break;
         case "continue":
             var mod = parseModifier(maneuver["modifier"]);
-            if(mod === "Uturn"){
+            if(mod == "Uturn"){
             	stepString = "Einen " + mod + " machen um <<TARGETSTREET>> zu kommen";
             }else{
             	stepString = mod + " einordnen um <<TARGETSTREET>> zu kommen";
@@ -65,11 +65,11 @@ Step.prototype.parseManeuver = function() {
         case "end of road":
         case "turn":
             var direction = "";
-            if (maneuver["modifier"] === "uturn") {
+            if (maneuver["modifier"] == "uturn") {
                 stepString = "Bei " + targetStreet + " wenden";
             } else {
                 var modifier = parseModifier(maneuver["modifier"]);
-                if (modifier !== "Weiter") {
+                if (modifier != "Weiter") {
                     modifier += " abbiegen";
                 }
                 stepString = modifier;
@@ -79,7 +79,7 @@ Step.prototype.parseManeuver = function() {
         case "roundabout":
         case "rotary":
             stepString = "Im Kreisverkehr ";
-            if (maneuver["exit"] !== null) {
+            if (maneuver["exit"] != null) {
                 stepString += "die ";
                 switch (parseInt(maneuver["exit"])) {
                     case 1:
@@ -115,7 +115,7 @@ Step.prototype.parseManeuver = function() {
             break;
         case "arrive":
             var mod = parseModifier(modifier);
-            if (mod === undefined) {
+            if (mod == undefined) {
                 stepString = "Sie haben das Ziel erreicht";
             } else {
                 stepString = "Das Ziel befindet sich " + mod;
@@ -151,7 +151,7 @@ Step.prototype.parseManeuver = function() {
                     break;
                 default:
             }
-            if(stepString !== ""){
+            if(stepString != ""){
                 stepString += "Spur verwenden <<TARGETSTREET>>";
             }
             break;
@@ -162,9 +162,9 @@ Step.prototype.parseManeuver = function() {
 
     
     // Die Anweisung kann nun noch erweitert werden, um eine Straße auf der weiter gefahren wird, oder um eine Richtung
-    if(typeof targetStreet !== "undefined" && targetStreet.length > 0){
+    if(typeof targetStreet != "undefined" && targetStreet.length > 0){
     	stepString = stepString.replace("<<TARGETSTREET>>", "auf " + targetStreet);
-    }else if(typeof destinations !== "undefined" && destinations.length > 0){
+    }else if(typeof destinations != "undefined" && destinations.length > 0){
     	stepString = stepString.replace("<<TARGETSTREET>>", "Richtung " + destinations);
     }else{
     	stepString = stepString.replace("<<TARGETSTREET>>", "");
@@ -239,8 +239,8 @@ Step.prototype.makeTrafficSigns = function(destinations){
                 destinations = destinations.substr(destinations.indexOf(":") + 1);
                 // No we get the destinations of this track an make them to a traffic sign
                 var tmpDests = [];
-                while(destinations.match(/^[^,]+/) !== null){
-                    if(destinations.indexOf(",") !== -1){
+                while(destinations.match(/^[^,]+/) != null){
+                    if(destinations.indexOf(",") != -1){
                         tmpDests.push(destinations.substring(0, destinations.indexOf(",")));
                         destinations = destinations.substring(destinations.indexOf(",")+1);
                     }else{
@@ -250,10 +250,10 @@ Step.prototype.makeTrafficSigns = function(destinations){
                 }
                 // Generate Output from the generated data
                 var tmpClass = "";
-                if(track[0].indexOf("A ") === 0){
+                if(track[0].indexOf("A ") == 0){
                     tmpClass = "autobahn";
-                }else if(track[0].trim().match(/^\w{0,3}\s*\d/) !== null 
-                    || track[0].trim().match(/^Ring\s\d+/) !== null)
+                }else if(track[0].trim().match(/^\w{0,3}\s*\d/) != null 
+                    || track[0].trim().match(/^Ring\s\d+/) != null)
                     {
                     tmpClass = "landstrasse";
                 }
@@ -333,4 +333,73 @@ Step.prototype.parseBearing = function(bearing) {
     } else if (bearing >= 292.5 && bearing < 337.5) {
         return "Nordwesten";
     }
+}
+
+
+Step.prototype.toHTML = function(distTraveled){
+    console.log(this.json.distance, distTraveled);
+    distTraveled = Math.max(distTraveled, 0);
+    var imgSrc = this.parseImg();
+    if(imgSrc.length >= 0){
+        var html = $('\
+            <div class="step">\
+                <div class="image">\
+                    <img src="' + imgSrc + '" alt="noimage" />\
+                </div>\
+                <div class="step-string">\
+                    ' + this.toString() + '\
+                </div>\
+                <div class="step-length">\
+                    ' + this.distanceString(this.json.distance - distTraveled) + '\
+                </div>\
+            </div>');
+    }else{
+        var html = $('\
+            <div class="step">\
+                <div class="image">\
+                </div>\
+                <div class="step-string">\
+                    ' + this.toString() + '\
+                </div>\
+                <div class="step-length">\
+                    ' + this.distanceString(this.json.distance - distTraveled) + '\
+                </div>\
+            </div>');
+    }
+    return html;
+}
+
+Step.prototype.getDistance = function(){
+    return this.json.distance;
+}
+
+Step.prototype.distanceString = function(length){
+    var result = "";
+    length = Math.floor(length);
+
+    if(length > 10000){
+        // We will only display full km
+        result = Math.round(length/1000) + " km";
+    }else if(length > 2000){
+        // We will display every 100m
+        result = (Math.round(length/100) / 10) + "km";
+    }else if(length > 1000){
+        // We will display every 50m
+        length /= 10;
+        length = Math.ceil(length/5) * 5;
+        length /= 100;
+        result = length + " km";
+    }else if(length > 500){
+        // We will display every 50m but in m instead of km
+        length /= 10;
+        length = Math.ceil(length/5) * 5;
+        length *= 10;
+        result = length + " m";
+    }else{
+        // We will display every 10m but in m instead of km
+        length = Math.ceil(length / 10) * 10;
+        result = length + " m";
+    }
+
+    return result;
 }

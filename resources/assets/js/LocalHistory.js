@@ -1,47 +1,102 @@
-function LocalHistory(){
-    this.präfix = "place-search:";
+/*
+ This Class can store retrieve And Update Objects within the local storage
+ It cann only be used to store Javascript Objects
+ Each stored Object will get two extra items:
+        date: the time in milliseconds when the object was last accessed
+        hash: a unique hash code which can compare two of the objects
+*/
+
+function LocalHistory(type){
+    this.MAXSIZE = 10;
+    this.type = type;
+    this.praefix = type + ":";
+    this.results = [];
 	this.history = this.readHistory();
+    
 }
 
 LocalHistory.prototype.readHistory = function(){
-    var präfix = this.präfix;
-    var result = [];
-    if (localStorage) {
-        var reg = new RegExp("^" + präfix, '');
-        var caller = this;
-        $.each(localStorage, function(key, value) {
-            if (key.match(reg) !== null) {
-                // Search Results are stored in Base64 encoded Strings
-                var match = key.match(/:([\d]+?)/);
-                var count = parseInt(match[1]);
-                var res = caller.b64DecodeUnicode(value);
-                res = JSON.parse(res);
-                res.count = count;
-                result.push(res);
-            }
-        });
-        result.sort(function(a, b) {
-            return b.count - a.count
-        });
-    }
-    return result;
+    $.each(localStorage, $.proxy(function(key, value){
+        if(key.indexOf(this.praefix) == 0){
+            this.results.push(JSON.parse(this.b64DecodeUnicode(value)));
+        }
+    }, this));
+    this.sortResults();
 }
 
-LocalHistory.prototype.getFullHistory = function(){
-	return this.history;
+LocalHistory.prototype.sortResults = function(){
+    this.results.sort(function(a,b){
+        return b.date-a.date;
+    });
 }
 
-LocalHistory.prototype.clearHistory = function() {
-    if(localStorage){
-        var präfix = this.präfix;
-        $.each(this.history, function(index, value){
-            var key = präfix + btoa(value.name);
-            localStorage.removeItem(key);
-        });
-        return true;
+LocalHistory.prototype.addItem = function(object){
+    if(typeof object != "object") return;
+
+    // Create a new Hash Value for this object
+    object.hash = this.createHashValue(object);
+    object.date = (new Date()).getTime();
+    if(!this.contains(object)){
+        // The new Object is not already contained
+        // We will add the new one and make sure we are not exeeding the maximum size
+        while(this.results.size >= this.MAXSIZE){
+            this.results.pop();
+        }
+        this.results.push(object);
     }else{
-        return false;
+        // The object is already contained in our result set
+        // We will just update the Time for it 
+        $.each(this.results, $.proxy(function(index, value){
+            if(value.hash == object.hash){
+                this.results[index].date = (new Date()).getTime();
+                return 0;
+            }
+        }, this));
     }
+    // Also resort the results
+    this.sortResults();
+    // And save it into the LocalStorage
+    this.saveResults();
+    
+}
+
+LocalHistory.prototype.saveResults = function(){
+    // First delete every existing entry 
+    $.each(localStorage, function(key, value){
+        if(key.indexOf(this.praefix) == 0){
+            localStorage.removeItem(key);
+        }
+    });
+    $.each(this.results, $.proxy(function(index, value){
+        var stringObject = JSON.stringify(value);
+        stringObject = this.b64EncodeUnicode(stringObject);
+        localStorage.setItem(this.praefix + index, stringObject);
+    }, this));
+}
+
+LocalHistory.prototype.createHashValue = function(object){
+    var hash = 0;
+    var stringObject = JSON.stringify(object);
+    if(stringObject.length == 0) return hash;
+    for(var i = 0; i < stringObject.length; i++){
+        var character = stringObject.charCodeAt(i);
+        hash = ((hash<<5)-hash)+character;
+        hash = hash & hash;
+    }
+    return hash;
+}
+
+LocalHistory.prototype.contains = function(object){
+    var contains = false;
+    $.each(this.results, function(index, value){
+        // Every Item is a Object which possibly contains more objects
+        // Thats why every Items gets the String hash inserted into the object which can compare two items
+        if(value.hash == object.hash){
+            contains = true;
+            return 0;
+        }
+    });
+    return contains;
 }
 
 LocalHistory.prototype.b64EncodeUnicode = function(str){

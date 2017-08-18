@@ -8,6 +8,12 @@
 	}
 }
 
+#offline-addon .area-selection-info {
+    display: none;
+    font-weight: bold;
+    font-size: 11px;
+}
+
 #offline-addon > #heading {
 	display:flex;
 	justify-content: space-between;
@@ -26,7 +32,7 @@
 
 #offline-addon .add-area {
 	text-align: center;
-    display: block;
+    display: none;
     padding: 10px 20px;
     border-top: 1px solid #e7e7e7;
 }
@@ -35,9 +41,66 @@
 	color: #337ab7
 }
 
-#offline-addon .downloaded-areas {
+#offline-addon .downloaded-areas, #offline-addon .available-areas {
 	list-style-type: none;
-    padding: 10px;
+    margin-bottom: 0;
+}
+
+#offline-addon .download-progress {
+    display: none;
+}
+
+#offline-addon .download-progress > .progress {
+    flex-grow: 1;
+}
+
+#offline-addon .download-progress .abort {
+    margin: 0 10px;
+    color: red;
+}
+
+#offline-addon .downloaded-areas > div.placeholder, #offline-addon .available-areas > div.placeholder {
+    text-align: center;
+    padding-bottom:5px;
+}
+
+#offline-addon .area{
+    text-align: left;
+    display: flex;
+    align-items: center;
+    padding: 5px;
+}
+
+#offline-addon .area > .texts {
+    flex-grow: 1;
+}
+
+#offline-addon .area > .texts > .name {
+    font-weight: bold;
+}
+
+#offline-addon .area > .texts > .info {
+    display: flex;
+    color: #777;
+}
+
+#offline-addon .area > .texts > .info > .seperator {
+    font-weight: bold;
+    padding: 0 3px;
+}
+
+#offline-addon .area > .remove {
+    cursor: pointer;
+    padding: 5px;
+}
+
+#offline-addon .area > .remove > span {
+    font-size: 17px;
+    color: #777;
+}
+
+#offline-addon .available-areas > div {
+    display: none;
 }
 
 body > #selector {

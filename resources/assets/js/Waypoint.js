@@ -9,7 +9,6 @@ function Waypoint(lon, lat, nominatimParser, gpsManager, index, map, callback){
 	this.resultHtml = null;
 	this.index = index;
 	this.charCode = String.fromCharCode(97 + index).toUpperCase();
-	console.log(nominatimParser);
 	if(lon !== undefined && lat !== undefined){
 		this.lon = parseFloat(lon);
 		this.lat = parseFloat(lat);
@@ -18,15 +17,13 @@ function Waypoint(lon, lat, nominatimParser, gpsManager, index, map, callback){
 		this.lat = parseFloat(nominatimParser.nominatimResult.lat);
 		this.data = nominatimParser;
 		this.evaluated = true;
-		console.log("nope");
 	}else if(gpsManager !== undefined){
 		this.lon = parseFloat(gpsManager.location[0]);
 		this.lat = parseFloat(gpsManager.location[1]);
 		this.data = gpsManager;
+		this.type = "gps";
 		this.evaluated = true;
-		console.log("baba");
 	}else{
-		console.log("nope");
 		return;
 	}
 	this.marker = new ol.Overlay({
@@ -80,7 +77,6 @@ Waypoint.prototype.positionToAdress = function() {
 Waypoint.prototype.getHtml = function() {
 	if(this.evaluated){
 		if(this.resultHtml === null){
-			console.log(this.index);
 			var description = typeof this.data.getHTMLAddressDetails === "function" ? this.data.getHTMLAddressDetails() : "Eigene Position";
 			this.resultHtml = $('\
 			<li class="wp" data-index="' + this.index + '">\

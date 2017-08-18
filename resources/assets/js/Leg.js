@@ -12,6 +12,33 @@ function Leg(legJson, route){
 	});
 }
 
+Leg.prototype.getDuration = function(){
+	// Returns the approximate duration left for this Leg
+	var duration = this.json.duration;
+	return duration;
+}
+
+Leg.prototype.shiftStep = function(){
+	if(this.steps.length == 0) return;
+	var step = this.steps.shift();
+
+	// Calculate how many of the annotations need to get removed
+	// A step can have multiple Lines. The length of the Waypoints of this step -1 is how many annotations need to get removed
+	var count = step.json.geometry.coordinates.length - 1;
+	var i = 0;
+	while(i != count){
+		// We need to remove this step from the json
+		var distance = this.json.annotation.distance.shift();
+		var duration = this.json.annotation.duration.shift();
+		this.json.annotation.datasources.shift();
+		this.json.annotation.nodes.shift();
+		this.json.distance -= distance;
+		this.json.duration -= duration;
+		i--;
+	}
+	return count;
+}
+
 Leg.prototype.generateRouteDescriptionHtml = function(){
 	var summary = this.json.summary;
 	summary = summary.replace(",", " , ");
@@ -42,3 +69,4 @@ Leg.prototype.generateRouteDescriptionHtml = function(){
 	})
 	return result;
 }
+

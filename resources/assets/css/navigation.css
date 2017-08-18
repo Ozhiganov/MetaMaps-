@@ -1,0 +1,132 @@
+#navigation > #next-step {
+	position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    display: flex;
+    z-index: 20002;
+    background-color: #ff8000;
+}
+
+#navigation > #next-step > .step {
+	display: flex;
+	align-items: center;
+	justify-content: space-around;
+	width:100%;
+}
+
+#navigation > #next-step > .step > .image {
+	flex-grow: 0;
+}
+
+#navigation > #next-step > .step > .image > img {
+	width: 60px;
+	filter: invert(100%);
+}
+
+#navigation > #next-step > .step > .step-string {
+	text-align: center;
+	color: white;
+	font-size: 15px;
+}
+
+#navigation > #next-step > .step > .step-length {
+	white-space: nowrap;
+	padding: 5px;
+	color: white;
+	font-weight: bold;
+	font-size: 20px;
+}
+
+#navigation > #general-information {
+	position: absolute;
+    bottom: 0;
+    z-index: 2002;
+    background-color: white;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    color: #777;
+}
+
+#navigation > #general-information > .exit {
+	padding: 15px;
+    font-size: 19px;
+}
+
+#navigation > #general-information > .information {
+	flex-grow: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: large;
+}
+
+#navigation > #general-information > .information > .seperator {
+	font-size: 25px;
+    padding: 0 10px;
+}
+
+/*
+	Code for the Leg finish Box
+*/
+#navigation .leg-finish {
+	position: absolute;
+    top: 0px;
+    background-color: rgba(255, 128, 0, .8);
+    height: 100%;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    color: white;
+    visibility: hidden;
+    z-index: 25555;
+}
+
+#navigation .leg-finish > .container {
+	width: 100%;
+}
+
+#navigation .leg-finish > .container > .text {
+	font-weight: bold;
+    font-size: large;
+    text-align: center;
+}
+
+#navigation .leg-finish > .container > .information {
+	display: flex;
+    justify-content: space-around;
+    padding-top: 20px;
+}
+
+#navigation .leg-finish > .container > .information > .start-time {
+	text-align: center;
+}
+
+#navigation .leg-finish > .container > .information > .arrival-time {
+	text-align: center;
+}
+
+#navigation .leg-finish > .container > .duration {
+	text-align: center;
+    padding-top: 15px;
+}
+
+#navigation .leg-finish > .container > .options {
+	padding-top: 15px;
+    display: flex;
+    justify-content: space-around;
+    width: 100%;
+}
+
+#navigation .leg-finish .label {
+	font-size: medium;
+}
+
+#navigation .leg-finish .plus {
+	color: red;
+}
+
+#navigation .leg-finish .minus {
+	color: green;
+}

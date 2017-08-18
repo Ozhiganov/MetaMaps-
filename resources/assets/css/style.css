@@ -99,10 +99,6 @@ input + .input-group-addon {
     display: none;
 }
 
-#search-addon .results .history-container > div:first-child {
-    padding-top: 10px;
-}
-
 #search-addon .results .results-container {
     background-color:white;
     display:none;
@@ -451,4 +447,27 @@ html, body, main, #map {
 .results #search-for-suggestions button {
     background-color: white;
     border: 0;
+}
+
+.history-container {
+    background-color: white;
+    position: relative;
+    width: 100%;
+}
+
+.history-container .searches > .item {
+    display: flex;
+    align-items: center;
+    font-size: 20px;
+    padding: 10px 0;
+    cursor: pointer;
+}
+
+.history-container .searches > .item > .icon {
+    font-size: 16px;
+    padding: 0 20px;
+}
+
+.history-container .searches > .item > .icon > span {
+    padding: 4px 0;
 }

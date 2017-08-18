@@ -5,18 +5,18 @@ function InteractiveMap() {
     // Initialize the Map With Controls to change the view
     this.map = this.initMap();
     this.module = null;
+    this.GpsManager = null;
     // Initialize the Positions gathering on click on the Map
-    this.reversePositionManager = new ReversePositionManager(this); // This is the Overlay that displays informations about a position where the user has clicked.
-    // Initialize the GPS Module
-    this.GpsManager = new GpsManager(this); 
-    // Initialize Offline Data with Service worker
-    //this.OfflineManager = new OfflineManager(this);
-    // The default Module is the search Module
-    // Let's start that:
-    this.switchModule("offline-karten");
+    this.reversePositionManager = new ReversePositionManager(this); // This is the Overlay that displays informations about a position where the user has clicked. 
 }
 InteractiveMap.prototype = Object.create(Map.prototype);
 InteractiveMap.prototype.constructor = InteractiveMap;
+
+InteractiveMap.prototype.enableGPSManager = function(){
+    // Initialize the GPS Module
+    this.GpsManager = new GpsManager(this);
+}
+
 InteractiveMap.prototype.initMap = function() {
     /**
      * Add prototypes to the map that can convert coordinates
@@ -55,7 +55,8 @@ InteractiveMap.prototype.initMap = function() {
                             }),
                             ol.source.OSM.ATTRIBUTION,
                         ],
-                        url: 'https://maps.metager.de/osm_tiles/{z}/{x}/{y}.png'
+                        //url: 'https://tiles.metager.de/{z}/{x}/{y}.png'
+                        url: '/tile_cache/{z}/{x}/{y}.png'
                     });
     }else{
         // This is for our Android App we'll use another Tile-Server that has it's cache Disabled
@@ -73,21 +74,30 @@ InteractiveMap.prototype.initMap = function() {
                             }),
                             ol.source.OSM.ATTRIBUTION,
                         ],
-                        url: 'https://tiles.metager.de/osm_tiles/{z}/{x}/{y}.png'
+                        //url: 'https://tiles.metager.de/{z}/{x}/{y}.png'
+                        url: '/tile_cache/{z}/{x}/{y}.png'
                     });
+    }
+    var initPos = [9.841943417968748,52.18082778659789];
+    var initZoom = 8;
+    if(typeof pos != "undefined" && typeof zoom != "undefined"){
+        initPos = pos;
+        initZoom = zoom;
+        pos = null;
+        zoom = null;
     }
     var map = new ol.Map({
         layers: [
             new ol.layer.Tile({
-                preload: Infinity,
+                preload: 0,
                 source: source
-            }),
+            }),/*
             new ol.layer.Tile({
                 source: new ol.source.TileDebug({
                   projection: 'EPSG:3857',
                   tileGrid:  source.getTileGrid()
                 })
-              })
+              })*/
         ],
         target: 'map',
         controls: ol.control.defaults({
@@ -101,8 +111,9 @@ InteractiveMap.prototype.initMap = function() {
             maxZoom: 18,
             minZoom: 6,
             center: ol.proj.transform(
-                [10.06897, 51.37247], 'EPSG:4326', 'EPSG:3857'),
-            zoom: 6
+                //[9.45824, 52.48812], 'EPSG:4326', 'EPSG:3857'),
+                initPos, 'EPSG:4326', 'EPSG:3857'),
+            zoom: initZoom
         }),
         loadTilesWhileAnimating: true,
         loadTilesWhileInteracting: true
@@ -119,16 +130,23 @@ InteractiveMap.prototype.switchModule = function(name, args){
     }
     switch(name){
         case "search":
-            this.module = new SearchModule(this);
+            // The search Module can be started with or without a search term
+            if(typeof args == "string"){
+                this.module = new SearchModule(this, args);
+            }else{
+                this.module = new SearchModule(this);
+            }
             break;
         case "route-finding":
-            this.module = new RouteFinder(this, [[parseFloat(args.lon), parseFloat(args.lat)]]);
+            this.module = new RouteFinder(this, args.waypoints, args.vehicle);
             break;
         case "navigatiion":
             break;
         case "offline-karten":
             this.module = new OfflineModule(this);
             break;
+        case "navigation":
+            this.module = new NavigationModule(this, args);
         default:
             return;
     }
