@@ -128,6 +128,7 @@ SearchModule.prototype.startSearch = function(moveMap){
 			this.updateURL();
 			// This was a succesfull
 			this.searchHistory.addItem({query: this.query});
+			$("#search input[name=q]").blur();
 		}
 		//caller.updateInterface();
 	}, this))
