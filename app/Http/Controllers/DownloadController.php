@@ -14,7 +14,7 @@ class DownloadController extends Controller
     	$tmpdir = sys_get_temp_dir() . DIRECTORY_SEPARATOR . getmypid() . ".zip";
 
     	// Create the temoporary Zip File that stores all the tiles
-    	if($zip->open($tmpdir, file_exists($tmpdir) ? \ZipArchive::OVERWRITE : \ZipArchive::CREATE)){
+    	if($zip->open($tmpdir, file_exists($tmpdir) ? \ZipArchive::OVERWRITE : \ZipArchive::CREATE) == TRUE){
     		for($zoom = $zoomstart; $zoom <= $zoomend; $zoom++){
     			// calculate the bbox for this Zoom
     			$xmintile = floor((($minx + 180) / 360) * pow(2, $zoom));
@@ -25,7 +25,7 @@ class DownloadController extends Controller
 				// We should've Prerendered all the requested Tiles and cann add them to the Zip archive
 				for($x = $xmintile; $x <= $xmaxtile; $x++){
 					for($y = $ymintile; $y <= $ymaxtile; $y++){
-						$tile = public_path() . DIRECTORY_SEPARATOR . "tiles" . DIRECTORY_SEPARATOR . "$zoom" . DIRECTORY_SEPARATOR . "$x" . DIRECTORY_SEPARATOR . $y . ".png";
+						$tile = public_path() . DIRECTORY_SEPARATOR . "tile_cache" . DIRECTORY_SEPARATOR . "$zoom" . DIRECTORY_SEPARATOR . "$x" . DIRECTORY_SEPARATOR . $y . ".png";
 						$zipTile = "offline_tiles" . DIRECTORY_SEPARATOR . "$zoom" . DIRECTORY_SEPARATOR . "$x" . DIRECTORY_SEPARATOR . $y . ".png";
 						if(file_exists($tile)){
 							$zip->addFile($tile, $zipTile);

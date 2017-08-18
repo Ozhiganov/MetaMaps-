@@ -1,6 +1,6 @@
 /node_modules
 /public/storage
-/public/tiles
+/public/tile_cache
 /storage/*.key
 /vendor
 /.idea
