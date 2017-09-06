@@ -6,7 +6,7 @@
     display: none;
 }
 
-.results {
+#search-addon .results {
     background-color: rgb(250, 250, 250);
     border: 1px solid #ccc;
     border-top: 0;
@@ -87,6 +87,8 @@
 
 .result-information .title {
     font-weight: bold;
+    text-overflow: ellipsis;
+    max-width: 30ch;
 }
 
 #show-list {

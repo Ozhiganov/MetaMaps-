@@ -106,7 +106,8 @@
 }
 
 #route-finder-addon #waypoint-list-container {
-    overflow: auto;
+    overflow-y: auto;
+    overflow-x: hidden;
     max-height: 88vh;
     border: 1px solid #ccc;
     border-top: 0;

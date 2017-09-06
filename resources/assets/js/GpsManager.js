@@ -3,6 +3,7 @@ function GpsManager(interactiveMap) {
     this.interactiveMap = interactiveMap;
     this.gps = null // Boolean which declares whether gps is available or not so we don't have to check against the API everytime
     this.location = null; // Array with Position data of the Last Position we retrieved
+    this.bearing = null;
     this.lockViewToPosition = true; // Whether the view should be locked when the current Location is shown.
     this.id = null; // ID of the process that follow the Location
     this.userPositionMarker = null; // Marker that displays the user Position
@@ -132,10 +133,21 @@ GpsManager.prototype.watchPosition = function(callback, options){
     if(typeof callback != "function")
         return;
     this.followId = navigator.geolocation.watchPosition($.proxy(function(position){
-        this.location[0] = parseFloat(position.coords.longitude);
-        this.location[1] = parseFloat(position.coords.latitude);
+        // We have a new Position
+        var long = parseFloat(position.coords.longitude);
+        var lat = parseFloat(position.coords.latitude);
+        this.location[0] = long;
+        this.location[1] = lat;
         this.accuracy = parseFloat(position.coords.accuracy);
         this.timestamp = Math.floor(position.timestamp / 1000);
+        // We can calculate the possible Heading if this is not the first Position we retrieve
+        if(typeof this.bearingPos == "object" && this.bearingPos.length == 2 && this.getDistance(this.bearingPos, this.location) > this.accuracy){
+            this.bearing = this.getBearing(this.bearingPos, this.location);
+            this.bearingPos = [long, lat];
+        }else{
+            this.bearingPos = [long, lat];
+            this.bearing = null;
+        }
         callback(position);
     }, this), function(error) {
             // Follow Location couldn't be started. Abort now
@@ -205,4 +217,31 @@ GpsManager.prototype.followLocation = function() {
         $("#lock-location").addClass("hidden");
         $("#lock-location > span.info").css("display", "");
     }
+}
+
+GpsManager.prototype.getBearing = function(p1, p2){
+    // Takes to Points in World Coordinates and calculates the Bearing of the connection Line
+    var p1r = [this.toRadians(p1[0]), this.toRadians(p1[1])];
+    var p2r = [this.toRadians(p2[0]), this.toRadians(p2[1])];
+    var x = Math.cos(p2r[1]) * Math.sin(p2r[0] - p1r[0]);
+    var y = Math.cos(p1r[1]) * Math.sin(p2r[1]) - Math.sin(p1r[1]) * Math.cos(p2r[1]) * Math.cos(p2r[0] - p1r[0]);
+    var bearing = Math.atan2(x, y);
+    bearing = this.toDegrees(bearing);
+    if(bearing < 0){
+        bearing += 360;
+    }
+    return bearing;
+}
+
+GpsManager.prototype.toRadians = function(angle) {
+    return angle * (Math.PI / 180);
+}
+
+GpsManager.prototype.toDegrees = function(radians) {
+    return radians * 180 / Math.PI;
+}
+
+GpsManager.prototype.getDistance = function(p1, p2){
+    var wgs84Sphere = new ol.Sphere(6378137);
+    return wgs84Sphere.haversineDistance(p1, p2);
 }

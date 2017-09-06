@@ -139,7 +139,7 @@ SearchModule.prototype.startSearch = function(moveMap){
 }
 
 SearchModule.prototype.enableGps = function(){
-	if(typeof this.query == "undefined"){
+	if(typeof this.query == "undefined" && this.interactiveMap.updateMapPositionOnGps){
     	this.interactiveMap.map.getView().setCenter(this.interactiveMap.map.transformToMapCoordinates(this.interactiveMap.GpsManager.location));
     	this.interactiveMap.map.getView().setZoom(12);
     }

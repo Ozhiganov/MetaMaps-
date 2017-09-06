@@ -39,7 +39,7 @@ LocalHistory.prototype.addItem = function(object){
     if(!this.contains(object)){
         // The new Object is not already contained
         // We will add the new one and make sure we are not exeeding the maximum size
-        while(this.results.size >= this.MAXSIZE){
+        while(this.results.length >= this.MAXSIZE){
             this.results.pop();
         }
         this.results.push(object);
@@ -62,11 +62,11 @@ LocalHistory.prototype.addItem = function(object){
 
 LocalHistory.prototype.saveResults = function(){
     // First delete every existing entry 
-    $.each(localStorage, function(key, value){
+    $.each(localStorage, $.proxy(function(key, value){
         if(key.indexOf(this.praefix) == 0){
             localStorage.removeItem(key);
         }
-    });
+    }, this));
     $.each(this.results, $.proxy(function(index, value){
         var stringObject = JSON.stringify(value);
         stringObject = this.b64EncodeUnicode(stringObject);

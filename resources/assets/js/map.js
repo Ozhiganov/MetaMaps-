@@ -2,6 +2,7 @@ function Map(type) {}
 
 function InteractiveMap() {
     Map.call(this);
+    this.updateMapPositionOnGps = true;
     // Initialize the Map With Controls to change the view
     this.map = this.initMap();
     this.module = null;
@@ -85,6 +86,7 @@ InteractiveMap.prototype.initMap = function() {
         initZoom = zoom;
         pos = null;
         zoom = null;
+        this.updateMapPositionOnGps = false;
     }
     var map = new ol.Map({
         layers: [
