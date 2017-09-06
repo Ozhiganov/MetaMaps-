@@ -206,6 +206,9 @@ Results.prototype.updateMapExtent = function(initPadding){
 	}
 	var caller = this;
 	var extent = [null, null, null, null];
+	var valid = undefined;
+	// 1. We try to only zoom into Matching results
+	// 2. If no mathing result was found we zoom into all results
 	$.each(this.results, function(index, res){
 		// We just focus on those results that have all the terms in the search query in it
 		var valid = true;
@@ -231,6 +234,26 @@ Results.prototype.updateMapExtent = function(initPadding){
 			extent[3] = lat;
 		}
 	});
+	if(extent[0] == null){
+		// There is no Result which matches every search term
+		// So we will Zoom into every result
+		$.each(this.results, function(index, res){
+			var lon = parseFloat(res.lon);
+			var lat = parseFloat(res.lat);
+			if(extent[0] === null || extent[0] > lon){
+				extent[0] = lon;
+			}
+			if(extent[1] === null || extent[1] > lat){
+				extent[1] = lat;
+			}
+			if(extent[2] === null || extent[2] < lon){
+				extent[2] = lon;
+			}
+			if(extent[3] === null || extent[3] < lat){
+				extent[3] = lat;
+			}
+		});
+	}
 
 	extent = caller.interactiveMap.map.transformToMapCoordinates([extent[0], extent[1]]).concat(caller.interactiveMap.map.transformToMapCoordinates([extent[2], extent[3]]));
 
