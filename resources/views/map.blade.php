@@ -95,8 +95,18 @@
                     <div class="container-fluid wait-for-search">
                         <p>
                             Ergebnisse werden geladen 
-                            <img src="/img/ajax-loader.gif" alt="loading..." id="loading-search-results" />
                         </p>
+                        <div class="no-internet">
+                            <div class="status">
+                                <p>
+                                    <span class="glyphicon glyphicon-warning-sign" style="color:red;"></span> Schlechte Internetverbindung
+                                </p>
+                                
+                            </div>
+                        </div>
+                        <div>
+                            <img src="/img/ajax-loader.gif" alt="loading..." id="loading-search-results" />
+                        </div>
                     </div>
                     <div class="results-container">
                     </div>

@@ -123,7 +123,6 @@ SearchModule.prototype.startSearch = function(moveMap){
 					this.retrySearch = undefined;
 					this.startSearch();
 				}, this), 1000);
-				console.log("error", jqxr);
 			}
 		}, this)
 	}).always($.proxy(function(){

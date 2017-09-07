@@ -3,6 +3,10 @@
     padding-left: 0;
 }
 
+#route-finder-addon .no-internet{
+    display: none;
+}
+
 .route-description .collapse > ul > li {
     display: flex;
     align-items: flex-end;

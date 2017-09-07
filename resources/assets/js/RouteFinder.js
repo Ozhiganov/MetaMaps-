@@ -481,7 +481,7 @@ RouteFinder.prototype.historyEnabled = function(){
 	});
 }
 
-RouteFinder.prototype.executeSearch = function(query){
+RouteFinder.prototype.executeSearch = function(query){ 
 	// Generate the Url for the Search Results
 	$("#route-finder-addon .wait-for-search").show('fast');
 	var map = this.interactiveMap.map;
@@ -491,16 +491,36 @@ RouteFinder.prototype.executeSearch = function(query){
 	// Query the Search:
 	var results = null;
 	var caller = this;
-	$.get(url, function(data){
-		if(caller.results !== null && caller.results !== undefined) caller.results.deleteSearch();
-		caller.results = new RouteFinderSearchResults(caller.interactiveMap, data, query);
-		if(data.length > 0){
-			caller.searchHistory.addItem({query: query});
-		}
-	})
-	.always(function(){
-		$("#route-finder-addon .wait-for-search").hide('fast');
-	});	
+	var timeout = 10; // 10 seconds Timeout for this request
+	this.searching = $.ajax({
+		url: url,
+		dataType: 'json',
+		success: $.proxy(function(data){
+			this.searching = undefined;
+			if(this.results !== null && this.results !== undefined) this.results.deleteSearch();
+			this.results = new RouteFinderSearchResults(this.interactiveMap, data, query);
+			if(data.length > 0){
+				caller.searchHistory.addItem({query: query});
+			}
+			$("#route-finder-addon .wait-for-search").hide('fast');
+		}, this),
+		timeout: (timeout*1000),
+		error: $.proxy(function(jqxr){
+			// We encountered an error while trying to fetch the search results.
+			// It can be an abortion error in case the user clicked abort, or a timeout/connection error
+			// Only in the latter case we'll retry the search
+			if(jqxr.statusText != "abort"){
+				$("#route-finder-addon .results .wait-for-search > p").hide("slow"); // Hide the currently displayed information
+				$("#route-finder-addon .results .wait-for-search .no-internet").show("slow");
+				this.retrySearch = window.setTimeout($.proxy(function(){
+					this.retrySearch = undefined;
+					this.executeSearch(query);
+				}, this), 1000);
+			}
+		}, this)
+	}).always($.proxy(function(){
+		this.searching = undefined;
+	}, this));
 }
 
 RouteFinder.prototype.enterSearch = function(){
@@ -522,6 +542,15 @@ RouteFinder.prototype.enterSearch = function(){
 }
 
 RouteFinder.prototype.exitSearch = function(nominatimParser){
+	$("#route-finder-addon .wait-for-search").hide('fast');
+	$("#route-finder-addon .results .wait-for-search > p").show("slow"); // Hide the currently displayed information
+	$("#route-finder-addon .results .wait-for-search .no-internet").hide("slow");
+	if(this.retrySearch != undefined){
+		window.clearTimeout(this.retrySearch);	// We retry fetching search results with a window.setTimeout() which needs to get cleared when we abort
+	}
+	if(this.searching != undefined){
+		this.searching.abort();
+	}
 	$("#route-finder-addon #vehicle-chooser").show("slow");
 	$("#route-finder-addon #waypoint-list-container .route-information").show("slow");
 	$("#route-finder-addon #waypoint-list-container #waypoint-list").show("slow", function(){
