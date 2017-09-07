@@ -70,7 +70,7 @@ SearchModule.prototype.startSearch = function(moveMap){
 	this.query = $("#search input[name=q]").val();
 	var caller = this;
 	// Conditions for not executing the search
-	if(this.query === ""){
+	if(this.query == ""){
 		$("#search input[name=q]").focus();
 		return;
 	}
@@ -83,60 +83,99 @@ SearchModule.prototype.startSearch = function(moveMap){
 		this.results = null;
 	}
 
-
-	var lockSearchFunctions = function(){
-		// Prevent Additional searches until this one finishes
-		$("#search button[type=submit]").attr("disabled", true);
-		$("#search input[name=q]").attr("readonly", true);
-
-	    // Let's add a Loading animation:
-	    $(".results .wait-for-search").show('fast');
-
-	    // Let's make a new input-group-addon to cancel the search if it takes too long
-	    var cancelSearch = $('\
-	        <div class="input-group-addon" id="cancel-search" title="Suche abbrechen">\
-	            X\
-	        </div> \
-	    ');
-	    $("#search input[name=q]").after(cancelSearch);
-
-	};
-	var unlockSearchFunctions = function(){
-		// Prevent Additional searches until this one finishes
-		$("#search button[type=submit]").attr("disabled", false);
-		$("#search input[name=q]").attr("readonly", false);
-
-	    // Let's add a Loading animation:
-	    $(".results .wait-for-search").hide('fast');
-
-	    $("#search #cancel-search").remove();
-	};
-
 	// Generate the Url for the Search Results
 	var map = this.interactiveMap.map;
 	var tmpExtent = map.getView().calculateExtent(map.getSize());
 	var extent = map.transformToWorldCoordinates([tmpExtent[0], tmpExtent[1]]).concat(map.transformToWorldCoordinates([tmpExtent[2], tmpExtent[3]]));
 	var url = '/' + encodeURI(this.query) + '/' + encodeURI(String(extent[0])) + '/' + encodeURI(String(extent[1])) + '/' + encodeURI(String(extent[2])) + '/' + encodeURI(String(extent[3]));
-	lockSearchFunctions();	
+	this.lockSearchFunctions();	
 	// Query the Search:
-	$.get(url, $.proxy(function(data){
-		if(typeof moveMap == "boolean")
-			this.results = new Results(this.interactiveMap, data, this.query, moveMap, this.resultsHistory);
-		else
-			this.results = new Results(this.interactiveMap, data, this.query, undefined, this.resultsHistory);
-		if(data.length > 0){
-			this.updateURL();
-			// This was a succesfull
-			this.searchHistory.addItem({query: this.query});
-			$("#search input[name=q]").blur();
-		}
-		//caller.updateInterface();
-	}, this))
-	.always(function(){
-		unlockSearchFunctions();
-	});	
+	var timeout = 10; // 10 seconds Timeout for this request
+	this.searching = $.ajax({
+		url: url,
+		dataType: 'json',
+		success: $.proxy(function(data){
+			if(typeof moveMap == "boolean")
+				this.results = new Results(this.interactiveMap, data, this.query, moveMap, this.resultsHistory);
+			else
+				this.results = new Results(this.interactiveMap, data, this.query, undefined, this.resultsHistory);
+			if(data.length > 0){
+				this.updateURL();
+				// This was a succesfull
+				this.searchHistory.addItem({query: this.query});
+				$("#search input[name=q]").blur();
+			}
+			this.unlockSearchFunctions();
+		}, this),
+		timeout: (timeout*1000),
+		error: $.proxy(function(jqxr){
+			// We encountered an error while trying to fetch the search results.
+			// It can be an abortion error in case the user clicked abort, or a timeout/connection error
+			// Only in the latter case we'll retry the search
+			if(jqxr.statusText != "abort"){
+				// This probably means that either the internet connection is bad or non existent at the moment
+				// We'll retry in a second and repeat until either the user aborts searching, or we succeed
+				// Show the user informations that we encountered network problems:
+				$("#search-addon .results .wait-for-search > p").hide("slow"); // Hide the currently displayed information
+				$("#search-addon .results .wait-for-search .no-internet").show("slow");
+				$("#search input[name=q]").val(this.query);
+				this.retrySearch = window.setTimeout($.proxy(function(){
+					this.retrySearch = undefined;
+					this.startSearch();
+				}, this), 1000);
+				console.log("error", jqxr);
+			}
+		}, this)
+	}).always($.proxy(function(){
+		this.searching = undefined;
+	}, this));
 
 }
+
+SearchModule.prototype.lockSearchFunctions = function(){
+		if(this.searchFunctionsLocked == undefined || this.searchFunctionsLocked == false){
+			this.searchFunctionsLocked = true;
+			// Prevent Additional searches until this one finishes
+			$("#search button[type=submit]").attr("disabled", true);
+			$("#search input[name=q]").attr("readonly", true);
+
+		    // Let's add a Loading animation:
+		    $(".results .wait-for-search").show('fast');
+
+		    // Let's make a new input-group-addon to cancel the search if it takes too long
+		    var cancelSearch = $('\
+		        <div class="input-group-addon" id="cancel-search" title="Suche abbrechen">\
+		            X\
+		        </div> \
+		    ');
+		    $(cancelSearch).click($.proxy(function(){
+		    	console.log("aborting");
+		    	if(this.retrySearch != undefined){
+		    		window.clearTimeout(this.retrySearch);	// We retry fetching search results with a window.setTimeout() which needs to get cleared when we abort
+		    	}
+		    	if(this.searching != undefined){
+		    		this.searching.abort();
+		    	}
+		    	this.unlockSearchFunctions();
+		    }, this));
+		    $("#search input[name=q]").after(cancelSearch);
+		}
+	};
+SearchModule.prototype.unlockSearchFunctions = function(){
+		if(this.searchFunctionsLocked != undefined && this.searchFunctionsLocked == true){
+			// Prevent Additional searches until this one finishes
+			$("#search button[type=submit]").attr("disabled", false);
+			$("#search input[name=q]").attr("readonly", false);
+
+		    // Let's add a Loading animation:
+		    $("#search-addon .results .wait-for-search > p").show("fast");
+		    $("#search-addon .results .wait-for-search .no-internet").hide("fast");
+		    $(".results .wait-for-search").hide('fast');
+
+		    $("#search #cancel-search").remove();
+		    this.searchFunctionsLocked = false;
+		}
+	};
 
 SearchModule.prototype.enableGps = function(){
 	if(typeof this.query == "undefined" && this.interactiveMap.updateMapPositionOnGps){
@@ -199,7 +238,7 @@ SearchModule.prototype.updateURL = function(){
 				var url = window.location.origin + "/map/" + query + "/" + pos[0] + "," + pos[1] + "," + zoom;
 				window.history.pushState({"pos" : pos, "zoom" : zoom, "query" : query, "data" : data}, "", url);
 			}
-		}else if(currentState == null || typeof currentState.pos == "undefined" ||
+		}else if(currentState == null || typeof currentState.pos == "undefined" || currentState.query != undefined ||
 			(currentState.pos[0] != pos[0] ||
 				currentState.pos[1] != pos[1] ||
 				currentState.zoom != zoom)){

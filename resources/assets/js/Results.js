@@ -127,6 +127,9 @@ Results.prototype.updateInterface = function(){
 			$("#search input[name=q]").after(cancelSearch);
 			$(cancelSearch).click({caller: caller}, function(event){
 				event.data.caller.deleteSearch();
+				event.data.caller.interactiveMap.module.results = undefined;
+				event.data.caller.interactiveMap.module.results = undefined;
+				event.data.caller.interactiveMap.module.updateURL();
 			});
 		});
 	}

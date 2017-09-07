@@ -66,23 +66,22 @@ RouteFinder.prototype.addWaypoints = function(waypoints, recalculate){
 					return 0;
 				}
 		}, this));
-		if(shouldAddNow && waypoints.length <= 1 && (this.interactiveMap.GpsManager == null || this.interactiveMap.GpsManager.loadingGps())){
-			shouldAddNow = false;
-			this.addWaypointsOnGps = waypoints;
-		} 
 		if(!shouldAddNow) return;
 	}else{
 		this.addWaypointsOnGps = null;
 	}
-
+	var gpsAdded = false; // We will only add the gps position one time. We'll ignore any other occurences
 	$.each(waypoints, function(index, value){
-		if(typeof value[0] == "string" && value[0] == "gps")
-			caller.addWaypoint(undefined, undefined, undefined, caller.interactiveMap.GpsManager, true, false);
-		else
+		if(typeof value[0] == "string" && value[0] == "gps"){
+			if(!gpsAdded){
+				caller.addWaypoint(undefined, undefined, undefined, caller.interactiveMap.GpsManager, true, false);
+				gpsAdded = true;
+			}
+		}else
 			caller.addWaypoint(value[0], value[1], undefined, undefined, false, false);
 	});	
 
-	if(this.interactiveMap.GpsManager.gps && this.interactiveMap.GpsManager.accuracy < 500 && this.waypoints.length <= 1){
+	if(this.interactiveMap.GpsManager.gps && this.interactiveMap.GpsManager.accuracy < 500 && this.waypoints.length <= 1 && !gpsAdded){
 		this.addWaypoint(undefined, undefined, undefined, this.interactiveMap.GpsManager, true, false);
 	}
 
@@ -310,6 +309,7 @@ RouteFinder.prototype.removeWaypointMarker = function(index){
 
 RouteFinder.prototype.mapClick = function(event){
 	this.exitSearch();
+	$("#route-finder-addon .show-list").remove();
 	var pos = this.interactiveMap.map.transformToWorldCoordinates(event.coordinate);
 	$("#route-finder-addon #waypoint-list-container").show("slow");
 	$("#route-finder-addon #vehicle-chooser").show("slow");
@@ -317,9 +317,7 @@ RouteFinder.prototype.mapClick = function(event){
 	$("#route-finder-addon > form").show("slow", function(){
 		caller.updateMobilesWindow();
 		caller.addWaypoint(pos[0], pos[1], undefined, undefined, true);
-	});
-	$("#route-finder-addon .results #show-list").remove();
-	
+	});	
 }
 
 RouteFinder.prototype.mobilesWindowClick = function(){
@@ -330,7 +328,7 @@ RouteFinder.prototype.mobilesWindowClick = function(){
 	$("#route-finder-addon > form").hide("slow", function(){
 		// Add the Possibility to come back to the list
 		var showList = $('\
-			<div id="show-list" class="container">\
+			<div class="container show-list">\
 				Liste anzeigen\
 			</div>');
 		$("#route-finder-addon").prepend(showList);
@@ -341,7 +339,7 @@ RouteFinder.prototype.mobilesWindowClick = function(){
 				event.data.caller.updateMobilesWindow();
 				event.data.caller.adjustMapView();
 			});
-			$("#route-finder-addon #show-list").remove();
+			$("#route-finder-addon .show-list").remove();
 		});
 	});
 

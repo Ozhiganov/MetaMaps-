@@ -269,7 +269,6 @@ NavigationModule.prototype.startLocationFollowing = function() {
         var duration = this.route.legs[0].json.duration;
         this.estimatedArival = new Date(new Date().getTime() + duration * 1000);
         this.interactiveMap.GpsManager.watchPosition($.proxy(this.newPosition, this));
-        console.log(this.route);
     }
 }
 
@@ -398,7 +397,7 @@ NavigationModule.prototype.newPosition = function(position) {
         // Let's check if we can submit a bearing for the starting point to generate a better route
         if(this.route.drivenRoute.coordinates.length >= 2){
             // We can calculate the current bearing. Let's do so:
-            var bearing = this.getBearing(this.route.drivenRoute.coordinates[this.route.drivenRoute.coordinates.length-2], pos);
+            var bearing = this.getBearing(this.route.drivenRoute.coordinates[0], pos);
             bearing = Math.round(bearing);
             url += "/" + bearing;
         }
