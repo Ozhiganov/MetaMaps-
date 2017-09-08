@@ -3,6 +3,11 @@ function SearchModule(interactiveMap, query){
 	// Initialize History Objects
 	this.searchHistory = new LocalHistory("suche");
 	this.resultsHistory = new LocalHistory("results");
+	// Add the Listener for the routing button
+	$("#start-navigation").show();
+	$("#start-navigation").click($.proxy(function(){
+		this.interactiveMap.switchModule("route-finding", {waypoints: [], vehicle: "car"});
+	}, this));
 	// Initialize the search Interface
 	this.initializeInterface();
 	// Add the History Items to the Interface
@@ -302,6 +307,8 @@ SearchModule.prototype.removeURLUpdater = function(){
 SearchModule.prototype.exit = function(){
 	if(this.results !== null && this.results !== undefined)	this.results.deleteSearch();
 	$("#popup-closer").click();
+	$("#start-navigation").hide();
+	$("#start-navigation").off();
 	this.removeSearchListeners();
 	$("#search-addon").hide('slow');
 	this.removeOptionsMenu();

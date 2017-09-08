@@ -61,16 +61,35 @@ Waypoint.prototype.positionToAdress = function() {
         //obj.attr('title', 'Eigener Standort');
     } else {
     	var url = "/reverse/" + pos[0] + "/" + pos[1];
-        //var url = "https://maps.metager.de/nominatim/reverse.php?format=json&lat=" + pos[1] + "&lon=" + pos[0] + "&zoom=18";
-        var caller = this;
-        $.get(url, function(data) {
-        	caller.data = new NominatimParser(data);
-        	caller.evaluated = true;
+        // Start the ajax call
+		var timeout = 10; // 10 seconds Timeout for this request
+		this.searching = $.ajax({
+			url: url,
+			dataType: 'json',
+			success: $.proxy(function(data){
+				this.data = new NominatimParser(data);
+	        	this.evaluated = true;
 
-        	if(typeof caller.callback === "function"){
-        		caller.callback(caller);
-        	}
-        });
+	        	if(typeof this.callback === "function"){
+	        		this.callback(this);
+	        	}
+			}, this),
+			timeout: (timeout*1000),
+			error: $.proxy(function(jqxr){
+				// We encountered an error while trying to fetch the search results.
+				// It can be an abortion error in case the user clicked abort, or a timeout/connection error
+				// Only in the latter case we'll retry the search
+				if(jqxr.statusText != "abort"){
+					$("#route-finder-addon #waypoint-list-container .wait-for-search .no-internet").show("slow");
+					this.retrySearch = window.setTimeout($.proxy(function(){
+						this.retrySearch = undefined;
+						this.positionToAdress();
+					}, this), 1000);
+				}
+			}, this)
+		}).always($.proxy(function(){
+			this.searching = undefined;
+		}, this));
     }
 }
 

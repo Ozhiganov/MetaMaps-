@@ -7,6 +7,12 @@
     display: none;
 }
 
+#route-finder-addon #waypoint-list-container div.wait-for-search {
+    width:100%;
+    background-color: rgb(255,128,0);
+    color: white;
+}
+
 .route-description .collapse > ul > li {
     display: flex;
     align-items: flex-end;

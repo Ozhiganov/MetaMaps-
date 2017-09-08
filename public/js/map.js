@@ -1939,6 +1939,11 @@ function SearchModule(interactiveMap, query){
 	// Initialize History Objects
 	this.searchHistory = new LocalHistory("suche");
 	this.resultsHistory = new LocalHistory("results");
+	// Add the Listener for the routing button
+	$("#start-navigation").show();
+	$("#start-navigation").click($.proxy(function(){
+		this.interactiveMap.switchModule("route-finding", {waypoints: [], vehicle: "car"});
+	}, this));
 	// Initialize the search Interface
 	this.initializeInterface();
 	// Add the History Items to the Interface
@@ -2238,6 +2243,8 @@ SearchModule.prototype.removeURLUpdater = function(){
 SearchModule.prototype.exit = function(){
 	if(this.results !== null && this.results !== undefined)	this.results.deleteSearch();
 	$("#popup-closer").click();
+	$("#start-navigation").hide();
+	$("#start-navigation").off();
 	this.removeSearchListeners();
 	$("#search-addon").hide('slow');
 	this.removeOptionsMenu();
@@ -3121,7 +3128,7 @@ RouteFinder.prototype.historyEnabled = function(){
 
 RouteFinder.prototype.executeSearch = function(query){ 
 	// Generate the Url for the Search Results
-	$("#route-finder-addon .wait-for-search").show('fast');
+	$("#route-finder-addon .results .wait-for-search").show('fast');
 	var map = this.interactiveMap.map;
 	var tmpExtent = map.getView().calculateExtent(map.getSize());
 	var extent = map.transformToWorldCoordinates([tmpExtent[0], tmpExtent[1]]).concat(map.transformToWorldCoordinates([tmpExtent[2], tmpExtent[3]]));
@@ -3140,7 +3147,7 @@ RouteFinder.prototype.executeSearch = function(query){
 			if(data.length > 0){
 				caller.searchHistory.addItem({query: query});
 			}
-			$("#route-finder-addon .wait-for-search").hide('fast');
+			$("#route-finder-addon .results .wait-for-search").hide('fast');
 		}, this),
 		timeout: (timeout*1000),
 		error: $.proxy(function(jqxr){
@@ -3180,7 +3187,7 @@ RouteFinder.prototype.enterSearch = function(){
 }
 
 RouteFinder.prototype.exitSearch = function(nominatimParser){
-	$("#route-finder-addon .wait-for-search").hide('fast');
+	$("#route-finder-addon .results .wait-for-search").hide('fast');
 	$("#route-finder-addon .results .wait-for-search > p").show("slow"); // Hide the currently displayed information
 	$("#route-finder-addon .results .wait-for-search .no-internet").hide("slow");
 	if(this.retrySearch != undefined){
@@ -3405,16 +3412,35 @@ Waypoint.prototype.positionToAdress = function() {
         //obj.attr('title', 'Eigener Standort');
     } else {
     	var url = "/reverse/" + pos[0] + "/" + pos[1];
-        //var url = "https://maps.metager.de/nominatim/reverse.php?format=json&lat=" + pos[1] + "&lon=" + pos[0] + "&zoom=18";
-        var caller = this;
-        $.get(url, function(data) {
-        	caller.data = new NominatimParser(data);
-        	caller.evaluated = true;
+        // Start the ajax call
+		var timeout = 10; // 10 seconds Timeout for this request
+		this.searching = $.ajax({
+			url: url,
+			dataType: 'json',
+			success: $.proxy(function(data){
+				this.data = new NominatimParser(data);
+	        	this.evaluated = true;
 
-        	if(typeof caller.callback === "function"){
-        		caller.callback(caller);
-        	}
-        });
+	        	if(typeof this.callback === "function"){
+	        		this.callback(this);
+	        	}
+			}, this),
+			timeout: (timeout*1000),
+			error: $.proxy(function(jqxr){
+				// We encountered an error while trying to fetch the search results.
+				// It can be an abortion error in case the user clicked abort, or a timeout/connection error
+				// Only in the latter case we'll retry the search
+				if(jqxr.statusText != "abort"){
+					$("#route-finder-addon #waypoint-list-container .wait-for-search .no-internet").show("slow");
+					this.retrySearch = window.setTimeout($.proxy(function(){
+						this.retrySearch = undefined;
+						this.positionToAdress();
+					}, this), 1000);
+				}
+			}, this)
+		}).always($.proxy(function(){
+			this.searching = undefined;
+		}, this));
     }
 }
 
@@ -3690,23 +3716,56 @@ Route.prototype.calculateRoute = function(){
 			url += value.lon + "," + value.lat + ";";
 		});
 		url = url.replace(/;+$/, '');
-
 		url = "/route/find/" + this.vehicle + "/" + url;
 
-		var caller = this;
-		$.get(url, function(data){
-			caller.route = data;
-			caller.route.activeRoute = 0;
-			caller.printRoute();
-			caller.updateVehicle();
-			caller.updateRouteInformation();
-			caller.updateMapExtent();
-			// Save the legs
-			caller.legs = caller.extractLegs();
-			if(typeof caller.callback === "function"){
-				caller.callback();
-			}
-		});
+		/*
+		* We start calculating the route. Since an internet connection is mandatory for that task
+		* We will show the user the information that we currently calculate the route.
+		* If the network takes too long or throws an error we show that to the user and retry
+		*/
+		// Show the loading text
+		$("#route-finder-addon #waypoint-list-container .wait-for-search").show("fast");
+		// We need to disable the new Waypoint form because the user should not be able to add waypoints while route calculation is active
+		$("#route-finder-addon .new-waypoint-form input[type=text], #route-finder-addon .new-waypoint-form button[type=submit]").attr("disabled", true);
+
+		// Start the ajax call
+		var timeout = 10; // 10 seconds Timeout for this request
+		this.searching = $.ajax({
+			url: url,
+			dataType: 'json',
+			success: $.proxy(function(data){
+				this.route = data;
+				this.route.activeRoute = 0;
+				this.printRoute();
+				this.updateVehicle();
+				this.updateRouteInformation();
+				this.updateMapExtent();
+				// Save the legs
+				this.legs = this.extractLegs();
+				if(typeof this.callback === "function"){
+					this.callback();
+				}
+				this.retrySearch = undefined;
+				$("#route-finder-addon #waypoint-list-container .wait-for-search").hide("fast");
+				$("#route-finder-addon #waypoint-list-container .wait-for-search .no-internet").hide("slow");
+				$("#route-finder-addon .new-waypoint-form input[type=text], #route-finder-addon .new-waypoint-form button[type=submit]").attr("disabled", false);
+			}, this),
+			timeout: (timeout*1000),
+			error: $.proxy(function(jqxr){
+				// We encountered an error while trying to fetch the search results.
+				// It can be an abortion error in case the user clicked abort, or a timeout/connection error
+				// Only in the latter case we'll retry the search
+				if(jqxr.statusText != "abort"){
+					$("#route-finder-addon #waypoint-list-container .wait-for-search .no-internet").show("slow");
+					this.retrySearch = window.setTimeout($.proxy(function(){
+						this.retrySearch = undefined;
+						this.calculateRoute();
+					}, this), 1000);
+				}
+			}, this)
+		}).always($.proxy(function(){
+			this.searching = undefined;
+		}, this));
 	}
 }
 
@@ -3933,6 +3992,15 @@ Route.prototype.calculateAlternativeRoutePopupPosition = function(alternativeRou
 }
 
 Route.prototype.deleteRoute = function(){
+	// If there is a route calculation pending we need to abort it
+	if(this.searching != undefined){
+		this.searching.abort();
+		this.searching = undefined;
+	}
+	if(this.retrySearch != undefined){
+		window.clearTimeout(this.retrySearch);
+		this.retrySearch = undefined;
+	}
 	if(this.vectorLayerRoutePreview !== undefined){
 		this.interactiveMap.map.removeLayer(this.vectorLayerRoutePreview);
 		this.vectorLayerRoutePreview = undefined;

@@ -483,7 +483,7 @@ RouteFinder.prototype.historyEnabled = function(){
 
 RouteFinder.prototype.executeSearch = function(query){ 
 	// Generate the Url for the Search Results
-	$("#route-finder-addon .wait-for-search").show('fast');
+	$("#route-finder-addon .results .wait-for-search").show('fast');
 	var map = this.interactiveMap.map;
 	var tmpExtent = map.getView().calculateExtent(map.getSize());
 	var extent = map.transformToWorldCoordinates([tmpExtent[0], tmpExtent[1]]).concat(map.transformToWorldCoordinates([tmpExtent[2], tmpExtent[3]]));
@@ -502,7 +502,7 @@ RouteFinder.prototype.executeSearch = function(query){
 			if(data.length > 0){
 				caller.searchHistory.addItem({query: query});
 			}
-			$("#route-finder-addon .wait-for-search").hide('fast');
+			$("#route-finder-addon .results .wait-for-search").hide('fast');
 		}, this),
 		timeout: (timeout*1000),
 		error: $.proxy(function(jqxr){
@@ -542,7 +542,7 @@ RouteFinder.prototype.enterSearch = function(){
 }
 
 RouteFinder.prototype.exitSearch = function(nominatimParser){
-	$("#route-finder-addon .wait-for-search").hide('fast');
+	$("#route-finder-addon .results .wait-for-search").hide('fast');
 	$("#route-finder-addon .results .wait-for-search > p").show("slow"); // Hide the currently displayed information
 	$("#route-finder-addon .results .wait-for-search .no-internet").hide("slow");
 	if(this.retrySearch != undefined){

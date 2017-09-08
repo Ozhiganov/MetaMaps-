@@ -117,6 +117,22 @@
                         <div class="length"></div>
                         <div class="duration"></div>
                     </div>
+                    <div class="container-fluid wait-for-search">
+                        <p>
+                            Route wird berechnet
+                        </p>
+                        <div class="no-internet">
+                            <div class="status">
+                                <p>
+                                    <span class="glyphicon glyphicon-warning-sign" style="color:red;"></span> Schlechte Internetverbindung
+                                </p>
+                                
+                            </div>
+                        </div>
+                        <div>
+                            <img src="/img/ajax-loader.gif" alt="loading..." id="loading-search-results" />
+                        </div>
+                    </div>
                     <ul id="waypoint-list" class="list-unstyled"></ul>
                 </div>
             </figure>
@@ -214,10 +230,8 @@
             <div class="map" id="map">
             </div>
 
-            <div id="start-navigation" class="hidden" title="Routenplaner starten">
-                <a href="/route/start/foot">
-                    <img src="/img/start-navigation.png" alt="Start Navigation" />
-                </a>
+            <div id="start-navigation" title="Routenplaner starten">
+                <img src="/img/start-navigation.png" alt="Start Navigation" />
             </div>
 
             <ul id="location-tool" class="list-unstyled hidden">

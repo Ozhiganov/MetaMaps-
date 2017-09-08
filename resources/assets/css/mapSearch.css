@@ -6,6 +6,10 @@
     display: none;
 }
 
+#start-navigation {
+    display: none;
+}
+
 #search-addon .no-internet{
     display: none;
 }
