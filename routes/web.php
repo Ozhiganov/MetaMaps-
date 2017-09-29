@@ -47,7 +47,7 @@ Route::group(['prefix' => 'map'], function () {
 
 Route::group(['prefix' => 'reverse'], function () {
     Route::get('{lon}/{lat}', function ($lon, $lat) {
-        $link = "https://tiles.metager.de/nominatim/reverse.php?format=json&lat=$lat&lon=$lon&zoom=18&extratags=1&addressdetails=1&namedetails=1";
+        $link = "https://maps.metager.de/nominatim/reverse.php?format=json&lat=$lat&lon=$lon&zoom=18&extratags=1&addressdetails=1&namedetails=1";
         $resContent = file_get_contents($link);
         $response = Response::make($resContent, 200);
         $response->header("Content-Type", "application/json");
@@ -89,7 +89,7 @@ Route::group(['prefix' => 'route'], function () {
                 ->with("vars", ["waypoints" => $waypoints, 'vehicle' => $vehicle]);
     });
     Route::get('search/{search}', function ($search) {
-        $url      = "https://tiles.metager.de/nominatim/search.php?q=" . urlencode($search) . "&limit=5&polygon_geojson=0&format=json&dedupe=1&extratags=1&addressdetails=1&namedetails=1";
+        $url      = "https://maps.metager.de/nominatim/search.php?q=" . urlencode($search) . "&limit=5&polygon_geojson=0&format=json&dedupe=1&extratags=1&addressdetails=1&namedetails=1";
         $content  = file_get_contents($url);
         $response = Response::make($content, 200);
         $response->header('Content-Type', 'application/json');
