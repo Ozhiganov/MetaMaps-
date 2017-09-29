@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use Cache;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Http\Request;
-use Log;
-use Response;
+use Illuminate\Contracts\Logging\Log;
+use Illuminate\Http\Response;
+
 
 class RoutingController extends Controller
 {
