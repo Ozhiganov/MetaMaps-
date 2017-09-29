@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Support\Facades\Cache;
+use Cache;
 use Predis\Connection\ConnectionException;
-use Illuminate\Http\Response;
-use \Illuminate\Http\Request;
+use Response;
+use Request;
 
 class SearchController extends Controller
 {
