@@ -115,6 +115,8 @@ Route::get('tile_cache/{z}/{x}/{y}.png', function($z, $x, $y){
     // The request is sent we'll wait up to 10 seconds for the png to be generated
     $filepath =  public_path() . DIRECTORY_SEPARATOR . "tiles" . DIRECTORY_SEPARATOR . $z . DIRECTORY_SEPARATOR . $x . DIRECTORY_SEPARATOR . "$y.png";
 
+    $filepath = str_replace("MetaGerMapsBeta", "MetaGerMaps", $filepath);
+
     if(!file_exists($filepath)){
         // We do not have the requested Tile generated yet
         // Let's send a request to out generator service
