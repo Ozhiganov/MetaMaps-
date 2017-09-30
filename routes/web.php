@@ -120,6 +120,7 @@ Route::get('tile_cache/{z}/{x}/{y}.png', function($z, $x, $y){
         // Let's send a request to out generator service
         $tempdir = sys_get_temp_dir() . DIRECTORY_SEPARATOR . "tile_requests" . DIRECTORY_SEPARATOR . "$z-$x-$y.request";
         touch($tempdir);
+        chmod($tempdir, 0666);
 
     
         $startTime = microtime(true);
