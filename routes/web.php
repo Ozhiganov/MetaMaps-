@@ -54,16 +54,17 @@ Route::group(['prefix' => 'reverse'], function () {
         return $response;
     });
 });
-
+Route::get('hilfe', function () {
+    return view('help');
+});
+/*
 Route::group(['prefix' => 'hilfe'], function () {
-    Route::get('gps', function () {
-        return view('gps')->with('css', [elixir('css/staticPages.css')]);
-    });
+
     Route::get('routen-assistent', function () {
         return view('routen-assistent')->with('css', [elixir('css/staticPages.css')]);
     });
 });
-
+*/
 Route::group(['prefix' => 'route'], function () {
     Route::get('preview/{vehicle}/{points}', 'RoutingController@routingOverviewGeoJson');
     Route::get('find/{vehicle}/{points}/{startBearing?}', 'RoutingController@routingGeoJson');
@@ -115,33 +116,6 @@ Route::get('tile_cache/{z}/{x}/{y}.png', function($z, $x, $y){
     // The request is sent we'll wait up to 10 seconds for the png to be generated
     $filepath =  public_path() . DIRECTORY_SEPARATOR . "tiles" . DIRECTORY_SEPARATOR . $z . DIRECTORY_SEPARATOR . $x . DIRECTORY_SEPARATOR . "$y.png";
 
-    if(!file_exists($filepath)){
-        // We do not have the requested Tile generated yet
-        // Let's send a request to out generator service
-        $tempdir = sys_get_temp_dir() . DIRECTORY_SEPARATOR . "tile_requests" . DIRECTORY_SEPARATOR . "$z-$x-$y.request";
-        touch($tempdir);
-
-    
-        $startTime = microtime(true);
-        while(file_exists($tempdir) && !file_exists($filepath)){
-            if((microtime(true) - $startTime) > 10){
-                break;
-            } 
-            usleep(5000);
-        }
-        while(true){
-            if((microtime(true) - $startTime) > 10){
-                break;
-            } 
-            usleep(5000);
-            try{
-                if(imagecreatefrompng($filepath) !== FALSE)
-                    break;
-            }catch(\ErrorException $e){
-                continue;
-            }
-        }
-    }
     if(file_exists($filepath)){
 
         $content = file_get_contents($filepath);
@@ -152,8 +126,25 @@ Route::get('tile_cache/{z}/{x}/{y}.png', function($z, $x, $y){
         $response->header('Expires', 'Wed, 11 Jan 1984 05:00:00 GMT');
         return $response;
     }else{
-        abort(404, "File not Found");
+        $socket = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
+        socket_connect($socket, "127.0.0.1", 63825);
+
+        socket_write($socket, "$z;$x;$y\n", strlen("$z;$x,$y\n"));
+
+        $content = "";
+        while(true){
+            $tmp = socket_read($socket, 4096);
+            if($tmp == "") break;
+            else $content .= $tmp;
+        }
+        $response = Response::make($content, 200);
+        $response->header('Content-Type', 'image/png');
+        $response->header('Cache-Control', 'max-age=0, no-cache, no-store, must-revalidate');
+        $response->header('Pragma', 'no-cache');
+        $response->header('Expires', 'Wed, 11 Jan 1984 05:00:00 GMT');
+        return $response;
     }
+
 });
 
 
