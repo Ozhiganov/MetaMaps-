@@ -115,7 +115,7 @@ Route::get('tile_cache/{z}/{x}/{y}.png', function($z, $x, $y){
 
     // The request is sent we'll wait up to 10 seconds for the png to be generated
     $filepath =  public_path() . DIRECTORY_SEPARATOR . "tiles" . DIRECTORY_SEPARATOR . $z . DIRECTORY_SEPARATOR . $x . DIRECTORY_SEPARATOR . "$y.png";
-
+    
     if(file_exists($filepath)){
 
         $content = file_get_contents($filepath);
