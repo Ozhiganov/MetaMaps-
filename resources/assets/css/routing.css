@@ -163,7 +163,7 @@
 
 #waypoint-list .waypoint .description {
     flex-grow: 1;
-    flex-shrink: 0;
+    flex-shrink: 1;
 }
 
 

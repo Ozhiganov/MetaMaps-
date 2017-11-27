@@ -111,7 +111,7 @@ InteractiveMap.prototype.initMap = function() {
         ]),
         view: new ol.View({
             maxZoom: 18,
-            minZoom: 6,
+            minZoom: 4,
             center: ol.proj.transform(
                 //[9.45824, 52.48812], 'EPSG:4326', 'EPSG:3857'),
                 initPos, 'EPSG:4326', 'EPSG:3857'),

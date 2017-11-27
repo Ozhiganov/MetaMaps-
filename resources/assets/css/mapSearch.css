@@ -104,7 +104,7 @@
 .result-information .title {
     font-weight: bold;
     text-overflow: ellipsis;
-    max-width: 30ch;
+    max-width: 19ch;
 }
 
 .show-list {
