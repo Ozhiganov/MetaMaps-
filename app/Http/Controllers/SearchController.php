@@ -89,7 +89,7 @@ class SearchController extends Controller
             foreach ($results as $result) {
                 if ($exactSearch) {
                     $searchWords = explode(" ", $search);
-                    $match       = false;
+                    $match = false;
                     foreach ($searchWords as $word) {
                         foreach ($result["address"] as $key => $value) {
                             if (($key === "hamlet" || $key === "village" || $key === "suburb" || $key === "subdistrict" || $key === "district" || $key === "province" || $key === "state" || $key === "city" || $key === "place" || $key === "street" || $key === "country" || $key === "housename") && stripos($value, $word) !== false) {
@@ -102,22 +102,11 @@ class SearchController extends Controller
                         continue;
                     }
                 }
-                $tmp = [];
                 # Marker
-                $tmp["lon"]          = $result["lon"];
-                $tmp["lat"]          = $result["lat"];
-                $tmp["display_name"] = $result["display_name"];
-                $tmp["title"]        = substr($result["display_name"], 0, strpos($result["display_name"], ","));
-                $tmp["type"]         = $result["type"];
-                $tmp["address"]      = $result["address"];
-                $tmp["extratags"]    = $result["extratags"];
-                $tmp["boundingbox"]  = $result["boundingbox"];
-                $tmp["geojson"]      = $result["geojson"];
-                $tmp["huerotate"]    = hexdec(substr(md5(serialize($result)), 0, 5)) % 360;
-                $tmp["place_id"]     = $result["place_id"];
-                $tmp["namedetails"]  = $result["namedetails"];
+                $result["title"]        = substr($result["display_name"], 0, strpos($result["display_name"], ","));
+                $result["huerotate"]    = hexdec(substr(md5(serialize($result)), 0, 5)) % 360;
 
-                $searchResults[] = $tmp;
+                $searchResults[] = $result;
             }
         }
         return $searchResults;

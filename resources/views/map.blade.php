@@ -15,6 +15,10 @@
     </head>
     <body>
         <main>
+            <figure id="hilfe" class="inactive">
+                <iframe src=""></iframe>
+                <span class="close">&#10005;</span>
+            </figure>
             <figure id="search-addon" class="">
                 <form accept-charset="UTF-8" id="search" class="form-inline">
                         <div class="form-group">
@@ -33,7 +37,8 @@
                                 <div class="input-group-addon dropdown inactive" id="options">
                                     <button id="options-button" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" class="glyphicon glyphicon-menu-hamburger"></button>
                                     <ul class="dropdown-menu" aria-labelledby="options-button">
-                                        <li><a href="#">Offline Karten</a></li>
+                                        <li class="offline-karten"><a href="#" class="">Offline Karten</a></li>
+                                        <li class="hilfe"><a href="javascript:void(null);" target="_blank">Hilfe</a></li>
                                     </ul>
                                 </div>
                                 <input class="form-control" name="q" placeholder="Karten durchsuchen..." type="text" autocomplete="off" value="@if(isset($search)){{$search}}@endif"/ onsubmit="return false;">
@@ -86,7 +91,7 @@
                     <label class="radio-inline" title="Auto">
                       <input type="radio" name="vehicle" value="car"> <div><img src="/img/car.png" height="20px" /></div>
                     </label>
-                    <button type="button" class="btn btn-success start-navigation inactive">Navigation starten</button>
+                    <button type="button" class="btn btn-sm btn-success start-navigation inactive">Navigation starten</button>
                     <button type="button" class="close" aria-label="Close" title="Routenplanung abbrechen">
                       <span aria-hidden="true">&times;</span>
                     </button>
@@ -146,22 +151,42 @@
                         <div>
                             <h1>
                                 Maps.MetaGer.de
-                                <small>Offline Karten</small>
+                                <small>Offline</small>
                             </h1>
                         </div>
                     </div>
                 </div>
                 <div class="results">
-                    <div class="add-area">
-                        <a href="#">+ Gebiet für Download hinzufügen</a>
-                    </div>
                     <div class="downloaded-areas">
-                        <div class="placeholder">Noch kein Gebiet heruntergeladen</div>
-                        <div class="placeholder area-selection-info">Tippe auf ein rot umrandetes Gebiet, um dieses herunterzuladen.</div>
+                        <div class="placeholder no-areas">Noch kein Gebiet heruntergeladen</div>
+                        <div class="placeholder loading-areas"><img src="/img/ajax-loader.gif" alt="loading" /> Lade Gebiete</div>
+                        <div class="add-area placeholder">
+                            <a href="#">+ Gebiet für Download hinzufügen</a>
+                        </div>
+                        <div class="auto-updates palceholder inactive">
+                            <div class="option">
+                                <label class="switch">
+                                  <input type="checkbox" checked>
+                                  <span class="slider round"></span>
+                                </label>
+                            </div>
+                            <div class="text">
+                                Automatische Updates
+                            </div>
+                        </div>
                     </div>
-                    <div class="available-areas">
-                    </div> 
-                    <div class="download-progress">
+                    <div class="area-selection inactive" style="display: flex; align-items: center; text-align:center; font-weight: bold; font-size: 12px;">
+                         <div id="download-information" style="padding: 0 10px;">
+                            <div class="size"></div>
+                            <div class="last-modified"></div>
+                        </div>
+                        <div class="text" style="flex-grow: 1;">Bewege die Karte, sodass das herunterzuladende Gebiet angezeigt wird und klicke rechts auf download.</div>
+                        <div id="start-download" style="padding: 0 20px;color: green;font-size: 20px;">
+                            <span class="glyphicon glyphicon-download-alt inactive"></span>
+                            <img src="/img/ajax-loader.gif" alt="loading" />
+                        </div>
+                    </div>
+                    <div class="download-progress inactive">
                         <div class="progress">
                             <div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%;">
                                 0%
@@ -239,7 +264,7 @@
                 <li id="follow-location"><span class="button glyphicon glyphicon-record"></span></li>
             </ul>
             <div id="gps-error" class="hidden">
-            <span>MetaGer konnte Ihren genauen Standort nicht ermitteln.</span> <a href="/hilfe/gps" target="_blank">Warum?</a>
+            <span>MetaGer konnte Ihren genauen Standort nicht ermitteln.</span> <a href="/hilfe" target="_blank">Warum?</a>
             </div>
         </main>
         @if(isset($vars))

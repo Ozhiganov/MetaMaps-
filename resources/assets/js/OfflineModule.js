@@ -1,4 +1,5 @@
 function OfflineModule(interactiveMap){
+	this.areaSelectionText = "Bewege die Karte, sodass das herunterzuladende Gebiet angezeigt wird und klicke rechts auf download.";
 	this.interactiveMap = interactiveMap;
 	this.areas = [];
 	this.vectorSource = new ol.source.Vector();
@@ -9,22 +10,174 @@ function OfflineModule(interactiveMap){
 	this.initializeInterface();
 	this.addListeners();
 	this.status = "overview";
+	this.downloadedStyle  = new ol.style.Style({
+	            stroke: new ol.style.Stroke({
+	                color: 'green',
+	                width: 2
+	            }),
+	            fill: new ol.style.Fill({
+	                color: 'rgba(0,255,0,.2)'
+	            })
+	        });
+	this.selectedStyle  = new ol.style.Style({
+	            stroke: new ol.style.Stroke({
+	                color: 'rgb(255,128,0)',
+	                width: 2
+	            }),
+	            fill: new ol.style.Fill({
+	                color: 'rgba(255,128,0,.2)'
+	            })
+	        });
 	// Recenter the view to get an overview of germany
-	this.interactiveMap.map.getView().animate({center: [1139922.2705121872, 6865247.913390023], zoom: 6, duration: 500}, $.proxy(function(){
-		// If the user is not in Wireless Lan we won't open this Module
-		// because we consume too much data here
-		if(typeof android != "undefined" && !android.isWireless()){
-			console.log("Kein WLan");
-			alert("Dieses Feature läd große Datenmengen herunter. Bitte stellen Sie sicher, dass sie sich in einer nicht getakteten Netzwerkverbindung befinden um fortzufahren.");
-			interactiveMap.switchModule("search");
-			return;
+	if(typeof android != "undefined" && typeof android.isWireless == "function" && !android.isWireless()){
+		console.log("Kein WLan");
+		alert("Dieses Feature läd große Datenmengen herunter. Bitte stellen Sie sicher, dass sie sich in einer nicht getakteten Netzwerkverbindung befinden um fortzufahren.");
+		interactiveMap.switchModule("search");
+		return;
+	}
+}
+
+OfflineModule.prototype.loadDownloadedAreas = function(){
+	this.vectorSource.clear();
+	
+	if(typeof android != "undefined" && typeof android.getDownloadedAreas == "function" ){
+		// Show the user that we are now loading the areas
+		var downloadedAreas = android.getDownloadedAreas();// JSON.parse(android.getDownloadedAreas());
+		downloadedAreas = JSON.parse(downloadedAreas);
+		if(Object.keys(downloadedAreas).length <= 0){
+			$("#offline-addon .no-areas").show();
 		}else{
-			console.log("WLan");
+			$("#offline-addon .auto-updates").show();
+			$("#offline-addon .no-areas").hide();
 		}
-		// We donwload all available Shapefiles from the server
-		// Those show which areas can be downloaded
-		this.downloadPolygons();
-	}, this));
+		$.each(downloadedAreas, $.proxy(function(index, value){
+			var bbox = value["bbox"];
+			var bboxPoints = [[bbox[0],bbox[1]],
+								[bbox[2],bbox[1]],
+								[bbox[2],bbox[3]],
+								[bbox[0],bbox[3]]];
+			var feature = this.addArea(bboxPoints, true);
+			var size = value["size"];
+			var unit = "B";
+			if(size > 1024){
+				size /= 1024;
+				unit = "KB";
+				if(size > 1024){
+					size /= 1024;
+					unit = "MB";
+					if(size > 1024){
+						size /= 1024;
+						unit = "GB";
+					}
+				}
+			}
+			// Round the size to three digits
+			size = Math.ceil(size);
+			var date = new Date(value["last-modified"]);
+			var month = date.getMonth();
+			month += 1;
+			month = month < 10 ? "0" + month : month;
+			var day = date.getDate();
+			day = day < 10 ? "0" + day : day;
+			var lastModified = day + "." + month + "." + date.getFullYear();
+			var newItem = $("\
+				<div class=\"area\" style=\"display: flex;align-items: center;text-align: center;font-weight: bold;font-size: 12px; border-bottom: 1px solid #dfdfdf\">\
+                         <div id=\"\" style=\"padding: 0 10px;\">\
+                            <div class=\"size\">" + size + " " + unit + "</div>\
+                            <div class=\"last-modified\">" + lastModified + "</div>\
+                        </div>\
+                        <div class=\"text\" style=\"flex-grow: 1;\">" + index + "</div>\
+                        <div class=\"inspect-item\" data-name=\"" + index + "\" style=\"padding: 0 20px;/* color: green; */font-size: 20px;\">\
+                            <span class=\"glyphicon glyphicon-search\" style=\"display: inline-block;\"></span>\
+                            <img src=\"/img/ajax-loader.gif\" alt=\"loading\" style=\"display: none;\">\
+                        </div>\
+                        <div class=\"rename\" data-name=\"" + index + "\" style=\"display: none; padding: 0 20px;/* color: green; */font-size: 20px;\">\
+                            <span class=\"glyphicon glyphicon-pencil\" style=\"display: inline-block;\"></span>\
+                            <img src=\"/img/ajax-loader.gif\" alt=\"loading\" style=\"display: none;\">\
+                        </div>\
+                        <div class=\"remove-download\" data-name=\"" + index + "\" style=\"display: none; padding: 0 20px;/* color: green; */font-size: 20px;\">\
+                            <span class=\"glyphicon glyphicon-trash\" style=\"display: inline-block;\"></span>\
+                            <img src=\"/img/ajax-loader.gif\" alt=\"loading\" style=\"display: none;\">\
+                        </div>\
+                    </div>");
+			var caller = this;
+			$(newItem).click($.proxy(function(){
+				this.focusDownloadedArea(feature, $(newItem));
+			}, this));
+			$(newItem).find(".rename").click(function(){
+				var newName = prompt("Geben Sie einen neuen Namen für dieses Gebiet ein:");
+				var oldName = $(newItem).find(".text").text();
+				if(newName != null && android.renameArea(oldName, newName)){
+					$("#offline-addon .exit").off();
+					$("#offline-addon .exit").click(function(){
+						caller.interactiveMap.switchModule("search");
+					});
+					$("#offline-addon .add-area").show("slow");
+					$(".downloaded-areas > .area").remove();
+					caller.loadDownloadedAreas();
+				}
+			});
+			$(newItem).find(".remove-download").click(function(){
+				var name = $(newItem).find(".text").text();
+				if(confirm("Soll das ausgewählte Gebiet wirklich gelöscht werden?") && android.removeArea(name)){
+					$("#offline-addon .exit").off();
+					$("#offline-addon .exit").click(function(){
+						caller.interactiveMap.switchModule("search");
+					});
+					$("#offline-addon .add-area").show("slow");
+					$(".downloaded-areas > .area").remove();
+					caller.loadDownloadedAreas();
+				}
+			});
+			$(".downloaded-areas").append(newItem);
+		}, this));
+	}else{
+		$("#offline-addon .no-areas").show();
+	}
+	$("#offline-addon .loading-areas").hide();
+}
+
+OfflineModule.prototype.focusDownloadedArea = function(feature, element){
+	var caller = this;
+	var name = $(element).find(".remove-download").attr("data-name");
+	$(element).off();
+	$(".downloaded-areas > div.area").each(function(index, value){
+		var tmpName = $(value).find(".remove-download").attr("data-name");
+		if(tmpName != name){
+			$(value).hide("slow");
+			return true;
+        }else{
+			$(value).find(".inspect-item").hide("slow");
+			$(value).find(".rename").show("slow");
+			$(value).find(".remove-download").show("slow");
+        }
+		$("#offline-addon .exit").off();
+		$("#offline-addon .exit").click(function(){
+			$(".downloaded-areas > div.area").show("slow");
+			$(".downloaded-areas > div.area .inspect-item").show("slow");
+			$(".downloaded-areas > div.area .rename").hide("slow");
+			$(".downloaded-areas > div.area .remove-download").hide("slow");
+			$("#offline-addon .add-area").show("slow");
+			$("#offline-addon .auto-updates").show();
+			$("#offline-addon .exit").off();
+			feature.setStyle(caller.downloadedStyle);
+			$("#offline-addon .exit").click(function(){
+				caller.interactiveMap.switchModule("search");
+            });
+            $(element).click($.proxy(function(){
+				caller.focusDownloadedArea(feature, element);
+			}, this));
+        });
+    });
+    var item = $(element);
+    $("#offline-addon .add-area, #offline-addon .auto-updates").hide("slow", function(){
+    	caller.interactiveMap.map.getView().fit(feature.getGeometry(), {
+    		duration: 500,
+    		callback: function(){
+    			feature.setStyle(caller.selectedStyle);
+    		}
+    	});
+    });	    
 }
 
 OfflineModule.prototype.addListeners = function(){
@@ -37,248 +190,114 @@ OfflineModule.prototype.addListeners = function(){
 	$("#offline-addon .add-area").click(function(){
 		caller.startAreaSelection();
 	});
-}
 
-OfflineModule.prototype.downloadPolygons = function(){
-	var mapFileUrl = "https://maps.metager.de/map_files/";
-	var polygons = [];
-	var caller = this;
-	$.get(mapFileUrl, function(data){
-		var regex = /<a.*?>([\w-]+?\.poly)<\/a>/gi;
-		var match = regex.exec(data);
-		var areas = [];
-		var id = 0;
-		while(match != null){
-			var area = {
-				id: id,
-				polygonfile: mapFileUrl + match[1],
-				mapFile: match[1].substring(0, match[1].indexOf(".poly")) + ".map",
-				mapFileUrl: mapFileUrl + match[1].substring(0, match[1].indexOf(".poly")) + ".map"
+	$("#offline-addon .auto-updates input").change(function(){
+		var state = $(this).is(":checked");
+		if(typeof android != "undefined"){
+			var success = android.setProperty("auto-update", state);
+			if(!success){
+				$(this).prop("checked", !state);
 			}
-			$.get(area.polygonfile, $.proxy(function(data){
-				var coordinates = [];
-				var area = this;
-				data.split("\n").forEach(function(line, index){
-					if(index == 0){
-						var infos = line.split(";");
-						area.name = infos[0];
-						area.filesize = infos[1];
-						area.date = infos[2];
-						return 1;
-					}else if(line == "none" || line == "END")
-						return 1;
-					else if(line.match(/^\d+$/g)){
-						coordinates.push([]);
-					}else{
-						var regex = /^\s*(\S+?)\s+(\S+)$/;
-						var match = regex.exec(line);
-						if(match){
-							var point = [parseFloat(parseFloat(match[1]).toFixed(20)), parseFloat(parseFloat(match[2]).toFixed(20))];
-							point = caller.interactiveMap.map.transformToMapCoordinates(point);
-							coordinates[coordinates.length-1].push(point);
-						}
-					}
-
-				});
-				this.polygon = new ol.geom.Polygon(coordinates);
-				caller.areas.push(this);
-				caller.updateAreas();
-			}, area));
-			match = regex.exec(data);
-			id++;
-		}
-	});
-}
-
-OfflineModule.prototype.updateAreas = function(){
-	// This Function will submit changes in the areas array to the User Interface
-	// Since the areas are getting loaded asynchronious we need to be aware of changes at any time
-	// First remove everything from the User Interface 
-	// 1. Remove all Area Polygons on the map:
-	this.interactiveMap.map.removeLayer(this.layer);
-	this.vectorSource = new ol.source.Vector();
-	this.layer = new ol.layer.Vector({
-		source: this.vectorSource
-	});
-	
-	// 2. Remove all Area Elements in the List
-	$("#offline-addon .downloaded-areas > div:not(.placeholder)").remove();
-	$("#offline-addon .available-areas > div").remove();
-
-	// Now add all areas in the array
-	var caller = this;
-	$.each(this.areas, function(index, area){
-		area.id = index;
-		caller.addArea(area);
-	});
-	switch(this.status){
-		case "overview":
-			$("#offline-addon .downloaded-areas > div.area").each(function(index, value){
-				$(this).show("slow");
-			});
-			$("#offline-addon .add-area").show('slow');
-			break;
-		case "area-selection":
-			$("#offline-addon .downloaded-areas > div.area").each(function(index, value){
-				$(this).hide("slow");
-			});
-		case "detail":
-			$("#offline-addon .downloaded-areas > div.area").each(function(index, value){
-				$(this).hide("slow");
-			});
-	}
-}
-
-OfflineModule.prototype.addArea = function(area){
-	if( typeof area != "undefined" && typeof area.polygon != "undefined" ){
-		var feature = new ol.Feature(area.polygon);
-	    if(typeof android != "undefined" && android.hasArea(area.mapFile)){
-	    	
-		   area.style  = new ol.style.Style({
-	            stroke: new ol.style.Stroke({
-	                color: 'green',
-	                width: 2
-	            }),
-	            fill: new ol.style.Fill({
-	                color: 'rgba(0,255,0,.2)'
-	            })
-	        });
-		   area.downloaded = true;
-		   area.filesize = android.getMapFileSize(area.mapFile);
-		   area.date = android.getMapFileDate(area.mapFile);
-		   this.addToDownloadedInterface(area);
 		}else{
-			area.style  = new ol.style.Style({
-	            stroke: new ol.style.Stroke({
-	                color: 'red',
-	                width: 2
-	            }),
-	            fill: new ol.style.Fill({
-	                color: 'rgba(255,0,0,.2)'
-	            })
-	        });
-	        // If this area is not downloaded yet, we'll add the Listener to download it now
-	        area.downloaded = false;
-	        this.addToAvailableInterface(area);
+			$(this).prop("checked", !state);
 		}
-	    feature.setProperties(area);
-		feature.setStyle(area.style);
-        
-		this.vectorSource.addFeature(feature);
-		this.select_interaction = new ol.interaction.Select();
+	});
 
-		this.select_interaction.getFeatures().on("add", function (e) { 
-		     var feature = e.element; //the feature selected
-		     if(typeof feature.getProperties().mapFileUrl != "undefined"){
-		     	this.areaSelected(feature);
-		     //	android.downloadArea(feature.getProperties().mapFileUrl);
-		     }
-		}, this);
-		this.select_interaction.getFeatures().on("remove", function (e) { 
-		     var feature = e.element; //the feature selected
-		     if(typeof feature.getProperties().mapFileUrl != "undefined"){
-		     	this.areaDeSelected(feature);
-		     //	android.downloadArea(feature.getProperties().mapFileUrl);
-		     }
-		}, this);
+	$("#start-download").off();
+	$("#start-download").click($.proxy(this.startDownload, this));
+}
 
-		this.interactiveMap.map.addInteraction(this.select_interaction);
+OfflineModule.prototype.addArea = function(area, downloaded){
+	var style = null;
+	if(downloaded){
+		style = this.downloadedStyle;
+	}else{
+		style = this.selectedStyle;
 	}
+
+	var coordinates = [];
+	$(area).each($.proxy(function(index, value){
+		coordinates.push(this.interactiveMap.map.transformToMapCoordinates(value));
+	}, this));
+	coordinates.push(coordinates[0]);
+	var feature = new ol.Feature({
+		geometry: new ol.geom.Polygon([coordinates]),
+		name: "Selected Area"
+	});
 	
+	feature.setStyle(style);
+	this.vectorSource.addFeature(feature);
+	return feature;
+}
+
+OfflineModule.prototype.removeArea = function(feature){
+	this.vectorSource.removeFeature(feature);
 }
 
 OfflineModule.prototype.startAreaSelection = function(){
-	$("#offline-addon .add-area").hide("slow");
-	$("#offline-addon").animate({margin: 0, width: '100%'}, 'slow');
-	$("#offline-addon .downlaoded-areas > .area").hide("slow");
-	$("#offline-addon .placeholder:not(.area-selection-info)").hide("slow");
-	$("#offline-addon .area-selection-info").show("slow");
-	$("#offline-addon .downloaded-areas > div.area").each(function(index, value){
-		$(this).hide("slow");
-	});
+	$("#offline-addon .downloaded-areas").hide("slow");
+	$("#offline-addon .area-selection").show("slow");
 	$("#offline-addon .exit").off();
 	$("#offline-addon .exit").click($.proxy(function(){
 		this.stopAreaSelection();
 	}, this));
-	this.interactiveMap.map.addLayer(this.layer);
+
+	this.interactiveMap.map.on("moveend",this.selectedAreaChanged, this);
+    this.selectedAreaChanged();
 	this.status = "area-selection";
+}
+
+OfflineModule.prototype.selectedAreaChanged = function() {
+	this.selectedArea = null;
+	var bbox = this.interactiveMap.map.getView().calculateExtent();
+	var min = this.interactiveMap.map.transformToWorldCoordinates([bbox[0],bbox[1]]);
+	var max = this.interactiveMap.map.transformToWorldCoordinates([bbox[2],bbox[3]]);
+	if(this.loadingFileList != null)
+		this.loadingFileList.abort();
+    http://localhost:8000/img/ajax-loader.gif
+	$("#download-information > .last-modified").html("<img src=\"/img/ajax-loader.gif\" alt=\"loading\"></img>");
+    $("#download-information > .size").html("");
+	$("#start-download > span").hide();
+	$("#start-download > img").show();
+	this.loadingFileList = $.getJSON("/download/list-files/" + min[0] + "/" + min[1] + "/" + max[0] + "/" + max[1], $.proxy(function(data){
+		var date = new Date(data["last-modified"]);
+		var month = date.getMonth();
+		month += 1;
+		month = month < 10 ? "0" + month : month;
+		var day = date.getDate();
+		day = day < 10 ? "0" + day : day;
+		$("#download-information > .last-modified").html(day + "." + month + "." + date.getFullYear());
+		// We will decide which Unit of datasize to show
+		var size = data["size"];
+		var unit = "B";
+		if(size > 1024){
+			size /= 1024;
+			unit = "KB";
+			if(size > 1024){
+				size /= 1024;
+				unit = "MB";
+				if(size > 1024){
+					size /= 1024;
+					unit = "GB";
+				}
+			}
+		}
+		// Round the size to three digits
+		size = Math.ceil(size);
+		$("#download-information > .size").html(size + " " + unit);
+        $("#start-download > span").show();
+        $("#start-download > img").hide();
+        this.selectedArea = data;
+	}, this));
 }
 
 OfflineModule.prototype.stopAreaSelection = function(){
-	$("#offline-addon .add-area").show("slow");
-	$("#offline-addon").animate({'margin-left': '15px', 'margin-top': '15px', 'margin-right':'15px'}, 'slow', function(){
-		$(this).css("width", "calc(100% - 30px)");
-	});
-	$("#offline-addon .downlaoded-areas > .area").show("slow");
-	$("#offline-addon .area-selection-info").hide("slow");
-	$("#offline-addon .downloaded-areas > div.area").each(function(index, value){
-		$(this).show("slow");
-	});
-	if(this.countDownloadedAreas() == 0)
-		$("#offline-addon .placeholder:not(.area-selection-info)").show("slow");
-	this.addListeners();
-	this.interactiveMap.map.removeLayer(this.layer);
-	this.status = "overview";
-}
-
-OfflineModule.prototype.areaSelected = function(feature){
-	$("#offline-addon .placeholder.area-selection-info").hide('slow');
+	$("#offline-addon .downloaded-areas").show("slow");
+	$("#offline-addon .area-selection").hide("slow");
 	
-	if(!feature.getProperties().downloaded){
-		var areaStyle  = new ol.style.Style({
-		    stroke: new ol.style.Stroke({
-		    color: 'rgb(255,165,0)',
-		         width: 2
-		    }),
-		    fill: new ol.style.Fill({
-		        color: 'rgba(255,165,0,.2)'
-		    })
-		});
-		feature.setStyle(areaStyle);
-	}
-	var caller = this;
-	$("#offline-addon .area").each(function(index, value){
-		if($(this).attr("id") != "area-" + feature.getProperties().id)
-			$(this).hide('slow');
-		else{
-			
-			$(this).show('slow', function(){
-				$(this).css("display", 'flex');
-				caller.interactiveMap.map.getView().fit(feature.getProperties().polygon, {
-					duration: 500
-				});
-			});
-		}
-	});
-	$("#offline-addon .exit").off();
-	var caller = this;
-	$("#offline-addon .exit").click(function(){
-		caller.select_interaction.getFeatures().clear();
-	});
-	this.status = "detail";
-}
-
-OfflineModule.prototype.areaDeSelected = function(feature){
-	$("#offline-addon .placeholder.area-selection-info").show('slow');
-	feature.setStyle(feature.getProperties().style);
-	$("#offline-addon .area").each(function(index, value){
-		$(this).hide('slow');
-	});
-	$("#offline-addon .exit").off();
-	var caller = this;
-	$("#offline-addon .exit").click(function(){
-		caller.stopAreaSelection();
-	});
-	this.status = "area-selection";
-}
-
-OfflineModule.prototype.countDownloadedAreas = function(){
-	var result = 0;
-	$.each(this.areas, function(index, value){
-		if(value.downloaded)
-			result++;
-	});
-	return result;
+	this.addListeners();
+    this.interactiveMap.map.un("moveend", this.selectedAreaChanged, this);
+	this.status = "overview";
 }
 
 OfflineModule.prototype.addToDownloadedInterface = function(area){
@@ -325,75 +344,71 @@ OfflineModule.prototype.addToAvailableInterface = function(area){
 	$("#offline-addon .available-areas").prepend(newElement);
 }
 
-OfflineModule.prototype.removeArea = function(area){
-	if(window.confirm("Soll das Gebiet " + area.name + " wirklich von Ihrem Gerät gelöscht werden?")){
-		android.removeArea(area.mapFile);
-		this.select_interaction.getFeatures().clear();
-		this.updateAreas();
-		this.interactiveMap.map.addLayer(this.layer);
-	}
-}
-
-OfflineModule.prototype.startDownload = function(area){
-	if(this.downloading != null) return;
-	var started = android.downloadArea(area.mapFileUrl);
-	if(started){
-		console.log("Download started");
-		// Area download is started
-		// Let's add a progress bar and wait for the download to finish
-		$("#offline-addon .download-progress").show('slow', function(){
-			$(this).css("display", "flex");
+OfflineModule.prototype.startDownload = function(){
+	if(this.selectedArea == null) return;
+	$("#start-download > span").hide("fast");
+	$("#start-download > img").show("fast");
+	$(".exit").hide("fast");
+	$(".area-selection > div.text").html("Downloading...");
+	this.interactiveMap.map.un("moveend", this.selectedAreaChanged, this);
+	$(".download-progress").show("slow", $.proxy(function(){
+		var data = this.selectedArea;
+		var bboxPoints = [[data["bbox"][0],data["bbox"][1]],
+								[data["bbox"][2],data["bbox"][1]],
+								[data["bbox"][2],data["bbox"][3]],
+								[data["bbox"][0],data["bbox"][3]]];
+		this.selectedAreaFeature = this.addArea(bboxPoints, false);
+		// Show the downloading area
+		this.interactiveMap.map.getView().fit(this.selectedAreaFeature.getGeometry(), {
+			padding: [$("#offline-addon").outerHeight(),0,0,0],
+			duration: 900,
+			callback: $.proxy(function(){
+				// Now send the download command to the android app
+				if(typeof android != "undefined"){
+					var origBbox = data["original-bbox"];
+					var downloadUrl = "/download/download-files/" + origBbox[0] + "/" + origBbox[1] + "/" + origBbox[2] + "/" + origBbox[3];
+					var started = android.download(downloadUrl, JSON.stringify(data));
+					if(started){
+						$("#offline-addon .download-progress .abort").off();
+						$("#offline-addon .download-progress .abort").click($.proxy(function(){
+							$("#offline-addon .download-progress .abort").off();
+							this.stopDownload();
+						}, this));
+						this.updateDownloadStatus();
+					}
+				}else{
+					this.stopDownload();
+				}
+			}, this)
 		});
-		var caller = this;
-		$("#offline-addon .download-progress .abort").off();
-		$("#offline-addon .download-progress .abort").click(function(){
-			$("#offline-addon .download-progress .abort").off();
-			caller.stopDownload();
-		});
-
-		// Block the Back Button and repalace it with a Loading Gif until the downlaod is either finished or aborted
-		$("#offline-addon .exit").before(
-			$('<img id="downloading" src="/img/ajax-loader.gif" height="16px" width="16px" alt="downloading..." style="align-self: center;margin-left: 10px;" />')
-		);
-		$("#offline-addon .exit").hide('slow');
-
-		this.downloading = area.id;
-		this.updateDownloadStatus();
-	}
+	}, this));
 }
 
 OfflineModule.prototype.stopDownload = function(){
-	if(window.confirm("Soll der Download wirklich abgebrochen werden?")){
+	if(typeof android != "undefined")
 		android.stopDownload();
-		$("#offline-addon .download-progress").hide('slow');
-		$("#offline-addon .progress-bar").attr("aria-valuenow", 0);
-		$("#offline-addon .progress-bar").css("width", "0%");
-		$("#offline-addon .progress-bar").html("0%");
-		$("#offline-addon .download-progress .abort").off();
-		$("#offline-addon #downloading").hide('slow', function(){
-			$(this).remove();
-		});
-		$("#offline-addon .exit").show('slow');
-		this.downloading = null;
-	}
+	$("#start-download > span").show("fast");
+	$("#start-download > img").hide("fast");
+	$(".exit").show("fast");
+	$(".area-selection > div.text").html(this.areaSelectionText);
+	this.interactiveMap.map.on("moveend", this.selectedAreaChanged, this);
+	$("#offline-addon .progress-bar").attr("aria-valuenow", 0);
+	$("#offline-addon .progress-bar").css("width", "0%");
+	$("#offline-addon .progress-bar").html("0%");
+	$(".download-progress").hide("slow");
+	this.selectedAreaFeature = this.removeArea(this.selectedAreaFeature);
+	$(".exit").click();
 }
 
 OfflineModule.prototype.updateDownloadStatus = function(){
 	var error;
 	if((error = android.getError()) != ""){
-		$("#offline-addon .download-progress").hide('slow');
-		$("#offline-addon .progress-bar").attr("aria-valuenow", 0);
-		$("#offline-addon .progress-bar").css("width", "0%");
-		$("#offline-addon .progress-bar").html("0%");
 		$("#offline-addon .download-progress").before($('\
 			<div class="download-failed alert alert-danger">' + error + '</div>'));
-		window.setTimeout(function(){
+		window.setTimeout($.proxy(function(){
 			$("#offline-addon .download-failed").remove();
-		}, 5000);
-		$("#offline-addon #downloading").hide('slow', function(){
-			$(this).remove();
-		});
-		$("#offline-addon .exit").show('slow');
+			this.stopDownload();
+		}, this), 5000);
 		this.downloading = null;
 		return;
 	}
@@ -410,19 +425,10 @@ OfflineModule.prototype.updateDownloadStatus = function(){
 		if(android.getStage() != android.getMaxStage() || downloaded != total){
 			window.setTimeout($.proxy(this.updateDownloadStatus, this), 100);
 		}else{
-			this.areas[this.downloading].downloaded = true;
-			$("#offline-addon .download-progress").hide('slow');
-			$("#offline-addon .progress-bar").attr("aria-valuenow", 0);
-			$("#offline-addon .progress-bar").css("width", "0%");
-			$("#offline-addon .progress-bar").html("0%");
-			$("#offline-addon #downloading").hide('slow', function(){
-				$(this).remove();
-			});
-			$("#offline-addon .exit").show('slow');
 			this.downloading = null;
-			this.select_interaction.getFeatures().clear();
-			this.updateAreas();
-			this.interactiveMap.map.addLayer(this.layer);
+			this.stopDownload();
+			$(".downloaded-areas > .area").remove();
+			this.loadDownloadedAreas();
 			return;
 		}
 	}else{
@@ -430,36 +436,40 @@ OfflineModule.prototype.updateDownloadStatus = function(){
 	}
 }
 
-OfflineModule.prototype.downloadFinished = function(area){
-	$("#offline-addon .download-progress").hide('slow');
-	$("#offline-addon .progress-bar").attr("aria-valuenow", 0);
-	$("#offline-addon .progress-bar").css("width", "0%");
-	$("#offline-addon .progress-bar").html("0%");
-	$("#offline-addon .download-progress .abort").off();
-	area.downloaded = true;
-	this.select_interaction.getFeatures().clear();
-	this.updateAreas();
-}
-
 OfflineModule.prototype.initializeInterface = function(){
 	// Hide everything from Map that is not needed:
 	$(".ol-zoom, .ol-zoomslider").hide("slow");
+	$("#offline-addon .no-areas").hide();
+	$("#offline-addon .loading-areas").show();
+	if(typeof android != "undefined" && typeof android.getProperty == "function"){
+		var autoUpdates = android.getProperty("auto-update").toLowerCase() == "true" ? true : false;
+		$("#offline-addon .auto-updates input").prop("checked", autoUpdates);
+	}
 	this.interactiveMap.reversePositionManager.setActive(false);
-	$("#offline-addon").show("slow");
+	$("#offline-addon").show("slow", $.proxy(function(){
+		this.loadDownloadedAreas();
+	}, this));
+	this.vectorSource = new ol.source.Vector();
+	this.layer = new ol.layer.Vector({
+		source: this.vectorSource
+	});
+	this.interactiveMap.map.addLayer(this.layer);
 }
 
 OfflineModule.prototype.exit = function(){
 	// Show everything again that got hidden on intialization
-	$(".ol-zoom, .ol-zoomslider").show("slow");
-	$("#offline-addon .add-area").hide('slow');
-	$("#offline-addon .placeholder:not(.area-selection-info)").show("slow");
-	$("#offline-addon .placeholder.area-selection-info").hide("slow");
+	$(".ol-zoom, .ol-zoomslider").show();
+	$("#offline-addon .placeholder.area-selection-info").hide();
 	this.interactiveMap.reversePositionManager.setActive(true);
 	$("#offline-addon").hide("slow");
 	this.interactiveMap.map.removeLayer(this.layer);
+	this.layer = null;
+	this.vectorSource = null;
+	
 	$("#offline-addon .exit").off();
-	$("#offline-addon .available-areas").html("");
+	$("#start-download").off();
 	$("#offline-addon .downloaded-areas > div:not(.placeholder)").remove();
+	$(".downloaded-areas .placeholder").show();
 }
 
 OfflineModule.prototype.enableGps = function(){

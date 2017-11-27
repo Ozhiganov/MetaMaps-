@@ -18,7 +18,7 @@ elixir((mix) => {
     mix.styles(['bootstrap.min.css', 'ol.css', 'style.css', 'iframeSearch.css'], 'public/css/iframeSearch.css');
     mix.styles(['routing.css'], 'public/css/routing.css');
     mix.scripts(['md5.js', 'jquery.min.js', 'jquery-ui.min.js', 'jquery.ui.touch-punch.min.js', 'bootstrap.min.js', 'ol.js', 'map.js', 'NominatimParser.js', 'ReversePositionManager.js', 'GpsManager.js',
-     'SearchModule.js', 'LocalHistory.js', 'Results.js', 'RouteFinder.js', 'Waypoint.js', 'RouteFinderSearchResults.js', 'Route.js', 'Leg.js', 'Step.js', 'OfflineManager.js', 'OfflineModule.js', 'NavigationModule.js', 'app.js'], 'public/js/map.js');
+     'SearchModule.js', 'LocalHistory.js', 'Results.js', 'RouteFinder.js', 'Waypoint.js', 'RouteFinderSearchResults.js', 'Route.js', 'Leg.js', 'Step.js', 'OfflineModule.js', 'NavigationModule.js', 'app.js'], 'public/js/map.js');
    // mix.scripts(['jquery.min.js', 'bootstrap.min.js', 'ol.js', 'map.js', 'mapSearch.js'], 'public/js/mapSearch.js');
    // mix.scripts(['jquery.min.js', 'bootstrap.min.js', 'ol.js', 'map.js', 'iframeSearch.js', 'iframeResizer.contentWindow.min.js'], 'public/js/iframeSearch.js');
     //mix.scripts(['jquery.min.js', 'bootstrap.min.js', 'ol.js', 'map.js', 'mapSearch.js', 'routing.js', 'routeAssistent.js'], 'public/js/routing.js');

@@ -7,6 +7,9 @@
 function RouteFinder(interactiveMap, waypoints, vehicle){
 	this.interactiveMap = interactiveMap;
 	this.waypoints = [];
+	this.gpsEnabled = false;
+	if(this.interactiveMap.GpsManager != null && this.interactiveMap.GpsManager.gps)
+		this.gpsEnabled = true;
 	this.resultHistory = new LocalHistory("results");
 	this.searchHistory = new LocalHistory("suche");
 	this.waypointsLength = waypoints.length;
@@ -99,13 +102,14 @@ RouteFinder.prototype.addWaypoints = function(waypoints, recalculate){
  * this methos is Called by the GPS-Mager once it has access to a GPS Position
 */
 RouteFinder.prototype.enableGps = function(){
+	this.gpsEnabled = true;
 	if(this.addWaypointsOnGps != null){
 		this.addWaypoints(this.addWaypointsOnGps);
 	}
 }
 
 RouteFinder.prototype.disableGps = function(){
-	console.log("disable");
+	this.gpsEnabled = false;
 	if(this.addWaypointsOnGps != null){
 		console.log(this.addWaypointsOnGps);
 		this.addWaypoints(this.addWaypointsOnGps);
@@ -250,6 +254,8 @@ RouteFinder.prototype.calculateRoute = function(vehicle){
 	}else{
 		$("#route-finder-addon .start-navigation").hide();
 		$("#route-finder-addon .start-navigation").off();
+		$("#route-finder-addon .route-information .length, #route-finder-addon .route-information .duration").html("");
+		this.updateMobilesWindow();
 	}
 	// After every Route Calculation the URL gets updated
 	this.updateURL();
@@ -419,6 +425,25 @@ RouteFinder.prototype.historyEnabled = function(){
 	// Clear the current History
 	$("#route-finder-addon > form .history-container .results").html("");
 	$("#route-finder-addon > form .history-container .searches").html("");
+	// Add the GPS position to the history container
+	var resHtml = $('\
+							<div class="container-fluid suggestion item gps" data-resultNumber="-1">\
+	                            <div class="flex-container">\
+	                                <div class="item history">\
+	                                    <span class="marker" style="font-size: 16px;"></span>\
+	                                </div>\
+	                                <div class="item result">\
+	                                    Eigene Position\
+	                                </div>\
+	                            </div>\
+	                        </div>\
+							');
+	$(resHtml).hide();
+	$(resHtml).mousedown($.proxy(function(event){
+		this.exitSearch();
+		this.addWaypoint(undefined, undefined, undefined, this.interactiveMap.GpsManager, true, true);
+	}, this));
+	$("#route-finder-addon > form .history-container .results").append(resHtml);
 	// Load the History into the container
 	$.each(this.resultHistory.results, $.proxy(function(index, value){
 		var html = (new NominatimParser(value)).getRouteFinderHtml().html();
@@ -464,17 +489,17 @@ RouteFinder.prototype.historyEnabled = function(){
 		// Each past search:
 		$("#route-finder-addon > form .history-container .results > .item").each(function(index, item){
 			var query = $(item).text().toLowerCase();
-			if(value.length > 0 && query.indexOf(value) > -1){
+			if(value.length > 0 && query.indexOf(value) > -1 && !$(item).hasClass("gps")){
 				$(this).show();
-			}else{
+			}else if(!$(item).hasClass("gps")){
 				$(this).hide();
 			}
 		});
 		$("#route-finder-addon > form .history-container .searches > .item").each(function(index, item){
 			var query = $(item).find(".search-query").html().toLowerCase();
-			if(value.length > 0 && query.indexOf(value) > -1){
+			if(value.length > 0 && query.indexOf(value) > -1 && !$(item).hasClass("gps")){
 				$(this).show();
-			}else{
+			}else if(!$(item).hasClass("gps")){
 				$(this).hide();
 			}	
 		});
@@ -528,6 +553,15 @@ RouteFinder.prototype.enterSearch = function(){
 	$("#route-finder-addon #waypoint-list-container #waypoint-list").hide("slow");
 	$("#route-finder-addon #waypoint-list-container .mobiles-window").hide('slow');
 	$("#route-finder-addon #waypoint-list-container .route-information").hide("slow");
+	var gpsInWaypointList = false;
+	$.each(this.waypoints, function(index, value){
+		if(typeof value.type != undefined && value.type == "gps")
+			gpsInWaypointList = true;
+	});
+	if(this.gpsEnabled && !gpsInWaypointList)
+	{
+		$("#route-finder-addon > form .history-container .results .gps").show();
+	}
 	var caller = this;
 
 	var cancelSearch = $('\
@@ -545,6 +579,7 @@ RouteFinder.prototype.exitSearch = function(nominatimParser){
 	$("#route-finder-addon .results .wait-for-search").hide('fast');
 	$("#route-finder-addon .results .wait-for-search > p").show("slow"); // Hide the currently displayed information
 	$("#route-finder-addon .results .wait-for-search .no-internet").hide("slow");
+	$("#route-finder-addon > form .history-container .results .gps").hide();
 	if(this.retrySearch != undefined){
 		window.clearTimeout(this.retrySearch);	// We retry fetching search results with a window.setTimeout() which needs to get cleared when we abort
 	}

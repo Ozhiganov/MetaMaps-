@@ -36,13 +36,29 @@ SearchModule.prototype.initializeInterface = function(){
 
 SearchModule.prototype.addOptionsMenu = function(){
 	var caller = this;
+    $("#search-addon #options").show("slow");
 	// If this is the App in the correct version we will show the Offline Module
 	if(typeof(android) != "undefined" && android.getVersionCode() >= 13){
-		$("#search-addon #options").show("slow");
 		$("#options > ul > li").click(function(){
 			caller.interactiveMap.switchModule('offline-karten');
 		});
+	}else{
+		$("#options > ul > li.offline-karten").hide();
 	}
+	$("#options > ul > li.hilfe").click($.proxy(function(){
+		$("#hilfe").show("slow");
+		$("#follow-location").hide();
+		$("#lock-location").hide();
+		$("#start-navigation").hide();
+		if($("#hilfe iframe").attr("src") == "")
+			$("#hilfe iframe").attr("src", "/hilfe");
+	}, this));
+	$("#hilfe .close").click($.proxy(function(){
+		$("#hilfe").hide("slow");
+		$("#follow-location").show();
+		$("#lock-location").show();
+		$("#start-navigation").show();
+	}, this));
 }
 
 SearchModule.prototype.removeOptionsMenu = function(){
@@ -114,6 +130,7 @@ SearchModule.prototype.startSearch = function(moveMap){
 		}, this),
 		timeout: (timeout*1000),
 		error: $.proxy(function(jqxr){
+			console.log(jqxr);
 			// We encountered an error while trying to fetch the search results.
 			// It can be an abortion error in case the user clicked abort, or a timeout/connection error
 			// Only in the latter case we'll retry the search

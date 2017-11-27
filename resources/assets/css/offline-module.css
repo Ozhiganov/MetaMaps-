@@ -2,9 +2,29 @@
 	display: none;
 }
 
+#offline-addon .auto-updates {
+    display: flex;
+    align-items: center;
+    border: 1px solid #dfdfdf;
+    border-left: 0;
+    border-right: 0;
+}
+
+#offline-addon .auto-updates > .option {
+    margin: 10px;
+        height: 20px;
+}
+
+#offline-addon .auto-updates .text {
+    flex-grow: 1;
+    text-align: center;
+    padding: 10px 0;
+    border-left: 1px solid #dfdfdf;
+}
+
 @media(max-width: 767px){
 	#offline-addon {
-		width: calc(100% - 30px);
+		width: 100%;
 	}
 }
 
@@ -25,6 +45,11 @@
 	color: white;
 }
 
+#offline-addon .progress-bar {
+    min-width: 40px;
+}
+
+
 #offline-addon > #heading > .logo {
 	align-self: center;
 	padding: 7px;
@@ -32,7 +57,6 @@
 
 #offline-addon .add-area {
 	text-align: center;
-    display: none;
     padding: 10px 20px;
     border-top: 1px solid #e7e7e7;
 }
@@ -47,7 +71,8 @@
 }
 
 #offline-addon .download-progress {
-    display: none;
+    display: flex;
+    margin: 0 10px;
 }
 
 #offline-addon .download-progress > .progress {

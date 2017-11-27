@@ -15,7 +15,11 @@ Route::get('/', function () {
 
 });
 
-Route::get('download/{minx}/{miny}/{maxx}/{maxy}/{zoomstart}/{zoomend}', 'DownloadController@downloadArea');
+Route::group(['prefix' => 'download'], function(){
+    Route::get('download-files/{minLon}/{minLat}/{maxLon}/{maxLat}', 'DownloadController@downloadFiles');
+    Route::get('list-files/{minLon}/{minLat}/{maxLon}/{maxLat}', 'DownloadController@listFiles');
+    Route::get('{minx}/{miny}/{maxx}/{maxy}/{zoomstart}/{zoomend}', 'DownloadController@downloadArea');
+});
 
 Route::group(['prefix' => 'map'], function () {
     Route::get('/', function () {
@@ -112,20 +116,6 @@ Route::group(['prefix' => 'metager'], function () {
 });
 
 Route::get('tile_cache/{z}/{x}/{y}.png', function($z, $x, $y){
-
-    // The request is sent we'll wait up to 10 seconds for the png to be generated
-    $filepath =  public_path() . DIRECTORY_SEPARATOR . "tiles" . DIRECTORY_SEPARATOR . $z . DIRECTORY_SEPARATOR . $x . DIRECTORY_SEPARATOR . "$y.png";
-    
-    if(file_exists($filepath)){
-
-        $content = file_get_contents($filepath);
-        $response = Response::make($content, 200);
-        $response->header('Content-Type', 'image/png');
-        $response->header('Cache-Control', 'max-age=0, no-cache, no-store, must-revalidate');
-        $response->header('Pragma', 'no-cache');
-        $response->header('Expires', 'Wed, 11 Jan 1984 05:00:00 GMT');
-        return $response;
-    }else{
         $socket = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
         socket_connect($socket, "127.0.0.1", 63825);
 
@@ -143,8 +133,6 @@ Route::get('tile_cache/{z}/{x}/{y}.png', function($z, $x, $y){
         $response->header('Pragma', 'no-cache');
         $response->header('Expires', 'Wed, 11 Jan 1984 05:00:00 GMT');
         return $response;
-    }
-
 });
 
 
