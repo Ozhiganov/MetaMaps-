@@ -56,13 +56,13 @@ RouteFinderSearchResults.prototype.mobilesWindowClick = function(){
 	$("#route-finder-addon .results .results-container").hide("slow", function(){
 		// Add the Possibility to come back to the list
 		var showList = $('\
-			<div id="show-list" class="container">\
+			<div class="container show-list">\
 				Liste anzeigen\
 			</div>');
-		$("#route-finder-addon .results").append(showList);
+		$("#route-finder-addon .history-container .results").append(showList);
 		$(showList).click({caller: caller}, function(event){
-			$("#show-list").hide('fast', function(){
-				$("#show-list").remove();
+			$("#route-finder-addon .history-container .results .show-list").hide('fast', function(){
+				$("#route-finder-addon .history-container .results .show-list").remove();
 			});
 			$("#route-finder-addon .results .results-container").show("slow");
 			$("#route-finder-addon .results .mobiles-window").show("slow", function(){
@@ -70,7 +70,7 @@ RouteFinderSearchResults.prototype.mobilesWindowClick = function(){
 			});
 		});
 
-		var paddingTop = $("#route-finder-addon form").outerHeight() + $("#route-finder-addon #show-list").outerHeight() + 50;
+		var paddingTop = $("#route-finder-addon form").outerHeight() + $("#route-finder-addon .history-container .results .show-list").outerHeight() + 50;
 		caller.updateMapExtent([paddingTop, 50, 50, 50]);
 	});
 
@@ -79,7 +79,7 @@ RouteFinderSearchResults.prototype.mobilesWindowClick = function(){
 RouteFinderSearchResults.prototype.deleteSearch = function(){
 	$("#route-finder-addon .results .results-container").html("");
 	$("#route-finder-addon .results .mobiles-window").remove();
-	$("#show-list").remove();
+	$("#route-finder-addon .results .history-container .show-list").remove();
 	var caller = this;
 	$.each(this.markerOverlays, function(index, value){
 		caller.interactiveMap.map.removeOverlay(value);

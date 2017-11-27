@@ -528,6 +528,8 @@ RouteFinder.prototype.executeSearch = function(query){
 				caller.searchHistory.addItem({query: query});
 			}
 			$("#route-finder-addon .results .wait-for-search").hide('fast');
+			$("#route-finder-addon > form .history-container .results .item").hide();
+			$("#route-finder-addon > form .history-container .searches .item").hide();
 		}, this),
 		timeout: (timeout*1000),
 		error: $.proxy(function(jqxr){
