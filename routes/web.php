@@ -15,6 +15,11 @@ Route::get('/', function () {
 
 });
 
+Route::get('/last-modified', function(){
+    return Response::make("", 200)
+        ->header("last-modified", filemtime(base_path()) * 1000);
+});
+
 Route::group(['prefix' => 'download'], function(){
     Route::get('download-files/{minLon}/{minLat}/{maxLon}/{maxLat}', 'DownloadController@downloadFiles');
     Route::get('list-files/{minLon}/{minLat}/{maxLon}/{maxLat}', 'DownloadController@listFiles');

@@ -38,7 +38,7 @@ SearchModule.prototype.addOptionsMenu = function(){
 	var caller = this;
     $("#search-addon #options").show("slow");
 	// If this is the App in the correct version we will show the Offline Module
-	if(typeof(android) != "undefined" && android.getVersionCode() >= 13){
+	if(typeof(android) != "undefined" && typeof android.getVersionCode == "function" && android.getVersionCode() >= 13){
 		$("#options > ul > li").click(function(){
 			caller.interactiveMap.switchModule('offline-karten');
 		});
