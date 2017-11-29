@@ -71,13 +71,12 @@
     <div class="panel">
         <div class="panel-body">
             <p>Seit kurzem bieten wir für alle Nutzer unserer <a href="https://metager.de/app">Android App</a> optional den Download von benötigtem Kartenmaterial an.</p>
-            <p>Gebiete, die über diese Funktion heruntergeladen werden, benötigen ab dem Zeitpunkt keine aktive Internetverbindung mehr um angezeigt zu werden.
-            Dies spart einerseits mobiles Datenvolumen, andererseits wird die Karte auch in Gebieten ohne ausgebautem Mobilfunknetz jederzeit korrekt angezeigt.</p>
+            <p>Gebiete, die über diese Funktion heruntergeladen werden, benötigen ab dem Zeitpunkt keine aktive Internetverbindung mehr um angezeigt zu werden.</p>
             <p>Um die Kartendaten für ein Gebiet herunterzu laden, gehen Sie wie folgt vor:</p>
             <ul>
                 <li>Öffnen Sie das Kontextmenü links neben dem Suchfeld in Ihrer Android App und klicken auf "Offline Karten"</li>
                 <li>Klicken Sie im neuen Menü auf "Gebiet hinzufügen"</li>
-                <li>Klicken Sie auf das für Sie passende, rot umrandete, Gebiet und im Anschluss auf das Download Symbol</li>
+                <li>Bewegen Sie nun die Karte so, dass das herunterzuladene Gebiet angezeigt wird. Es wird nun auf der linken Seite die voraussichtliche Download Größe und das Alter der Kartendaten angezeigt. Auf der rechten Seite findet sich ein Knopf um das angezeigte Gebiet herunterzuladen.</li>
             </ul>
             <p>=> Der Download beginnt nun; Sobald dieser abgeschlossen ist nutzen Sie für dieses Gebiet Offline Karten.</p>
             <p><b>Wichtig:</b> Die Offline Funktion ist aktuell auf die Anzeige der Karten beschränkt. Um eine Suche durchzuführen, oder eine Route zu berechnen benötigen Sie weiterhin eine aktive Internetverbindung.</p>
@@ -133,9 +132,9 @@
         <div class="panel-heading"></div>
         <div class="panel-body">
             <p>Voraussetzung hierfür ist ein halbwegs aktueller mobiler Browser (z.B. Firefox - zu finden im App-Store).</p>
-            <p>Plant man nun eine Route zu verschiedenen Wegpunkten, muss der Startpunkt die aktuelle <a href="/hilfe/gps">GPS-Position</a> sein. Bei eingeschaltetem GPS auf dem Gerät erscheint eine entsprechende Option, wenn man die Eingabe für den Wegpunkt startet.</p>
+            <p>Plant man nun eine Route zu verschiedenen Wegpunkten, muss der Startpunkt die aktuelle GPS-Position sein. Bei eingeschaltetem GPS auf dem Gerät erscheint eine entsprechende Option, wenn man die Eingabe für den Wegpunkt startet.</p>
             <p>Alle weiteren Wegpunkte können wie gewohnt beliebig entweder über die Suchfunktion innerhalb der Eingabebox für Wegpunkte im Routenplaner, oder durch einen Klick auf die Karte hinzugefügt werden.</p>
-            <p>Nach einem Klick auf "Route berechnen" erscheint nun die Wegbeschreibung und zusätzlich darüber ein Knopf "Routenführung starten".</p>
+            <p>Nach einem Klick auf "Route berechnen" erscheint nun die Wegbeschreibung und zusätzlich darüber ein Knopf "Navigation starten".</p>
             <p>Ein Klick auf diesen Knopf startet dann die Navigation.</p>
         </div>
     </div>
