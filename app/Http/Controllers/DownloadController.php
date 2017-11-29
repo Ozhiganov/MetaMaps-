@@ -65,6 +65,38 @@ class DownloadController extends Controller
         }
     }
 
+    public function downloadAssets(){
+        $socket = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
+        socket_connect($socket, "127.0.0.1", 63825);
+
+        socket_write($socket, "download-assets\n", strlen("download-assets\n"));
+
+        $content = "";
+        while(true){
+            $tmp = socket_read($socket, 4096);
+            if($tmp === FALSE) break;
+            if($tmp == "") break;
+            else $content .= $tmp;
+        }
+        socket_close($socket);
+
+        # The result is a path to the Zip File that will get downloaded
+        if(file_exists($content)){
+            return response()->download($content, "asset-data.tar", 
+                [
+                    "Content-Type" => "application/tar",
+                    "Pragma" => "public",
+                    "Expires" => "0",
+                    "Cache-Control" => "must-revalidate, post-check=0, pre-check=0",
+                    "Content-Description" => "File Transfer",
+                    "Content-Transfer-Encoding" => "binary",
+                    "Content-Length" => sizeof($content)
+                ])->deleteFileAfterSend(true);
+        }else{
+            abort(404, "File not found");
+        }
+    }
+
     public function downloadArea($minx, $miny, $maxx, $maxy, $zoomstart, $zoomend){
     	if($zoomstart > $zoomend || $minx > $maxx || $miny > $maxy){
     		abort(404);

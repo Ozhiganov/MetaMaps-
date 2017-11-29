@@ -28,13 +28,6 @@ function OfflineModule(interactiveMap){
 	                color: 'rgba(255,128,0,.2)'
 	            })
 	        });
-	// Recenter the view to get an overview of germany
-	if(typeof android != "undefined" && typeof android.isWireless == "function" && !android.isWireless()){
-		console.log("Kein WLan");
-		alert("Dieses Feature läd große Datenmengen herunter. Bitte stellen Sie sicher, dass sie sich in einer nicht getakteten Netzwerkverbindung befinden um fortzufahren.");
-		interactiveMap.switchModule("search");
-		return;
-	}
 }
 
 OfflineModule.prototype.loadDownloadedAreas = function(){
@@ -346,6 +339,15 @@ OfflineModule.prototype.addToAvailableInterface = function(area){
 
 OfflineModule.prototype.startDownload = function(){
 	if(this.selectedArea == null) return;
+
+	// If the user is not connected to a wlan we will inform him of that fact
+	if(typeof android != "undefined" && typeof android.isWireless == "function" && !android.isWireless()){
+		var confirmed = confirm("Die Download Größe beträgt " + $("#download-information > .size").html() + ". Ohne WLan fortfahren?");
+		if(!confirmed)
+			return;
+	}
+
+
 	$("#start-download > span").hide("fast");
 	$("#start-download > img").show("fast");
 	$(".exit").hide("fast");
@@ -384,8 +386,10 @@ OfflineModule.prototype.startDownload = function(){
 	}, this));
 }
 
-OfflineModule.prototype.stopDownload = function(){
-	if(typeof android != "undefined")
+OfflineModule.prototype.stopDownload = function(abort){
+	if(typeof abort == "undefined")
+		abort = true;
+	if(typeof android != "undefined" && abort)
 		android.stopDownload();
 	$("#start-download > span").show("fast");
 	$("#start-download > img").hide("fast");
@@ -426,7 +430,7 @@ OfflineModule.prototype.updateDownloadStatus = function(){
 			window.setTimeout($.proxy(this.updateDownloadStatus, this), 100);
 		}else{
 			this.downloading = null;
-			this.stopDownload();
+			this.stopDownload(false);
 			$(".downloaded-areas > .area").remove();
 			this.loadDownloadedAreas();
 			return;

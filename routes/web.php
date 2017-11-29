@@ -22,6 +22,7 @@ Route::get('/last-modified', function(){
 
 Route::group(['prefix' => 'download'], function(){
     Route::get('download-files/{minLon}/{minLat}/{maxLon}/{maxLat}', 'DownloadController@downloadFiles');
+    Route::get('download-assets', 'DownloadController@downloadAssets');
     Route::get('list-files/{minLon}/{minLat}/{maxLon}/{maxLat}', 'DownloadController@listFiles');
     Route::get('{minx}/{miny}/{maxx}/{maxy}/{zoomstart}/{zoomend}', 'DownloadController@downloadArea');
 });
