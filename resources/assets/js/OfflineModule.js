@@ -426,7 +426,7 @@ OfflineModule.prototype.updateDownloadStatus = function(){
 		$("#offline-addon .progress-bar").attr("aria-valuenow", downloaded);
 		$("#offline-addon .progress-bar").css("width", percent + "%");
 		$("#offline-addon .progress-bar").html(android.getDownloadStatusMessage());
-		if(android.getStage() != android.getMaxStage() || downloaded != total){
+		if(android.getStage() != android.getMaxStage() || downloaded != total || !android.isDownloadFinished()){
 			window.setTimeout($.proxy(this.updateDownloadStatus, this), 100);
 		}else{
 			this.downloading = null;
