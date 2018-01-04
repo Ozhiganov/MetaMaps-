@@ -16,6 +16,8 @@ function SearchModule(interactiveMap, query){
 	this.addSearchListeners();
 	// Add Options Menu
 	this.addOptionsMenu();
+	// Add Exit on Logo Click
+	this.addLogoClick();
 	// Add the Url Updater
 	this.addURLUpdater();
 	// Start the Search already if the query variable is defined
@@ -32,6 +34,16 @@ function SearchModule(interactiveMap, query){
 
 SearchModule.prototype.initializeInterface = function(){
 	$("#search-addon").show('slow');
+}
+
+SearchModule.prototype.addLogoClick = function(){
+	$("div.logo").click($.proxy(function(){
+		this.interactiveMap.switchModule("search");
+	}, this));
+}
+
+SearchModule.prototype.removeLogoClick = function(){
+	$("div.logo").off();
 }
 
 SearchModule.prototype.addOptionsMenu = function(){
@@ -330,4 +342,5 @@ SearchModule.prototype.exit = function(){
 	$("#search-addon").hide('slow');
 	this.removeOptionsMenu();
 	this.removeURLUpdater();
+	this.removeLogoClick();
 }
