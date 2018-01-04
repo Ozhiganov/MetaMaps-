@@ -186,6 +186,7 @@ figure#search-addon .form-group {
     background-color: rgba(255, 128, 0, .7);
     border-bottom-left-radius: 0;
     border-top-left-radius: 8px!important;
+    cursor: pointer;
 }
 
 .logo > div{
