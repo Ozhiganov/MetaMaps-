@@ -9,3 +9,6 @@ Homestead.yaml
 .env
 /.buildpath
 /.project
+/public/css/*.css
+/public/js/*.js
+public/mix-manifest.json
