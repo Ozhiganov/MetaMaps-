@@ -84,7 +84,8 @@ RouteFinder.prototype.addWaypoints = function(waypoints, recalculate){
 			caller.addWaypoint(value[0], value[1], undefined, undefined, false, false);
 	});	
 
-	if(this.interactiveMap.GpsManager.gps && this.interactiveMap.GpsManager.accuracy < 500 && this.waypoints.length <= 1 && !gpsAdded){
+	if( this.interactiveMap.GpsManager !== null && this.interactiveMap.GpsManager.gps !== null 
+		&& this.interactiveMap.GpsManager.gps && this.interactiveMap.GpsManager.accuracy < 500 && this.waypoints.length <= 1 && !gpsAdded){
 		this.addWaypoint(undefined, undefined, undefined, this.interactiveMap.GpsManager, true, false);
 	}
 
@@ -162,7 +163,7 @@ RouteFinder.prototype.addWaypoint = function(lon, lat, nominatimParser, gpsManag
 	}else{
 		return false;
 	}
-	if(index === 0){
+	if(gpsManager !== undefined){
 		this.waypoints.unshift(waypoint);
 	}else{
 		this.waypoints.push(waypoint);
@@ -363,11 +364,7 @@ RouteFinder.prototype.updateMobilesWindow = function(){
 
 RouteFinder.prototype.appendNewWaypointForm = function(){
 	// If there is only one waypoint yet we will make the user define a start point
-	if(this.waypoints.length <= 1){
-		$("#route-finder-addon .results").before(this.generateNewWaypointForm("Startpunkt angeben:"));
-	}else{
-		$("#route-finder-addon .results").before(this.generateNewWaypointForm("Wegpunkt hinzufügen:"));
-	}
+	$("#route-finder-addon .results").before(this.generateNewWaypointForm("Wegpunkt hinzufügen:"));
 }
 
 RouteFinder.prototype.generateNewWaypointForm = function(text){
