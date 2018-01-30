@@ -4,7 +4,8 @@
  * building robust, powerful web applications using Vue and Laravel.
  */
 
-//require('bootstrap-sass');
+var version = 'v5';
+window.osrmTextInstructions = require('osrm-text-instructions')(version);
 
 //window.Vue = require('vue');
 
