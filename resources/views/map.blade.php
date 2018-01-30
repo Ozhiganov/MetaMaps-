@@ -284,6 +284,7 @@
             @endif
         </script>
         @endif
+        <script src="/js/modules.js" type="text/javascript" defer></script>
         <script src="{{ elixir('js/map.js') }}" type="text/javascript" defer></script>
     </body>
 </html>

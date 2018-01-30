@@ -112,7 +112,6 @@ RouteFinder.prototype.enableGps = function(){
 RouteFinder.prototype.disableGps = function(){
 	this.gpsEnabled = false;
 	if(this.addWaypointsOnGps != null){
-		console.log(this.addWaypointsOnGps);
 		this.addWaypoints(this.addWaypointsOnGps);
 	}
 }
@@ -164,7 +163,6 @@ RouteFinder.prototype.addWaypoint = function(lon, lat, nominatimParser, gpsManag
 		return false;
 	}
 	if(waypoint.type == "gps"){
-		console.log(waypoint);
 		this.waypoints.unshift(waypoint);
 	}else{
 		this.waypoints.push(waypoint);

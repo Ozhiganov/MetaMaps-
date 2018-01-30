@@ -23,7 +23,7 @@ Route.prototype.extractLegs = function(){
 	var result = [];
 	var caller = this;
 	$.each(this.route.routes[this.route.activeRoute].legs, function(index, value){
-		result.push(new Leg(value, caller));
+		result.push(new Leg(value, caller, index, caller.route.routes[caller.route.activeRoute].legs.length));
 	});
 	return result;
 }
@@ -483,7 +483,6 @@ Route.prototype.shiftStep = function(){
 		this.drivenRoute.coordinates.push(coordinate);
 		count--;
 	}
-	console.log(this);
 }
 
 Route.prototype.shiftStepStep = function(){
@@ -507,7 +506,6 @@ Route.prototype.shiftStepStep = function(){
 		var coordinate = route.geometry.coordinates.shift();
 		this.drivenRoute.coordinates.push(coordinate);
 	}
-	console.log(step);
 
 }
 
