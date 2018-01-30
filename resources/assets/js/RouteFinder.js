@@ -163,7 +163,8 @@ RouteFinder.prototype.addWaypoint = function(lon, lat, nominatimParser, gpsManag
 	}else{
 		return false;
 	}
-	if(gpsManager !== undefined){
+	if(waypoint.type == "gps"){
+		console.log(waypoint);
 		this.waypoints.unshift(waypoint);
 	}else{
 		this.waypoints.push(waypoint);
@@ -281,7 +282,7 @@ RouteFinder.prototype.addLegDescriptions = function(){
 
 RouteFinder.prototype.addWaypointInterface = function(waypoint){
 	var waypointHtml = waypoint.getHtml();
-	if(waypoint.index === 0){
+	if(waypoint.type == "gps"){
 		$("#route-finder-addon #waypoint-list").prepend(waypointHtml);
 	}else{
 		$("#route-finder-addon #waypoint-list").append(waypointHtml);	

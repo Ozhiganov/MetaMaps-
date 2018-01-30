@@ -29,14 +29,14 @@ Route::group(['prefix' => 'download'], function(){
 
 Route::group(['prefix' => 'map'], function () {
     Route::get('/', function () {
-        return view('map')->with('scripts', [elixir('js/mapSearch.js')])->with('css', [elixir('css/general.css'), elixir('css/mapSearch.css'), elixir('css/routing.css')]);
+        return view('map')->with('css', [elixir('css/general.css'), elixir('css/mapSearch.css'), elixir('css/routing.css')]);
     });
     Route::get('{position}', function ($position) {
         $positionData = explode(",", $position);
         if (sizeof($positionData) === 3) {
             $center = [$positionData[0], $positionData[1]];
             $zoom   = $positionData[2];
-            return view('map')->with('scripts', [elixir('js/mapSearch.js')])->with('css', [elixir('css/general.css'), elixir('css/mapSearch.css'), elixir('css/routing.css')])
+            return view('map')->with('css', [elixir('css/general.css'), elixir('css/mapSearch.css'), elixir('css/routing.css')])
                 ->with("vars", ["center" => $center, "zoom" => $zoom]);
         } else {
             return redirect('/');
@@ -47,7 +47,7 @@ Route::group(['prefix' => 'map'], function () {
         if (sizeof($positionData) === 3) {
             $center = [$positionData[0], $positionData[1]];
             $zoom   = $positionData[2];
-            return view('map')->with('scripts', [elixir('js/mapSearch.js')])->with('css', [elixir('css/general.css'), elixir('css/mapSearch.css'), elixir('css/routing.css')])
+            return view('map')->with('css', [elixir('css/general.css'), elixir('css/mapSearch.css'), elixir('css/routing.css')])
                 ->with("vars", ["center" => $center, "zoom" => $zoom, "query" => $search]);
         } else {
             return redirect('/');
@@ -96,7 +96,7 @@ Route::group(['prefix' => 'route'], function () {
             $waypoints = rtrim($waypoints, ",");
             $waypoints .= "]";
         }
-        return view('map')->with('scripts', [elixir('js/mapSearch.js')])->with('css', [elixir('css/general.css'), elixir('css/mapSearch.css'), elixir('css/routing.css')])
+        return view('map')->with('css', [elixir('css/general.css'), elixir('css/mapSearch.css'), elixir('css/routing.css')])
                 ->with("vars", ["waypoints" => $waypoints, 'vehicle' => $vehicle]);
     });
     Route::get('search/{search}', function ($search) {
@@ -110,7 +110,7 @@ Route::group(['prefix' => 'route'], function () {
 });
 
 Route::get('map/{search}/{latMin}/{lonMin}/{latMax}/{lonMax}', function ($search, $latMin, $lonMin, $latMax, $lonMax) {
-    return view('map')->with('javascript', "/$search/$latMin/$lonMin/$latMax/$lonMax")->with('search', $search)->with('boundings', 'true')->with('getPosition', 'false')->with('minPos', json_encode([floatval($latMin), floatval($lonMin)]))->with('maxPos', json_encode([floatval($latMax), floatval($lonMax)]))->with('scripts', [elixir('js/mapSearch.js')])->with('css', [elixir('css/mapSearch.css')]);
+    return view('map')->with('javascript', "/$search/$latMin/$lonMin/$latMax/$lonMax")->with('search', $search)->with('boundings', 'true')->with('getPosition', 'false')->with('minPos', json_encode([floatval($latMin), floatval($lonMin)]))->with('maxPos', json_encode([floatval($latMax), floatval($lonMax)]))->with('css', [elixir('css/mapSearch.css')]);
 });
 
 Route::get('{search}/{latMin}/{lonMin}/{latMax}/{lonMax}/{adjustView?}/{limit?}', 'SearchController@boundingBoxSearch');
