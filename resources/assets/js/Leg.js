@@ -1,4 +1,4 @@
-function Leg(legJson, route){
+function Leg(legJson, route, legIndex, legSize){
 	this.route = route;
 	this.json = legJson;
 	this.hash = md5(JSON.stringify(this.json));
@@ -8,7 +8,7 @@ function Leg(legJson, route){
 		var nextStreet = undefined;
 		if(caller.json.steps.length > (index+1) && caller.json.steps[index+1].name !== undefined) 
 			nextStreet = caller.json.steps[index+1].name;
-		caller.steps.push(new Step(value, nextStreet));
+		caller.steps.push(new Step(value, nextStreet, legIndex, legSize));
 	});
 }
 
@@ -65,7 +65,12 @@ Leg.prototype.generateRouteDescriptionHtml = function(){
 		');
 	var caller = this;
 	$.each(this.steps, function(index, value){
-		$($(result).get(2)).find(">ul").append($('<li><div><img src="' + value.parseImg() + '" alt=" " /></div><div class="step-string">' + value.toString() + '</div><div class="step-length">' + caller.route.distanceString(value.json.distance) + '</div></li>'));
+		var img = value.parseImg();
+		if(img == ""){
+			$($(result).get(2)).find(">ul").append($('<li><div class="step-image"></div><div class="step-string">' + value.toString() + '</div><div class="step-length">' + caller.route.distanceString(value.json.distance) + '</div></li>'));
+		}else{
+			$($(result).get(2)).find(">ul").append($('<li><div class="step-image"><img src="' + value.parseImg() + '" alt=" " /></div><div class="step-string">' + value.toString() + '</div><div class="step-length">' + caller.route.distanceString(value.json.distance) + '</div></li>'));
+		}		
 	})
 	return result;
 }

@@ -16,6 +16,8 @@ update(maps.metager.de):
     - cp -r * ~/.MetaGerMaps
     - cd ~/.MetaGerMaps
     - composer install
+    - npm install
+    - npm run production
     - cp ~/.env .
     - chmod -R 777 storage
     - chmod -R 777 bootstrap/cache

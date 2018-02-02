@@ -19,6 +19,10 @@
     padding: 10px 0 5px 0;
 }
 
+.route-description .collapse > ul > li > div.step-image {
+    min-width: 45px;
+}
+
 .route-description .collapse > ul > li > div.step-string {
     flex-shrink: 1;
     flex-grow: 1;
