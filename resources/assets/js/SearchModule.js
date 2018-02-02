@@ -111,9 +111,9 @@ SearchModule.prototype.startSearch = function(moveMap){
 	// Hide every History Item Container
 	$("#search-addon .results .history-container .item").hide();
 
-	if(this.results != null && this.results != undefined){
+	if(this.results != undefined){
 		this.results.deleteSearch();
-		this.results = null;
+		this.results = undefined;
 	}
 
 	// Generate the Url for the Search Results
@@ -128,15 +128,31 @@ SearchModule.prototype.startSearch = function(moveMap){
 		url: url,
 		dataType: 'json',
 		success: $.proxy(function(data){
-			if(typeof moveMap == "boolean")
-				this.results = new Results(this.interactiveMap, data, this.query, moveMap, this.resultsHistory);
-			else
-				this.results = new Results(this.interactiveMap, data, this.query, undefined, this.resultsHistory);
+			console.log(data);
 			if(data.length > 0){
+				if(typeof moveMap == "boolean")
+					this.results = new Results(this.interactiveMap, data, this.query, moveMap, this.resultsHistory);
+				else
+					this.results = new Results(this.interactiveMap, data, this.query, undefined, this.resultsHistory);
+			
 				this.updateURL();
 				// This was a succesfull
 				this.searchHistory.addItem({query: this.query});
 				$("#search input[name=q]").blur();
+			}else{
+				// The search wasn't successfull but the input field got cleared. We need to put the last search back in
+				$("#search input[name=q]").val(this.query);
+				this.updateURL();
+				$("#search input[name=q]").focus();
+				$("#search input[name=q]").tooltip({
+					title: "Leider konnten keine Ergebnisse gefunden werden.",
+					element: $("#search input[name=q]"),
+					placement: "bottom"
+				});
+				$("#search input[name=q]").tooltip("show");
+				window.setTimeout(function(){
+					$("#search input[name=q]").tooltip("destroy");
+				}, 3000);
 			}
 			this.unlockSearchFunctions();
 		}, this),
